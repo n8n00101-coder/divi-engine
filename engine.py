@@ -20,6 +20,13 @@ Generation routes (locked, see voice/settings.json):
   hi  IndicF5 cross-lingual from the Telugu reference, with the owner's
       approved +20% pace calibration: ONE atempo 1.20 per take, logged.
 
+Pluggable backends (backends.py): env JULIE_TTS_BACKEND overrides the
+route above for any language — "elevenlabs" (your ElevenLabs voice,
+key from env ELEVENLABS_API_KEY) or "http" (any model server you run,
+env JULIE_TTS_URL). The gates, re-roll loop and QC report are unchanged
+on top of every backend; each take's backend is recorded in the QC
+report. See README, "Connect your own model (fast path)".
+
 Each take is synthesized in a subprocess (this file, --gen-take) so the
 network environment the Space needs (proxy env intact) never contaminates
 the local-ASR gate process (which strips proxies — a proxy breaks local
@@ -36,6 +43,8 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+
+import backends  # noqa: E402  (pluggable TTS backends; see backends.py)
 
 VOICE_DIR = os.path.join(HERE, "voice")
 EN_REF = os.path.join(VOICE_DIR, "english-reference.wav")
@@ -101,7 +110,7 @@ def _indicf5_synthesize(text, ref_wav, ref_text):
                     fd = upload()
                 except Exception:
                     pass
-    raise RuntimeError(f"IndicF5 failed after retries: {last}")
+    raise RuntimeError(f"[indicf5-space] IndicF5 failed after retries: {last}")
 
 
 def _squash_gaps_np(y, sr, max_gap=0.35, keep=0.12, thr_db=-45.0):
@@ -216,27 +225,48 @@ def _chatterbox_take(text, ref_wav, out_wav, settings):
     return pace
 
 
+def _bytes_to_take(audio, lang, out_wav, settings, info):
+    """Shared downstream path for every service backend: audio bytes in
+    (mp3/wav), normalised 24 kHz mono wav out. Hindi keeps its locked
+    +20% pace calibration (ONE atempo, logged) on every route."""
+    raw = out_wav + ".raw"
+    with open(raw, "wb") as f:
+        f.write(audio)
+    subprocess.run(["ffmpeg", "-v", "error", "-i", raw, "-ar", str(SR),
+                    "-ac", "1", out_wav, "-y"], check=True)
+    os.unlink(raw)
+    if lang == "hi":
+        atempo = settings["hindi_indicf5"]["pace_calibration"]["atempo"]
+        _atempo_file(out_wav, atempo)
+        info["atempo"] = atempo  # approved +20% pace calibration, logged
+
+
 def gen_take(lang, text, out_wav):
-    """--gen-take mode: synthesize ONE raw take. Prints a JSON info line."""
+    """--gen-take mode: synthesize ONE raw take via the selected backend
+    (env JULIE_TTS_BACKEND, default per language). Prints a JSON info
+    line that names the backend; the parent records it in the QC report."""
     settings = load_settings()
-    info = {"lang": lang}
-    if lang == "en":
+    backend = backends.resolve_backend(lang, settings)
+    info = {"lang": lang, "backend": backend}
+    if backend == "chatterbox":
+        if lang != "en":
+            raise RuntimeError(
+                "[chatterbox] the Chatterbox route is the English clone; "
+                "for te/hi use indicf5-space, elevenlabs or http")
         info["pace"] = _chatterbox_take(text, EN_REF, out_wav, settings)
-    elif lang in ("te", "hi"):
+    elif backend == "indicf5-space":
+        if lang == "en":
+            raise RuntimeError(
+                "[indicf5-space] the IndicF5 route serves te/hi; "
+                "for en use chatterbox, elevenlabs or http")
         ref_text = open(TE_REF_TEXT).read().strip()
         audio = _indicf5_synthesize(text, TE_REF, ref_text)
-        raw = out_wav + ".raw"
-        with open(raw, "wb") as f:
-            f.write(audio)
-        subprocess.run(["ffmpeg", "-v", "error", "-i", raw, "-ar", str(SR),
-                        "-ac", "1", out_wav, "-y"], check=True)
-        os.unlink(raw)
-        if lang == "hi":
-            atempo = settings["hindi_indicf5"]["pace_calibration"]["atempo"]
-            _atempo_file(out_wav, atempo)
-            info["atempo"] = atempo  # approved +20% pace calibration, logged
-    else:
-        raise SystemExit(f"unknown lang {lang}")
+        _bytes_to_take(audio, lang, out_wav, settings, info)
+    elif backend in ("elevenlabs", "http"):
+        audio = backends.synthesize(backend, text, lang, settings)
+        _bytes_to_take(audio, lang, out_wav, settings, info)
+    else:  # resolve_backend already rejects unknown values
+        raise RuntimeError(f"[backends] unhandled backend {backend!r}")
     print("GEN_INFO " + json.dumps(info))
 
 
@@ -401,8 +431,8 @@ def main():
     ap = argparse.ArgumentParser(description="Julie AI Voice Engine")
     ap.add_argument("--text")
     ap.add_argument("--text-file")
-    ap.add_argument("--lang", choices=["en", "te", "hi"], required=True)
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--lang", choices=["en", "te", "hi"])
+    ap.add_argument("--out")
     ap.add_argument("--rolls", type=int, default=None,
                     help="max generation attempts per sentence (default: settings)")
     ap.add_argument("--bed", action="store_true",
@@ -417,6 +447,8 @@ def main():
         gen_take(args.gen_take[0], args.gen_take[1], args.gen_take[2])
         return 0
 
+    if not args.lang or not args.out:
+        ap.error("--lang and --out are required")
     if not args.text and not args.text_file:
         ap.error("--text or --text-file is required")
     text = args.text if args.text else open(args.text_file).read()
@@ -428,11 +460,19 @@ def main():
     if not sentences:
         ap.error("no sentences in text")
     workdir = tempfile.mkdtemp(prefix="julie_takes_")
+    try:
+        backend = backends.resolve_backend(args.lang, settings)
+    except RuntimeError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
     qc = {"engine": "julie-ai-voice-engine 1.0", "voice": settings["voice_name"],
-          "lang": args.lang, "text": text, "max_rolls": max_rolls,
-          "sentences": []}
+          "lang": args.lang, "backend": backend, "text": text,
+          "max_rolls": max_rolls, "sentences": []}
     chosen = []
-    gen_timeout = 1800 if args.lang == "en" else 1200
+    if backend in ("elevenlabs", "http"):
+        gen_timeout = 300  # 120 s HTTP cap per take + conversion margin
+    else:
+        gen_timeout = 1800 if args.lang == "en" else 1200
     for si, sent in enumerate(sentences, start=1):
         entry = {"index": si, "text": sent, "rolls": [], "chosen_roll": None}
         passed_path = None
@@ -448,12 +488,14 @@ def main():
                 if line.startswith("GEN_INFO "):
                     gen_info = json.loads(line[len("GEN_INFO "):])
             if proc.returncode != 0 or not os.path.exists(take):
-                entry["rolls"].append({"roll": roll, "gen_error":
+                entry["rolls"].append({"roll": roll, "backend": backend,
+                                       "gen_error":
                                        (proc.stderr or "")[-400:],
                                        "gen_s": round(time.time() - t0, 1)})
                 continue
             rep = gates.run_all_gates(take, args.lang, sent, settings)
-            entry["rolls"].append({"roll": roll, "gen": gen_info,
+            entry["rolls"].append({"roll": roll, "backend": backend,
+                                   "gen": gen_info,
                                    "gen_s": round(time.time() - t0, 1), **rep})
             if rep["pass"]:
                 entry["chosen_roll"] = roll
@@ -474,7 +516,7 @@ def main():
 
     info = assemble(chosen, args.out, settings, args.bed)
     qc["verdict"] = "PASS — every sentence passed all five gates"
-    qc["final"] = {"out": args.out, **info}
+    qc["final"] = {"out": args.out, "backend": backend, **info}
     qc_path = os.path.splitext(args.out)[0] + ".qc.json"
     with open(qc_path, "w") as fh:
         json.dump(qc, fh, ensure_ascii=False, indent=1)

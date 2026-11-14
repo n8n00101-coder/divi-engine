@@ -84,6 +84,37 @@ Notes:
   engine isolates it in a subprocess so it never contaminates the local
   ASR gates.
 
+## Connect your own model (fast path)
+
+The built-in routes are free, and you pay in time instead: the IndicF5
+Space has a public queue and outage streaks, and Chatterbox on a local
+CPU takes minutes per take. If you run a faster model yourself — or
+have an ElevenLabs voice — connect it and generation stops being the
+bottleneck:
+
+1. `git pull` to get the pluggable-backend build.
+2. Pick ONE backend (environment variables only — keys never go in a
+   file, and never appear in QC reports):
+   - **ElevenLabs:** `export JULIE_TTS_BACKEND=elevenlabs`,
+     `export ELEVENLABS_API_KEY=…`, `export JULIE_EL_VOICE_ID=…`
+     (optional `JULIE_EL_MODEL`, default `eleven_multilingual_v2`; the
+     voice id can instead live in `voice/settings.json` under
+     `backends.elevenlabs.voice_id`). The voice then comes from that
+     ElevenLabs voice id — the reference wavs are not used.
+   - **Your own model server:** `export JULIE_TTS_BACKEND=http` and
+     `export JULIE_TTS_URL=http://your-server/tts` (optional
+     `JULIE_TTS_KEY`, sent as `Authorization: Bearer …`). Server
+     contract: accept a POST with JSON `{"text", "lang", "voice"}` and
+     return audio bytes (mp3 or wav) as the response body.
+3. Run the engine exactly as before — same CLI, same languages.
+
+Nothing about quality control changes: the five gates, the re-roll loop
+and the QC report apply on top of **any** backend, each take's backend
+is recorded in `<name>.qc.json`, and a take that fails the gates is
+rejected no matter how fast it was generated. HTTP backends time out at
+120 s per take and fail loudly, naming the backend — no silent hangs.
+Leave `JULIE_TTS_BACKEND` unset to return to the default free routes.
+
 ## Honest limits
 
 - **IndicF5 diction varies per take.** Some takes will always smear a hard
@@ -102,6 +133,7 @@ Notes:
 
 ```
 engine.py                 CLI: generate -> gate -> re-roll -> assemble
+backends.py               pluggable TTS backends (defaults, elevenlabs, http)
 gates.py                  the five gates, importable
 phonetics.py              Telugu / Devanagari / ASR-script phonetic normalizers
 voice/
