@@ -1,0 +1,10 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.cache/
+huggingface/
+takes/
+*_takes/
+*.qc.json.tmp
+.DS_Store

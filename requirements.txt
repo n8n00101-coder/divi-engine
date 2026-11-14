@@ -1,0 +1,10 @@
+# Julie AI Voice Engine
+# ffmpeg must also be installed and on PATH.
+numpy
+scipy
+librosa
+soundfile
+faster-whisper
+requests
+torch
+chatterbox-tts
