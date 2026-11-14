@@ -454,7 +454,11 @@ def main():
     text = args.text if args.text else open(args.text_file).read()
     settings = load_settings()
     max_rolls = args.rolls or settings["gates"]["max_rolls"]
-    import gates  # imported here: strips proxies in THIS process only
+    gen_env = dict(os.environ)  # snapshot BEFORE the gates import: gates
+    import gates  # strips proxy vars in THIS process (local ASR loads);
+    # generation subprocesses get gen_env (the original environment) —
+    # with the stripped env their HTTPS calls to the TTS backend cannot
+    # route through the proxy and fail with SSL errors.
 
     sentences = split_sentences(text)
     if not sentences:
@@ -482,7 +486,8 @@ def main():
             proc = subprocess.run(
                 [sys.executable, os.path.abspath(__file__), "--gen-take",
                  args.lang, sent, take],
-                capture_output=True, text=True, timeout=gen_timeout)
+                capture_output=True, text=True, timeout=gen_timeout,
+                env=gen_env)
             gen_info = {}
             for line in (proc.stdout or "").splitlines():
                 if line.startswith("GEN_INFO "):
