@@ -23,6 +23,17 @@ gate table, and writes NO final mp3. That loop is the permanent fix: the
 defects the gates name (mispronunciation, swallowed words, foreign ghost
 words, pitch drift, level jumps) cannot be shipped by this tool.
 
+WHOLE-TAKE ONLY for Telugu/Hindi (Ajju's order, 2026-11-16): te/hi
+sentences are generated as WHOLE takes and ship only from a single take
+that passes the five gates PLUS speaker identity (>= 0.85 vs the English
+reference) PLUS the pace band. Clause/donor assembly and every
+splice-inside-a-sentence edit are hard-disabled for te/hi — the patchwork
+builds (fixed2/fixed3/fixed5) were rejected by the owner's ear on
+2026-11-15 precisely because every splice is heard as a cut and every
+regenerated segment carries a different identity. Large te/hi roll
+budgets dispatch to the indicf5-batch.yml mass-roll workflow instead of
+rolling locally (see dispatch_mass_rolls).
+
 Generation routes (locked, see voice/settings.json):
   en  Chatterbox TTS zero-shot clone, exaggeration 0.35, phrase chunking,
       pace guard (regen once, then atempo clamped to 1.12x, logged).
@@ -124,9 +135,30 @@ def _indicf5_synthesize(text, ref_wav, ref_text):
     raise RuntimeError(f"[indicf5-space] IndicF5 failed after retries: {last}")
 
 
-def _squash_gaps_np(y, sr, max_gap=0.35, keep=0.12, thr_db=-45.0):
+WHOLE_TAKE_LANGS = ("te", "hi")
+
+
+def forbid_inside_sentence_edit(lang, op):
+    """Hard guard: no splice-inside-a-sentence operation may ever run on
+    a Telugu/Hindi take. Patchwork assembly was rejected by the owner's
+    ear three times on 2026-11-15 (fixed2, fixed3, fixed5): every splice
+    is a discontinuity a native ear hears as a cut, and regenerated
+    segments carry a different voice identity. te/hi sentences ship from
+    ONE whole take or not at all."""
+    if lang in WHOLE_TAKE_LANGS:
+        raise RuntimeError(
+            f"[whole-take] {op} is forbidden for lang={lang!r}: Telugu/Hindi "
+            "sentences ship from one whole take only — no clause/donor "
+            "assembly, no splice inside a sentence (owner's order, "
+            "2026-11-16, after the 2026-11-15 ear rejections).")
+
+
+def _squash_gaps_np(y, sr, max_gap=0.35, keep=0.12, thr_db=-45.0, lang=None):
     """Cut silences longer than max_gap INSIDE a phrase down to `keep`.
-    (The clone invents mid-phrase pauses; her delivery flows through.)"""
+    (The clone invents mid-phrase pauses; her delivery flows through.)
+    English-only in practice (the Chatterbox session); the lang guard
+    makes the te/hi ban structural, not conventional."""
+    forbid_inside_sentence_edit(lang, "_squash_gaps_np")
     import numpy as np
     hop = 256
     n = len(y) // hop
@@ -224,7 +256,9 @@ class _ChatterboxSession:
             parts = []
             for ui, unit in enumerate(units):
                 y = self._gen_unit(unit)
-                y = _squash_gaps_np(y, SR)
+                # English clone only — this session cannot serve te/hi
+                # (_gen_take_core refuses), and the guard proves it.
+                y = _squash_gaps_np(y, SR, lang="en")
                 parts.append(y)
                 if ui < len(units) - 1:
                     parts.append(np.zeros(int(join * SR), dtype=np.float32))
@@ -404,6 +438,16 @@ def run_batch(args, settings, gen_env):
     except RuntimeError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
+    if mass_roll_route(args.lang, max_attempts, settings) == "dispatch":
+        # Same rule as single mode: a large te/hi budget dispatches to
+        # the mass-roll workflow instead of rolling locally.
+        try:
+            dispatch_mass_rolls([ln["text"] for ln in lines], args.lang,
+                                max_attempts, settings)
+            return 3
+        except Exception as e:
+            print(f"ERROR: mass-roll dispatch failed: {e}", file=sys.stderr)
+            return 2
     worker_env = dict(gen_env)
     if backend == "chatterbox":
         # Spread the machine's cores across workers unless the user
@@ -477,8 +521,12 @@ def run_batch(args, settings, gen_env):
                                           rec["text"], settings)
                 entry["gate_s"] = round(time.time() - g0, 1)
                 entry.update(rep)
+                ship, ship_extra = ship_decision(item["out"], args.lang,
+                                                 rec["text"], settings, rep)
+                if ship_extra:
+                    entry["ship_check"] = ship_extra
                 rec["rolls"].append(entry)
-                if rep["pass"]:
+                if ship:
                     rec["chosen_roll"] = attempt
                     chosen_takes[idx] = item["out"]
                 else:
@@ -666,6 +714,146 @@ def assemble(take_paths, out_mp3, settings, use_bed):
 
 
 # =========================================================================
+# te/hi ship rule: whole take + identity + pace (Ajju's order, 2026-11-16)
+# =========================================================================
+_IDENTITY_ENCODER = None
+_EN_REF_EMB = None
+
+
+def _take_identity(path):
+    """Resemblyzer cosine similarity of a take vs the 25 s English
+    reference (the house voice). Raises on any failure — the caller
+    fails closed."""
+    global _IDENTITY_ENCODER, _EN_REF_EMB
+    import numpy as np
+    import soundfile as sf
+    from resemblyzer import VoiceEncoder, preprocess_wav
+    if _IDENTITY_ENCODER is None:
+        _IDENTITY_ENCODER = VoiceEncoder(verbose=False)
+        _EN_REF_EMB = _IDENTITY_ENCODER.embed_utterance(preprocess_wav(EN_REF))
+    y, sr = sf.read(path)
+    if sr != 16000:
+        import librosa
+        y = librosa.resample(y.astype("float32"), orig_sr=sr, target_sr=16000)
+    emb = _IDENTITY_ENCODER.embed_utterance(preprocess_wav(y, 16000))
+    return float(np.dot(emb, _EN_REF_EMB)
+                 / (np.linalg.norm(emb) * np.linalg.norm(_EN_REF_EMB) + 1e-9))
+
+
+def _take_pace_wps(path, lang, n_words):
+    """Words per second over the ASR speech span — the same formula the
+    indicf5-batch runners use. faster-whisper's default log-prob /
+    no-speech thresholds silently drop segments on this material
+    (fixed4 calibration), so they are disabled explicitly; the model is
+    fed a librosa-decoded array because PyAV decoding is unreliable."""
+    import librosa
+    import numpy as np
+    import gates
+    y, _sr = librosa.load(path, sr=16000, mono=True)
+    segs, _info = gates.get_model().transcribe(
+        y, language=lang, word_timestamps=True,
+        log_prob_threshold=None, no_speech_threshold=None)
+    words = [w for s in segs for w in (s.words or [])]
+    if len(words) < 2:
+        return None
+    span = words[-1].end - words[0].start
+    med = float(np.median([w.end - w.start for w in words]))
+    eff = span + med
+    return (n_words / eff) if eff > 0 else None
+
+
+def ship_decision(take_path, lang, text, settings, rep):
+    """The single place a take is accepted for shipping.
+
+    en: the five gates decide (locked recipe, unchanged).
+    te/hi: WHOLE-TAKE ONLY — the five gates PLUS identity >=
+    gates.identity_min_te_hi PLUS pace within gates.pace_wps_te_hi,
+    all on the SAME whole take. A check that cannot be measured fails
+    closed (ship=False): an unmeasurable take is not a passing take.
+    Returns (ship, extra); extra is merged into the QC roll entry.
+    """
+    if lang not in WHOLE_TAKE_LANGS:
+        return bool(rep["pass"]), {}
+    if not rep["pass"]:
+        return False, {}
+    g = settings["gates"]
+    extra = {"ship_rule": "whole-take: 5 gates + identity + pace"}
+    try:
+        ident = _take_identity(take_path)
+        extra["identity"] = round(ident, 3)
+        extra["identity_min"] = g["identity_min_te_hi"]
+        extra["identity_pass"] = bool(ident >= g["identity_min_te_hi"])
+    except Exception as e:  # fail closed: unmeasurable != passing
+        extra["identity"] = None
+        extra["identity_pass"] = False
+        extra["identity_error"] = str(e)[-200:]
+    try:
+        wps = _take_pace_wps(take_path, lang, len(text.split()))
+        lo, hi = g["pace_wps_te_hi"]
+        extra["pace_wps"] = round(wps, 3) if wps else None
+        extra["pace_band"] = [lo, hi]
+        extra["pace_pass"] = bool(wps and lo <= wps <= hi)
+    except Exception as e:  # fail closed
+        extra["pace_wps"] = None
+        extra["pace_pass"] = False
+        extra["pace_error"] = str(e)[-200:]
+    return bool(extra["identity_pass"] and extra["pace_pass"]), extra
+
+
+def mass_roll_route(lang, rolls, settings):
+    """'local' or 'dispatch': te/hi roll budgets above the local limit
+    go to the indicf5-batch.yml mass-roll workflow (10 parallel
+    runners); everything else rolls locally."""
+    if lang in WHOLE_TAKE_LANGS and \
+            rolls > settings["gates"]["local_roll_limit_te_hi"]:
+        return "dispatch"
+    return "local"
+
+
+def dispatch_mass_rolls(sentences, lang, total_rolls, settings):
+    """Hand a large te/hi roll budget to the indicf5-batch workflow:
+    write the sentences to indicf5-lines.txt in this repo, commit +
+    push, and dispatch the workflow via gh. The runners generate WHOLE
+    takes of every line and gate them with the same ship rule; takes +
+    gate JSONs come back as the run's indicf5-batch-all artifact.
+    Nothing is shipped locally on this path — the caller exits without
+    writing an mp3. Raises on any failure (fail loudly)."""
+    import math
+    repo = os.path.dirname(os.path.abspath(__file__))
+    per_runner = max(1, math.ceil(total_rolls / 10))
+    lines_file = os.path.join(repo, "indicf5-lines.txt")
+    with open(lines_file, "w") as fh:
+        fh.write("\n".join(sentences) + "\n")
+
+    def run(cmd):
+        p = subprocess.run(cmd, cwd=repo, capture_output=True, text=True)
+        if p.returncode != 0:
+            raise RuntimeError(f"{' '.join(cmd[:3])} failed: "
+                               f"{(p.stderr or p.stdout)[-300:]}")
+        return p.stdout
+
+    run(["git", "add", "indicf5-lines.txt"])
+    run(["git", "commit", "-m",
+         f"indicf5 mass-roll lines ({lang}, {total_rolls} rolls requested)"])
+    run(["git", "push", "origin", "main"])
+    run(["gh", "workflow", "run", "indicf5-batch.yml", "--ref", "main",
+         "-f", f"rolls={per_runner}", "-f", "lines_path=indicf5-lines.txt"])
+    url = ""
+    try:
+        url = run(["gh", "run", "list", "--workflow", "indicf5-batch.yml",
+                   "--limit", "1", "--json", "url",
+                   "--jq", ".[0].url"]).strip()
+    except Exception:
+        pass  # the dispatch itself already succeeded; URL is a courtesy
+    print(f"DISPATCHED indicf5-batch: {total_rolls} rolls requested "
+          f"({per_runner}/runner x 10) for {len(sentences)} sentence(s)."
+          + (f" Run: {url}" if url else ""))
+    print("Takes + gate JSONs arrive as the run's indicf5-batch-all "
+          "artifact; no local mp3 is written by this dispatch.")
+    return True
+
+
+# =========================================================================
 # Main loop: generate -> gate -> re-roll
 # =========================================================================
 def split_sentences(text):
@@ -737,6 +925,16 @@ def main():
     sentences = split_sentences(text)
     if not sentences:
         ap.error("no sentences in text")
+    if mass_roll_route(args.lang, max_rolls, settings) == "dispatch":
+        # Large te/hi budget: mass rolls belong on the 10-runner
+        # indicf5-batch workflow, not on this machine. Exit 3 =
+        # dispatched (not a pass, not a failure); nothing ships locally.
+        try:
+            dispatch_mass_rolls(sentences, args.lang, max_rolls, settings)
+            return 3
+        except Exception as e:
+            print(f"ERROR: mass-roll dispatch failed: {e}", file=sys.stderr)
+            return 2
     workdir = tempfile.mkdtemp(prefix="julie_takes_")
     try:
         backend = backends.resolve_backend(args.lang, settings)
@@ -773,20 +971,24 @@ def main():
                                        "gen_s": round(time.time() - t0, 1)})
                 continue
             rep = gates.run_all_gates(take, args.lang, sent, settings)
+            ship, ship_extra = ship_decision(take, args.lang, sent,
+                                             settings, rep)
             entry["rolls"].append({"roll": roll, "backend": backend,
                                    "gen": gen_info,
-                                   "gen_s": round(time.time() - t0, 1), **rep})
-            if rep["pass"]:
+                                   "gen_s": round(time.time() - t0, 1), **rep,
+                                   **({"ship_check": ship_extra}
+                                      if ship_extra else {})})
+            if ship:
                 entry["chosen_roll"] = roll
                 passed_path = take
                 break
         qc["sentences"].append(entry)
         if passed_path is None:
-            qc["verdict"] = "FAIL — no take passed all gates; NO final mp3 written"
+            qc["verdict"] = "FAIL — no take passed the ship checks; NO final mp3 written"
             qc_path = os.path.splitext(args.out)[0] + ".qc.json"
             with open(qc_path, "w") as fh:
                 json.dump(qc, fh, ensure_ascii=False, indent=1)
-            print(f"FAIL: sentence {si} never passed the gates in "
+            print(f"FAIL: sentence {si} never passed the ship checks in "
                   f"{max_rolls} rolls. Gate table: {qc_path}", file=sys.stderr)
             return 2
         dest = os.path.join(workdir, f"chosen_s{si}.wav")
@@ -794,7 +996,10 @@ def main():
         chosen.append(dest)
 
     info = assemble(chosen, args.out, settings, args.bed)
-    qc["verdict"] = "PASS — every sentence passed all five gates"
+    qc["verdict"] = ("PASS — every sentence passed the full ship suite "
+                     "(five gates + identity + pace)"
+                     if args.lang in WHOLE_TAKE_LANGS else
+                     "PASS — every sentence passed all five gates")
     qc["final"] = {"out": args.out, "backend": backend, **info}
     qc_path = os.path.splitext(args.out)[0] + ".qc.json"
     with open(qc_path, "w") as fh:

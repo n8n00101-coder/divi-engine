@@ -65,6 +65,30 @@ route leaves a ~91 Hz hum in gaps), and exactly **one** loudnorm pass
 (≈ −15 LUFS) finishes the file. `--bed` adds the channel's quiet piano bed
 ≈ 11 dB under the voice.
 
+## Why whole-take only (Telugu/Hindi)
+
+Telugu and Hindi sentences are generated as **whole takes** and ship only
+from a single take that passes the full suite: the five gates **plus**
+speaker identity (≥ 0.85 vs the English reference) **plus** the pace band
+(1.9–2.5 words/s). Clause/donor assembly and every splice-inside-a-sentence
+edit are hard-disabled for te/hi in code (`forbid_inside_sentence_edit`).
+
+The reason is the owner's ear. Three patchwork builds — fixed2, fixed3 and
+fixed5 (2026-11-15) — were each rejected: every splice is a discontinuity a
+native ear hears as a **cut**, and every regenerated segment carries a
+slightly different voice identity, so patched sentences never sound like
+one person speaking. One whole take has one identity and no joins; if no
+take passes within the roll budget, the engine exits non-zero and ships
+**nothing** for that sentence.
+
+Large te/hi roll budgets (above `gates.local_roll_limit_te_hi` in
+`voice/settings.json`) are the default mass-roll route: the engine writes
+the sentences to `indicf5-lines.txt`, commits, and dispatches the
+`indicf5-batch.yml` workflow — 10 parallel runners generating whole takes
+with rotating genuine-Telugu references and gating every take with the
+same suite. Exit code 3 means "dispatched"; takes and gate JSONs return as
+the run's `indicf5-batch-all` artifact.
+
 ## Install
 
 ```bash
