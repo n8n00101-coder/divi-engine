@@ -16,7 +16,10 @@ A take is a FULL PASS only if every gate passes on that same take.
 All takes + per-take gate JSON are written to OUTDIR for harvest; nothing
 is assembled here.
 
-Env: RUNNER_INDEX (0..9), ROLLS (per sentence, default 6), OUTDIR (out).
+Env: RUNNER_INDEX (0..9), ROLLS (per sentence, default 6), OUTDIR (out),
+LINES_PATH (optional lines file in this repo — one sentence per line;
+written by engine.py's dispatch_mass_rolls for arbitrary te/hi scripts.
+Default: the built-in demo pair.)
 """
 import json
 import os
@@ -36,10 +39,28 @@ os.makedirs(OUT, exist_ok=True)
 IDX = int(os.environ.get("RUNNER_INDEX", "0"))
 ROLLS = int(os.environ.get("ROLLS", "6"))
 
-SENTS = {
+DEMO_SENTS = {
     1: "మీరు నిద్రలోకి జారుకున్న క్షణం నుంచి, మీ మెదడు పని ఆపదు. నిజానికి, దాని అసలు పని అప్పుడే మొదలవుతుంది.",
     2: "రోజంతా మీరు చూసినవి, విన్నవి, నేర్చుకున్నవి అన్నీ మెదడులో తాత్కాలికంగా దాచుకుంటాయి. కానీ అవి అక్కడే ఉంటే, మరుసటి రోజు కల్లా కలిసిపోతాయి.",
 }
+
+
+def load_sentences():
+    """Sentences to voice: the LINES_PATH file when set and present
+    (one sentence per line, numbered from 1 in file order), else the
+    built-in demo pair."""
+    lp = os.environ.get("LINES_PATH", "")
+    if lp:
+        p = lp if os.path.isabs(lp) else os.path.join(ROOT, lp)
+        if os.path.exists(p):
+            lines = [ln.strip() for ln in open(p, encoding="utf-8")
+                     if ln.strip()]
+            if lines:
+                return {i + 1: t for i, t in enumerate(lines)}
+    return DEMO_SENTS
+
+
+SENTS = load_sentences()
 REF_ORDER = ["span1", "span2", "span3", "te3"]
 IDENTITY_MIN = 0.85
 WPS_MIN, WPS_MAX = 1.9, 2.5

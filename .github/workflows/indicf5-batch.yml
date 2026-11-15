@@ -14,6 +14,11 @@ on:
         required: true
         type: string
         default: "6"
+      lines_path:
+        description: "Optional lines file in the repo (one sentence per line); empty = built-in demo pair"
+        required: false
+        type: string
+        default: ""
 jobs:
   gen:
     runs-on: ubuntu-latest
@@ -64,6 +69,7 @@ jobs:
           PYTHONUNBUFFERED: "1"
           RUNNER_INDEX: ${{ matrix.idx }}
           ROLLS: ${{ inputs.rolls }}
+          LINES_PATH: ${{ inputs.lines_path }}
           OMP_NUM_THREADS: "4"
           MKL_NUM_THREADS: "4"
         run: python3 indicf5_gen.py
