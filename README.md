@@ -203,8 +203,13 @@ Leave `JULIE_TTS_BACKEND` unset to return to the default free routes.
 engine.py                 CLI: generate -> gate -> re-roll -> assemble (+ --batch)
 backends.py               pluggable TTS backends (defaults, elevenlabs, http, github)
 gates.py                  the five gates, importable
+indicf5_gen.py            whole-sentence IndicF5 take generator + full gates
+                          (runs on the indicf5-batch runners)
+requirements-indicf5.txt  deps for the IndicF5 runners
 .github/workflows/
   voice-batch.yml         free parallel batch voicing on GitHub Actions
+  indicf5-batch.yml       10-runner brute-force whole-sentence Telugu takes,
+                          every take fully gated (gates + identity + pace)
 BENCHMARK.md              measured batch-vs-per-line timings on a small VM
 test_batch.py             offline batch-mode tests (stub generation)
 phonetics.py              Telugu / Devanagari / ASR-script phonetic normalizers

@@ -1,0 +1,19 @@
+# IndicF5 batch runners (indicf5-batch.yml). torch/torchaudio are installed
+# separately from the PyTorch CPU index, mirroring the proven local stack
+# (wtu-dub venv: torch 2.5.1, transformers 4.49.0, vocos 0.1.0).
+# NOTE: no f5-tts package here — IndicF5's model snapshot bundles its own
+# f5_tts fork and indicf5_gen.py puts the snapshot on sys.path.
+numpy==1.26.4
+scipy
+librosa==0.11.0
+soundfile
+faster-whisper==1.2.1
+transformers==4.49.0
+accelerate
+vocos==0.1.0
+x-transformers
+ema-pytorch
+torchdiffeq
+pydub
+matplotlib
+tqdm
