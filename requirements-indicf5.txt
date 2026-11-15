@@ -20,3 +20,7 @@ tqdm
 jieba
 pypinyin
 wandb
+datasets==2.21.0
+einops
+hydra-core
+omegaconf
