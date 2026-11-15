@@ -7,4 +7,8 @@ soundfile
 faster-whisper
 requests
 torch
-chatterbox-tts
+# Pinned 2026-11-15 (V4): the synth is the locked voice's instrument —
+# an unpinned resolve floated to a build that needs pkuseg and failed
+# to install on py3.12. 0.1.7 is the version of the proven stack (the
+# Nov-14 approval work and the 2026-11-15 gate diagnosis).
+chatterbox-tts==0.1.7

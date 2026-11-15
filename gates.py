@@ -452,7 +452,18 @@ def ghost_scan(unhinted_res, lang, script_words):
     script_lat = {re.sub(r"[^a-z]", '', w.lower()) for w in script_words}
     for t in lat:
         tl = t.lower()
-        if tl in GHOST_BLACK:
+        # A token that IS a script word is never a ghost. The blacklist
+        # exists to catch FOREIGN English bleed in te/hi takes; without
+        # this exemption it also fired on an English take's own script
+        # words ("hello" is in GHOST_BLACK, so "Hello, this is Julie."
+        # failed gate 2 on every roll, deterministically — V4 diagnosis
+        # 2026-11-15; the approved reference recording likewise tripped
+        # it on its own words just/feels/safer). This matches the
+        # docstring above: "for en, Latin tokens matching no script
+        # word". te/hi behaviour is unchanged: their scripts strip to
+        # non-Latin here, so a Latin blacklist token is still foreign
+        # unless the script itself contains it (code-mixed lines).
+        if tl in GHOST_BLACK and tl not in script_lat:
             ghosts.append(t)
         elif lang == "hi" and tl not in ROMAN_HI_OK:
             ghosts.append(t)
