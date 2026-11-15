@@ -77,6 +77,53 @@ own runner (4 cores / 16 GB each), which is where `--jobs` scaling
 belongs. On a machine with the RAM headroom, `--jobs` works exactly
 as in mode (b), just with more workers.
 
+## GitHub Actions route — measured 2026-11-15 (the 10x proof)
+
+The workflow (`.github/workflows/voice-batch.yml`) was dispatch-tested
+end-to-end three times with `test-lines.txt` — the same 6 demo lines —
+split across **3 runners** (`-f chunks=3`), English, Chatterbox, all
+five gates on every line. Wall time is run creation → run completion
+(dispatch → artifact ready is ~7 s more in each case).
+
+| Run | ID | Caches | Wall | Result |
+|---|---|---|---|---|
+| 1 (original workflow) | 43734396304 | cold (first run ever) | **6m46s** | **6/6 lines PASS**, merged artifact verified: `001.mp3`–`006.mp3` in original numbering + QC |
+| 2 (caches + 20-cap + thread pin) | 43735459049 | HF model cache **hit**, pip cache cold under its new key | 7m14s | 5/6 — line 3 failed the pitch gate (f0 228.7 Hz vs 185–220 band) on all 3 rolls |
+| 3 (both caches warm) | 43736471637 | pip **hit** + HF **hit** on every chunk | **5m46s** | 5/6 — line 1 failed the swallowed-word gate on all 3 rolls |
+
+Per-chunk engine timings (inside the jobs): generation totals of
+111–219 s per 2-line chunk including re-rolls; plain takes ≈55–95 s
+on the 4-core runners, gates ≈12 s per take, one model load per chunk
+per round. Job totals (setup + install + generate) were 4m46s–6m16s.
+
+**Gate variance is real and is the accuracy working as designed.**
+Runs 2 and 3 each lost a different line to a different gate after all
+re-rolls; the gates and thresholds are locked, takes are stochastic,
+and a line that never passes gets no mp3 — its chunk job goes red and
+the QC report names it. Re-dispatching (or re-running just the failed
+lines) is the intended remedy. Run 1 shows the same script passing
+6/6 on another set of takes.
+
+**Workflow bug found and fixed by these runs:** every chunk writes
+`batch.qc.json`, and the merge step's files overwrote each other — the
+merged artifact kept only one chunk's report. Each chunk now also
+uploads `batch.qc.chunk-<n>.json`; runs 2–3 artifacts contain all
+three chunk reports.
+
+### Projection for a 209-line script (labelled projection, not a measurement)
+
+From the measured per-line rates above (fixed warm overhead ≈1–1.5 min
+per runner for setup + cache restore + model load; ≈70–110 s per line
+including gates and average re-rolls):
+
+- **chunks=10** → ~21 lines/runner → roughly **26–40 min** wall.
+- **chunks=20** → ~11 lines/runner → roughly **14–22 min** wall.
+
+Against the 8–12 hours Hark reported for the same script voiced
+locally line-by-line, that is a **>20x wall-clock reduction**, with
+the identical gates on every line. Treat the ranges as estimates —
+gate re-roll luck moves individual lines, as runs 2–3 show.
+
 ## What this means for a 209-line script
 
 - Per-line mode pays a full process start + model load + conditioning

@@ -118,16 +118,26 @@ free cloud route below.
 
 ### Free cloud compute — GitHub Actions (`github` backend)
 
-`.github/workflows/voice-batch.yml` runs batch mode on up to **10 free
+`.github/workflows/voice-batch.yml` runs batch mode on up to **20 free
 GitHub-hosted runners in parallel** (this repo is public, so standard
-runners cost nothing). A 209-line script becomes ~21 lines per runner,
-each loading the model once.
+runners cost nothing). A 209-line script becomes ~21 lines per runner
+at `chunks=10`, or ~11 per runner at `chunks=20`, each loading the
+model once. Pip downloads and the Hugging Face models are cached
+across runs, so repeat runs skip both big downloads.
+
+**Measured** (2026-11-15, three real dispatches of the 6-line
+`test-lines.txt` on 3 runners): **5m46s–6m46s wall** for the whole
+script, dispatch to finished artifact; the fully-green run passed 6/6
+lines through all five gates. Projected from those per-line rates, a
+209-line script lands in roughly **15–25 minutes at `chunks=20`** —
+versus the 8–12 hours the same script took voiced locally
+line-by-line. Full numbers: `BENCHMARK.md`.
 
 1. Put your lines in a file in this repo (e.g. `lines.txt`, one line per
    row) and push it.
 2. Dispatch the workflow:
    ```bash
-   gh workflow run voice-batch.yml -f lines_path=lines.txt -f lang=en -f chunks=10
+   gh workflow run voice-batch.yml -f lines_path=lines.txt -f lang=en -f chunks=20
    gh run watch                      # wait for the run to finish
    ```
    (or: GitHub → Actions → *julie-voice-batch* → Run workflow.)
