@@ -97,13 +97,11 @@ def main():
     ref_text = ref["text"]
     print(f"runner {IDX}: ref={ref_name} rolls={ROLLS}", flush=True)
 
-    # IndicF5 ships its own f5_tts fork inside the model snapshot; put the
-    # snapshot on sys.path so model.py imports THAT f5_tts (the PyPI
-    # f5-tts package is a different codebase).
-    from huggingface_hub import snapshot_download
-    snap = snapshot_download("Aditya02/IndicF5")
-    if snap not in sys.path:
-        sys.path.insert(0, snap)
+    # f5_tts must resolve to the AI4Bharat/IndicF5 repo's fork (installed
+    # by the workflow): the HF snapshot bundles an OLDER f5_tts whose
+    # load_model() still requires ckpt_path, which this model.py does not
+    # pass (wave-4 failure, 2026-11-15). Do NOT put the snapshot on
+    # sys.path — it would shadow the correct fork with the bundled one.
     from transformers import AutoModel
     model = AutoModel.from_pretrained("Aditya02/IndicF5",
                                       trust_remote_code=True)

@@ -45,6 +45,11 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
           pip install -q torch==2.5.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
           pip install -q -r requirements-indicf5.txt 2>&1 | tail -3
+          # The f5_tts fork this model.py expects (its load_model has no
+          # ckpt_path). The HF snapshot bundles an older, incompatible
+          # fork; the PyPI f5-tts package is a different codebase.
+          pip install -q --no-deps git+https://github.com/AI4Bharat/IndicF5.git 2>&1 | tail -2
+          python3 -c "import inspect; from f5_tts.infer.utils_infer import load_model; assert 'ckpt_path' not in inspect.signature(load_model).parameters or inspect.signature(load_model).parameters['ckpt_path'].default is not inspect.Parameter.empty, 'wrong f5_tts fork'; print('f5_tts fork ok')"
       - name: Install Resemblyzer (identity gate)
         run: |
           if ! pip install -q resemblyzer==0.1.4 2>resemb_err.log; then
