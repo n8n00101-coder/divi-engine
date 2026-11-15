@@ -211,7 +211,11 @@ phonetics.py              Telugu / Devanagari / ASR-script phonetic normalizers
 voice/
   settings.json           ALL locked settings (single source of truth)
   english-reference.wav   canonical 25 s English reference (+ .m4a original)
-  telugu-reference.wav    Telugu reference (+ its transcript .txt)
+  telugu-reference.wav    Telugu reference (+ its transcript .txt) — default is
+                          span2, the gold Telugu Part 2 span (see refs/)
+  refs/                   genuine Telugu reference set: span1/span2/span3
+                          (Telugu Part 2 narration slices) + te3 (slower
+                          Silent-Habit span), indexed by refs/refs.json
   samples/                owner-approved samples per language
   VOICE.md                voice provenance
 PRONUNCIATION-PROFILE.md  the measured delivery profile the settings encode

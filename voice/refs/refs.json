@@ -1,0 +1,26 @@
+{
+ "note": "Genuine Telugu channel narration references for IndicF5 zero-shot cloning, committed 2026-11-15 (fixed6). span1/2/3 are 18.0 s slices of the WHO TAUGHT US Telugu Part 2 narration (file2-audio.wav at 148-166 s, 320-338 s, 435-453 s) with transcript-aligned texts from proof/fixed3/ref_texts.json (time-proportional windows, corroborated on span 3). te3 is the slower 8.25 s span from the channel's Telugu VO over the Silent Habit short (words verified against the official Telugu script). All 24000 Hz mono.",
+ "default": "span2",
+ "refs": {
+  "span1": {
+   "wav": "voice/refs/span1.wav",
+   "text": "ఇప్పుడు కెమెరాని వెనక్కి తిప్పుదాం. ఈ సీన్స్ చూసి పెరిగే అమ్మాయిలకి ఏమవుతుంది? 97 లో బార్బరా ఫ్రెడరిక్సన్ టామీ ఆన్ రాబర్ట్స్ పెట్టిన పేరు ఆబ్జెక్టిఫికేషన్ థియరీ ఎడమ నుంచి కుడికి చదవండి. ఒకటి ఆడవాళ్ళని లుక్స్ తోనే జడ్జ్ చేస్తారని ఒక అమ్మాయి మళ్ళీ మళ్ళీ చూస్తుంది. రెండు ఆ అమ్మాయి తనని తానే బయట నుంచి చూసుకుంటుంది. కెమెరా లాగా మూడు తన బాడీని ఎప్పుడూ చెక్ చేసుకుంటుంది. నేను ఎలా ఉన్నాను? ఎవరు చూస్తున్నారు? నాలుగు",
+   "source": "Telugu Part 2 narration, file2 148-166 s"
+  },
+  "span2": {
+   "wav": "voice/refs/span2.wav",
+   "text": "లక్ష ఆడవాళ్ళకి 128.6 నేషనల్ 64.6 6 కి దాదాపు డబుల్ కానీ జాగ్రత్త ఈ నెంబర్స్ రిపోర్ట్ అయిన కేసులే కేసులు ఎక్కువ అంటే రిపోర్టింగ్ ఎక్కువ కావచ్చు నేరాలు కాదు పైగా జూలై 2024 లో కొత్త క్రిమినల్ చట్టాలు వచ్చాయి. పైగా అతి పెద్ద కేటగిరీ బయటివాళ్ళు కాదు భర్తలు బంధువుల క్రూరత్వం నాలుగు కేసుల్లో ఒకటి కంటే ఎక్కువ సినిమాలు మొత్తం కథ కాదు.",
+   "source": "Telugu Part 2 narration, file2 320-338 s (best single gold span; also the repo default voice/telugu-reference.wav)"
+  },
+  "span3": {
+   "wav": "voice/refs/span3.wav",
+   "text": "వన్ మార్కెటింగ్ ఈ పాటలు చాలాసార్లు రిలీజ్ కి ముందే సినిమాని ప్రమోట్ చేసే మార్కెటింగ్ టూల్ అని కంపోజర్స్ ప్రొడ్యూసర్స్ ఇండియా టుడే కి చెప్పారు. 2025 లో ఇలాంటి మూడు పాటలు ఉన్న థమ్మా సినిమా డైరెక్టర్ ఈ పాటలు ఆడియన్స్ ని సినిమాలోకి తీసుకొచ్చే మార్కెటింగ్ ఆసెట్స్ అన్నారు. కారణంట 2 మ్యూజిక్ రైట్స్ పుష్ప 2 మ్యూజిక్ రిజిక్ రైట్స్ కి టీ సిరీస్ 65 కోట్లు కట్టిందని బాలీవుడ్ హంగామా",
+   "source": "Telugu Part 2 narration, file2 435-453 s"
+  },
+  "te3": {
+   "wav": "voice/refs/te3.wav",
+   "text": "అందుకే ఇది చిన్నగా మొదలవుతుంది. వారానికి ఒకసారి. తర్వాత ప్రతి రాత్రీ పడుకునే ముందు.",
+   "source": "Channel Telugu VO (Silent Habit short), slower span 10.20-18.45 s of the candidate narration"
+  }
+ }
+}
