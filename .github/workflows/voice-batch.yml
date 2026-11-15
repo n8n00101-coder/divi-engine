@@ -1,6 +1,6 @@
 name: julie-voice-batch
 # Free cloud batch voicing: split a lines file into contiguous chunks and
-# run the engine's batch mode on up to 10 GitHub-hosted runners in
+# run the engine's batch mode on up to 20 GitHub-hosted runners in
 # parallel (public repos: standard runners are free). Each runner loads
 # the model once for its whole chunk. Download the merged artifact
 # "julie-voice-batch-all" when the run finishes:
@@ -23,10 +23,10 @@ on:
         options: [en, te, hi]
         default: en
       chunks:
-        description: "Parallel runners (1-10)"
+        description: "Parallel runners (1-20)"
         required: true
         type: string
-        default: "10"
+        default: "20"
       rerolls:
         description: "Gate re-rolls per failing line"
         required: true
@@ -50,7 +50,7 @@ jobs:
           lines = [l.strip() for l in open(os.environ["LINES_PATH"]) if l.strip()]
           if not lines:
               raise SystemExit(f"no lines in {os.environ['LINES_PATH']}")
-          n = max(1, min(10, int(os.environ["CHUNKS"]), len(lines)))
+          n = max(1, min(20, int(os.environ["CHUNKS"]), len(lines)))
           per = math.ceil(len(lines) / n)
           os.makedirs("chunks", exist_ok=True)
           used = []
@@ -77,7 +77,7 @@ jobs:
     timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 10
+      max-parallel: 20
       matrix:
         chunk: ${{ fromJSON(needs.prepare.outputs.chunks) }}
     steps:
@@ -89,7 +89,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
+      # Repeat runs skip the big downloads: pip's wheel cache (torch is
+      # ~200 MB) and the Hugging Face model cache both persist across
+      # runs, keyed on requirements.txt.
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py311-${{ hashFiles('requirements.txt') }}-torch2.6.0
+          restore-keys: |
+            pip-${{ runner.os }}-py311-
       - name: Cache Hugging Face models
         uses: actions/cache@v4
         with:
@@ -106,10 +115,26 @@ jobs:
           CHUNK: ${{ matrix.chunk }}
           LANG: ${{ inputs.lang }}
           REROLLS: ${{ inputs.rerolls }}
+          # Runners have 4 cores and each chunk runs a single worker:
+          # give torch all 4 threads instead of the small-machine default.
+          JULIE_CLONE_THREADS: "4"
+          OMP_NUM_THREADS: "4"
+          MKL_NUM_THREADS: "4"
         run: |
           FIRST=$(python3 -c "import json; print(json.load(open('chunks/chunk-${CHUNK}.json'))['first_index'])")
           python3 engine.py --batch "chunks/chunk-${CHUNK}.txt" --lang "$LANG" \
             --outdir out --jobs 1 --rerolls "$REROLLS" --first-index "$FIRST"
+      - name: Name this chunk's QC report (merged artifact keeps them all)
+        if: always()
+        env:
+          CHUNK: ${{ matrix.chunk }}
+        run: |
+          # Every chunk writes out/batch.qc.json; without a per-chunk
+          # name the merge step's files overwrite each other and only
+          # one chunk's report survives.
+          if [ -f out/batch.qc.json ]; then
+            cp out/batch.qc.json "out/batch.qc.chunk-${CHUNK}.json"
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
