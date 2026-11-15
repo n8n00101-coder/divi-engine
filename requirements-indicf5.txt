@@ -17,3 +17,6 @@ torchdiffeq
 pydub
 matplotlib
 tqdm
+jieba
+pypinyin
+wandb
