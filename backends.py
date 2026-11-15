@@ -23,6 +23,13 @@ Backend selection (env JULIE_TTS_BACKEND):
                      engine POSTs JSON {"text", "lang", "voice"} and
                      expects audio bytes (mp3 or wav) back; optional env
                      JULIE_TTS_KEY is sent as "Authorization: Bearer …"
+    github           NOT a synthesis backend — a stub that names the
+                     free GitHub Actions route (.github/workflows/
+                     voice-batch.yml): up to 10 free runners generate a
+                     whole lines file in parallel with this same engine
+                     in batch mode. Selecting it fails fast with the
+                     dispatch instructions. See README, "Fast batch
+                     mode".
 
 Keys are read from the environment ONLY — never hardcoded, never
 logged, never written to the QC report. Every failure is a fast, loud
@@ -34,7 +41,7 @@ import os
 import requests
 
 HTTP_TIMEOUT_S = 120
-BACKENDS = ("indicf5-space", "chatterbox", "elevenlabs", "http")
+BACKENDS = ("indicf5-space", "chatterbox", "elevenlabs", "http", "github")
 _DEFAULTS = {"en": "chatterbox", "te": "indicf5-space", "hi": "indicf5-space"}
 
 
@@ -118,4 +125,12 @@ def synthesize(backend, text, lang, settings):
         return synthesize_elevenlabs(text, lang, settings)
     if backend == "http":
         return synthesize_http(text, lang, settings)
+    if backend == "github":
+        raise RuntimeError(
+            "[github] 'github' is not a synthesis backend — it names the "
+            "free GitHub Actions route: put your lines in a file in this "
+            "repo, then dispatch .github/workflows/voice-batch.yml "
+            "(gh workflow run voice-batch.yml -f lines_path=lines.txt "
+            "-f lang=en -f chunks=10) and download the "
+            "julie-voice-batch-all artifact. See README, 'Fast batch mode'.")
     raise RuntimeError(f"[backends] {backend!r} is not a service backend")

@@ -1,0 +1,131 @@
+name: julie-voice-batch
+# Free cloud batch voicing: split a lines file into contiguous chunks and
+# run the engine's batch mode on up to 10 GitHub-hosted runners in
+# parallel (public repos: standard runners are free). Each runner loads
+# the model once for its whole chunk. Download the merged artifact
+# "julie-voice-batch-all" when the run finishes:
+#   gh run download <run-id> -n julie-voice-batch-all
+# A chunk job can go red when some of its lines never pass the gates —
+# its artifact still uploads (if: always) with every passing line's mp3
+# plus batch.qc.json naming the failures.
+on:
+  workflow_dispatch:
+    inputs:
+      lines_path:
+        description: "Lines file in this repo (one line per row)"
+        required: true
+        type: string
+        default: "lines.txt"
+      lang:
+        description: "Language"
+        required: true
+        type: choice
+        options: [en, te, hi]
+        default: en
+      chunks:
+        description: "Parallel runners (1-10)"
+        required: true
+        type: string
+        default: "10"
+      rerolls:
+        description: "Gate re-rolls per failing line"
+        required: true
+        type: string
+        default: "2"
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      chunks: ${{ steps.split.outputs.chunks }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Split lines into contiguous chunks
+        id: split
+        env:
+          LINES_PATH: ${{ inputs.lines_path }}
+          CHUNKS: ${{ inputs.chunks }}
+        run: |
+          python3 - <<'EOF'
+          import json, math, os
+          lines = [l.strip() for l in open(os.environ["LINES_PATH"]) if l.strip()]
+          if not lines:
+              raise SystemExit(f"no lines in {os.environ['LINES_PATH']}")
+          n = max(1, min(10, int(os.environ["CHUNKS"]), len(lines)))
+          per = math.ceil(len(lines) / n)
+          os.makedirs("chunks", exist_ok=True)
+          used = []
+          for ci in range(n):
+              part = lines[ci * per:(ci + 1) * per]
+              if not part:
+                  continue
+              with open(f"chunks/chunk-{ci}.txt", "w") as fh:
+                  fh.write("\n".join(part) + "\n")
+              with open(f"chunks/chunk-{ci}.json", "w") as fh:
+                  json.dump({"first_index": ci * per + 1}, fh)
+              used.append(ci)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write("chunks=" + json.dumps(used) + "\n")
+          print(f"{len(lines)} lines -> {len(used)} chunks of <={per}")
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chunks
+          path: chunks/
+  voice:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        chunk: ${{ fromJSON(needs.prepare.outputs.chunks) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: chunks
+          path: chunks
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-models-${{ hashFiles('requirements.txt') }}
+      - name: Install deps
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+          pip install -q torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
+          pip install -q httpx -r requirements.txt 2>&1 | tail -3
+      - name: Generate this chunk (batch mode, model loads once)
+        env:
+          PYTHONUNBUFFERED: "1"
+          CHUNK: ${{ matrix.chunk }}
+          LANG: ${{ inputs.lang }}
+          REROLLS: ${{ inputs.rerolls }}
+        run: |
+          FIRST=$(python3 -c "import json; print(json.load(open('chunks/chunk-${CHUNK}.json'))['first_index'])")
+          python3 engine.py --batch "chunks/chunk-${CHUNK}.txt" --lang "$LANG" \
+            --outdir out --jobs 1 --rerolls "$REROLLS" --first-index "$FIRST"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: voice-chunk-${{ matrix.chunk }}
+          path: out/
+  merge:
+    needs: voice
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: voice-chunk-*
+          path: merged
+          merge-multiple: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: julie-voice-batch-all
+          path: merged/

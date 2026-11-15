@@ -3,6 +3,17 @@
 
     python3 engine.py --text "…" --lang te --out line.mp3
     python3 engine.py --text-file script.txt --lang en --out out.mp3 --bed
+    python3 engine.py --batch lines.txt --lang en --outdir out/ --jobs 4
+
+BATCH MODE (--batch): one line per row in the lines file. The old path
+reloads the TTS model and re-computes the reference conditioning for
+EVERY take (a subprocess per take); batch mode loads the model once per
+worker process, computes the conditioning once, and generates every
+line in-process. --jobs N runs N such workers in parallel. Lines that
+fail the gates are re-rolled in place (default --rerolls 2), never the
+whole file. Each passing line is written to <outdir>/<nnn>.mp3 and a
+batch.qc.json records per-line rolls, gate results and timings. See
+README, "Fast batch mode".
 
 For every sentence the engine generates a take, runs ALL FIVE GATES on it
 (gates.py), and automatically re-rolls (up to --rolls, default 6) when any
@@ -161,68 +172,90 @@ def _atempo_file(path, factor):
     os.replace(tmp, path)
 
 
-def _chatterbox_take(text, ref_wav, out_wav, settings):
-    """English clone take: phrase chunking + pace guard (locked recipe)."""
-    import numpy as np
-    import soundfile as sf
-    import torch
-    from chatterbox.tts import ChatterboxTTS
+class _ChatterboxSession:
+    """One loaded Chatterbox model with the reference conditioning
+    computed ONCE and reused for every line (batch mode). The per-line
+    recipe — phrase chunking, gap squash, pace guard — is the locked
+    one; only the load-once lifecycle is new. The old per-take path
+    rebuilt all of this for every single take."""
 
-    cfg = settings["english_chatterbox"]
-    torch.set_num_threads(max(1, int(os.environ.get("JULIE_CLONE_THREADS", "2"))))
-    model = ChatterboxTTS.from_pretrained(device="cpu")
-    has_prepare = hasattr(model, "prepare_conditionals")
-    if has_prepare:
-        model.prepare_conditionals(ref_wav)
+    def __init__(self, ref_wav, settings):
+        import soundfile as sf
+        import torch
+        from chatterbox.tts import ChatterboxTTS
 
-    def gen_unit(unit):
-        kw = {"exaggeration": cfg["exaggeration"], "cfg_weight": cfg["cfg_weight"]}
-        if has_prepare:
-            wav = model.generate(unit, **kw)
+        self.settings = settings
+        self.cfg = settings["english_chatterbox"]
+        self.ref_wav = ref_wav
+        torch.set_num_threads(max(1, int(os.environ.get("JULIE_CLONE_THREADS", "2"))))
+        self.model = ChatterboxTTS.from_pretrained(device="cpu")
+        self.has_prepare = hasattr(self.model, "prepare_conditionals")
+        if self.has_prepare:
+            self.model.prepare_conditionals(ref_wav)
+        ref_y, _ = sf.read(ref_wav, dtype="float32", always_2d=False)
+        if ref_y.ndim > 1:
+            ref_y = ref_y[:, 0]
+        self.ref_rate = _onset_rate(ref_y.astype("float32"), SR)
+
+    def _gen_unit(self, unit):
+        import numpy as np
+        kw = {"exaggeration": self.cfg["exaggeration"],
+              "cfg_weight": self.cfg["cfg_weight"]}
+        if self.has_prepare:
+            wav = self.model.generate(unit, **kw)
         else:
-            wav = model.generate(unit, audio_prompt_path=ref_wav, **kw)
+            wav = self.model.generate(unit, audio_prompt_path=self.ref_wav, **kw)
         data = wav.detach().cpu().float().numpy()
         return (data[0] if data.ndim == 2 else data).astype(np.float32)
 
-    # phrase chunking: units end at commas/semicolons/colons (0.06 s joins)
-    units = [u.strip() for u in re.split(r"(?<=[,;:])\s*", text) if u.strip()]
-    if not units:
-        units = [text]
+    def generate(self, text, out_wav):
+        """English clone take: phrase chunking + pace guard (locked recipe)."""
+        import numpy as np
+        import soundfile as sf
 
-    def synth_all():
-        parts = []
-        for ui, unit in enumerate(units):
-            y = gen_unit(unit)
-            y = _squash_gaps_np(y, SR)
-            parts.append(y)
-            if ui < len(units) - 1:
-                parts.append(np.zeros(int(cfg_join * SR), dtype=np.float32))
-        return np.concatenate(parts)
+        cfg = self.cfg
+        join = cfg["phrase_chunking"]["comma_gap_s"]
+        # phrase chunking: units end at commas/semicolons/colons (0.06 s joins)
+        units = [u.strip() for u in re.split(r"(?<=[,;:])\s*", text) if u.strip()]
+        if not units:
+            units = [text]
 
-    cfg_join = settings["english_chatterbox"]["phrase_chunking"]["comma_gap_s"]
-    ref_y, _ = sf.read(ref_wav, dtype="float32", always_2d=False)
-    if ref_y.ndim > 1:
-        ref_y = ref_y[:, 0]
-    ref_rate = _onset_rate(ref_y.astype(np.float32), SR)
-    pace = {"action": "none", "ref_rate": round(ref_rate, 2)}
-    y = synth_all()
-    rate = _onset_rate(y, SR)
-    pace["rate"] = round(rate, 2)
-    band = cfg["pace_guard"]["band_frac"]
-    if ref_rate > 0 and abs(rate - ref_rate) / ref_rate > band:
-        y = synth_all()  # ONE regeneration
+        def synth_all():
+            parts = []
+            for ui, unit in enumerate(units):
+                y = self._gen_unit(unit)
+                y = _squash_gaps_np(y, SR)
+                parts.append(y)
+                if ui < len(units) - 1:
+                    parts.append(np.zeros(int(join * SR), dtype=np.float32))
+            return np.concatenate(parts)
+
+        ref_rate = self.ref_rate
+        pace = {"action": "none", "ref_rate": round(ref_rate, 2)}
+        y = synth_all()
         rate = _onset_rate(y, SR)
-        pace["action"] = "regen"
-        pace["rate_after_regen"] = round(rate, 2)
-        if abs(rate - ref_rate) / ref_rate > band:
-            factor = min(1.12, max(1 / 1.12, ref_rate / rate)) if rate > 0 else 1.0
-            sf.write(out_wav, y, SR, subtype="PCM_16")
-            _atempo_file(out_wav, round(factor, 3))
-            pace["action"] = "regen+atempo"
-            pace["atempo"] = round(factor, 3)
-            return pace
-    sf.write(out_wav, y, SR, subtype="PCM_16")
-    return pace
+        pace["rate"] = round(rate, 2)
+        band = cfg["pace_guard"]["band_frac"]
+        if ref_rate > 0 and abs(rate - ref_rate) / ref_rate > band:
+            y = synth_all()  # ONE regeneration
+            rate = _onset_rate(y, SR)
+            pace["action"] = "regen"
+            pace["rate_after_regen"] = round(rate, 2)
+            if abs(rate - ref_rate) / ref_rate > band:
+                factor = min(1.12, max(1 / 1.12, ref_rate / rate)) if rate > 0 else 1.0
+                sf.write(out_wav, y, SR, subtype="PCM_16")
+                _atempo_file(out_wav, round(factor, 3))
+                pace["action"] = "regen+atempo"
+                pace["atempo"] = round(factor, 3)
+                return pace
+        sf.write(out_wav, y, SR, subtype="PCM_16")
+        return pace
+
+
+def _chatterbox_take(text, ref_wav, out_wav, settings):
+    """One-off English clone take (single-take subprocess path): builds a
+    throwaway session, exactly the old behaviour."""
+    return _ChatterboxSession(ref_wav, settings).generate(text, out_wav)
 
 
 def _bytes_to_take(audio, lang, out_wav, settings, info):
@@ -241,19 +274,20 @@ def _bytes_to_take(audio, lang, out_wav, settings, info):
         info["atempo"] = atempo  # approved +20% pace calibration, logged
 
 
-def gen_take(lang, text, out_wav):
-    """--gen-take mode: synthesize ONE raw take via the selected backend
-    (env JULIE_TTS_BACKEND, default per language). Prints a JSON info
-    line that names the backend; the parent records it in the QC report."""
-    settings = load_settings()
-    backend = backends.resolve_backend(lang, settings)
+def _gen_take_core(backend, lang, text, out_wav, settings, session=None):
+    """Synthesize ONE raw take via an already-resolved backend; returns
+    the GEN_INFO dict. `session` is a reusable _ChatterboxSession —
+    batch mode loads the model once and passes it in for every line;
+    without one, the Chatterbox route builds a throwaway session, as
+    the old per-take subprocess path always did."""
     info = {"lang": lang, "backend": backend}
     if backend == "chatterbox":
         if lang != "en":
             raise RuntimeError(
                 "[chatterbox] the Chatterbox route is the English clone; "
                 "for te/hi use indicf5-space, elevenlabs or http")
-        info["pace"] = _chatterbox_take(text, EN_REF, out_wav, settings)
+        sess = session or _ChatterboxSession(EN_REF, settings)
+        info["pace"] = sess.generate(text, out_wav)
     elif backend == "indicf5-space":
         if lang == "en":
             raise RuntimeError(
@@ -262,12 +296,224 @@ def gen_take(lang, text, out_wav):
         ref_text = open(TE_REF_TEXT).read().strip()
         audio = _indicf5_synthesize(text, TE_REF, ref_text)
         _bytes_to_take(audio, lang, out_wav, settings, info)
-    elif backend in ("elevenlabs", "http"):
+    elif backend in ("elevenlabs", "http", "github"):
         audio = backends.synthesize(backend, text, lang, settings)
         _bytes_to_take(audio, lang, out_wav, settings, info)
     else:  # resolve_backend already rejects unknown values
         raise RuntimeError(f"[backends] unhandled backend {backend!r}")
+    return info
+
+
+def gen_take(lang, text, out_wav):
+    """--gen-take mode: synthesize ONE raw take via the selected backend
+    (env JULIE_TTS_BACKEND, default per language). Prints a JSON info
+    line that names the backend; the parent records it in the QC report."""
+    settings = load_settings()
+    backend = backends.resolve_backend(lang, settings)
+    info = _gen_take_core(backend, lang, text, out_wav, settings)
     print("GEN_INFO " + json.dumps(info))
+
+
+# =========================================================================
+# Batch mode: model loads once per worker, every line in-process
+# =========================================================================
+def read_batch_lines(path, first_index=1):
+    """Batch lines file: one line per row; blank rows are skipped.
+    Returns [{"index": n, "text": line}] numbered from first_index
+    (the Actions workflow passes --first-index per chunk so merged
+    artifacts keep the script's original line numbers)."""
+    lines = []
+    with open(path) as fh:
+        for raw in fh:
+            line = raw.strip()
+            if line:
+                lines.append({"index": first_index + len(lines), "text": line})
+    return lines
+
+
+def split_round_robin(items, n):
+    """Split items into at most n chunks, round-robin, so long and
+    short lines spread evenly across parallel workers."""
+    n = max(1, min(int(n), len(items) or 1))
+    chunks = [[] for _ in range(n)]
+    for i, item in enumerate(items):
+        chunks[i % n].append(item)
+    return [c for c in chunks if c]
+
+
+def batch_line_name(index):
+    return f"{index:03d}.mp3"
+
+
+def batch_gen_worker(in_path, out_path):
+    """--batch-gen mode (hidden): generate every take listed in a JSON
+    manifest with ONE model load and ONE reference conditioning for the
+    whole manifest — the batch speed core. A failing item is recorded
+    in the output manifest, never fatal to the rest of the chunk."""
+    with open(in_path) as fh:
+        manifest = json.load(fh)
+    lang = manifest["lang"]
+    settings = load_settings()
+    backend = backends.resolve_backend(lang, settings)
+    session = None
+    if backend == "chatterbox":
+        session = _ChatterboxSession(EN_REF, settings)  # load + condition ONCE
+    results = []
+    for item in manifest["items"]:
+        t0 = time.time()
+        rec = {"index": item["index"], "roll": item["roll"]}
+        try:
+            rec["gen"] = _gen_take_core(backend, lang, item["text"],
+                                        item["out"], settings, session=session)
+            rec["ok"] = os.path.exists(item["out"])
+            if not rec["ok"]:
+                rec["gen_error"] = "generation wrote no output file"
+        except Exception as e:  # one bad line must not kill the chunk
+            rec["ok"] = False
+            rec["gen_error"] = str(e)[-400:]
+        rec["gen_s"] = round(time.time() - t0, 1)
+        results.append(rec)
+    with open(out_path, "w") as fh:
+        json.dump({"backend": backend, "results": results}, fh,
+                  ensure_ascii=False)
+    print(f"BATCH_GEN {len(results)} takes, backend={backend}")
+    return 0
+
+
+def run_batch(args, settings, gen_env):
+    """--batch orchestration: rounds of parallel worker processes.
+
+    Round 1 generates one take per line (each worker loads the model
+    once for its whole chunk); the parent gates every take in-process;
+    only lines that failed go into the next round, up to --rerolls
+    extra rounds. Passing lines are assembled to <outdir>/<nnn>.mp3;
+    lines that never pass get no mp3 and are named in batch.qc.json.
+    Returns 0 when every line passed, 2 otherwise (same honesty rule
+    as single mode)."""
+    import gates  # already imported by main(); local ref for clarity
+
+    lines = read_batch_lines(args.batch, args.first_index)
+    if not lines:
+        print("ERROR: no lines in batch file", file=sys.stderr)
+        return 2
+    os.makedirs(args.outdir, exist_ok=True)
+    jobs = max(1, args.jobs or min(4, os.cpu_count() or 1))
+    max_attempts = 1 + max(0, args.rerolls)
+    try:
+        backend = backends.resolve_backend(args.lang, settings)
+    except RuntimeError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
+    worker_env = dict(gen_env)
+    if backend == "chatterbox":
+        # Spread the machine's cores across workers unless the user
+        # pinned JULIE_CLONE_THREADS themselves.
+        threads = max(1, (os.cpu_count() or 1) // jobs)
+        worker_env.setdefault("JULIE_CLONE_THREADS", str(threads))
+    workdir = tempfile.mkdtemp(prefix="julie_batch_")
+    engine_path = os.path.abspath(__file__)
+    line_by_idx = {ln["index"]: ln for ln in lines}
+    records = {ln["index"]: {"index": ln["index"], "text": ln["text"],
+                             "rolls": [], "chosen_roll": None, "out": None}
+               for ln in lines}
+    chosen_takes = {}
+    model_loads = 0
+    wall0 = time.time()
+    pending = list(lines)
+    for attempt in range(1, max_attempts + 1):
+        if not pending:
+            break
+        chunks = split_round_robin(pending, jobs)
+        procs = []
+        for ci, chunk in enumerate(chunks):
+            items = [{"index": ln["index"], "roll": attempt,
+                      "text": ln["text"],
+                      "out": os.path.join(
+                          workdir, f"line{ln['index']}_r{attempt}.wav")}
+                     for ln in chunk]
+            man_in = os.path.join(workdir, f"manifest_{attempt}_{ci}.in.json")
+            man_out = os.path.join(workdir, f"manifest_{attempt}_{ci}.out.json")
+            with open(man_in, "w") as fh:
+                json.dump({"lang": args.lang, "items": items}, fh,
+                          ensure_ascii=False)
+            proc = subprocess.Popen(
+                [sys.executable, engine_path, "--batch-gen", man_in, man_out],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                env=worker_env)
+            procs.append((proc, man_out, items))
+            model_loads += 1
+        still = []
+        for proc, man_out, items in procs:
+            try:
+                proc.communicate(timeout=1800 * len(items) + 1800)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.communicate()
+            results = []
+            if os.path.exists(man_out):
+                with open(man_out) as fh:
+                    results = json.load(fh).get("results", [])
+            by_idx = {r["index"]: r for r in results}
+            item_by_idx = {it["index"]: it for it in items}
+            for idx, item in item_by_idx.items():
+                rec = records[idx]
+                res = by_idx.get(idx)
+                if res is None:
+                    rec["rolls"].append(
+                        {"roll": attempt, "backend": backend,
+                         "gen_error": "batch worker died before reporting"})
+                    still.append(line_by_idx[idx])
+                    continue
+                entry = {"roll": attempt, "backend": backend,
+                         "gen_s": res.get("gen_s")}
+                if not res.get("ok"):
+                    entry["gen_error"] = res.get("gen_error", "worker failed")
+                    rec["rolls"].append(entry)
+                    still.append(line_by_idx[idx])
+                    continue
+                entry["gen"] = res.get("gen")
+                g0 = time.time()
+                rep = gates.run_all_gates(item["out"], args.lang,
+                                          rec["text"], settings)
+                entry["gate_s"] = round(time.time() - g0, 1)
+                entry.update(rep)
+                rec["rolls"].append(entry)
+                if rep["pass"]:
+                    rec["chosen_roll"] = attempt
+                    chosen_takes[idx] = item["out"]
+                else:
+                    still.append(line_by_idx[idx])
+        pending = still
+
+    for idx in sorted(records):
+        rec = records[idx]
+        if rec["chosen_roll"] is not None:
+            out_mp3 = os.path.join(args.outdir, batch_line_name(idx))
+            info = assemble([chosen_takes[idx]], out_mp3, settings, args.bed)
+            rec["out"] = out_mp3
+            rec["duration_s"] = info["duration_s"]
+    failed = [r for r in records.values() if r["chosen_roll"] is None]
+    qc = {"engine": "julie-ai-voice-engine 1.0", "mode": "batch",
+          "voice": settings["voice_name"], "lang": args.lang,
+          "backend": backend, "jobs": jobs, "rerolls": args.rerolls,
+          "lines": [records[i] for i in sorted(records)],
+          "timings": {"wall_s": round(time.time() - wall0, 1),
+                      "model_loads": model_loads,
+                      "gen_s_total": round(sum(
+                          e.get("gen_s") or 0
+                          for r in records.values() for e in r["rolls"]), 1)},
+          "verdict": ("PASS — every line passed all five gates"
+                      if not failed else
+                      f"PARTIAL — {len(failed)} of {len(records)} lines "
+                      "never passed the gates; no mp3 written for them")}
+    qc_path = os.path.join(args.outdir, "batch.qc.json")
+    with open(qc_path, "w") as fh:
+        json.dump(qc, fh, ensure_ascii=False, indent=1)
+    print(f"BATCH {'OK' if not failed else 'PARTIAL'}: "
+          f"{len(records) - len(failed)}/{len(records)} lines -> {args.outdir} "
+          f"({qc['timings']['wall_s']}s wall, {model_loads} model loads) "
+          f"— QC: {qc_path}")
+    return 0 if not failed else 2
 
 
 # =========================================================================
@@ -439,13 +685,41 @@ def main():
                     help="add the quiet piano bed under the voice")
     ap.add_argument("--keep-takes", action="store_true",
                     help="keep the per-roll take wavs next to the output")
+    ap.add_argument("--batch", metavar="LINES_TXT",
+                    help="batch mode: voice a whole lines file (one line "
+                         "per row) with the model loaded once per worker")
+    ap.add_argument("--outdir",
+                    help="batch mode: directory for <nnn>.mp3 per line "
+                         "plus batch.qc.json")
+    ap.add_argument("--jobs", type=int, default=None,
+                    help="batch mode: parallel worker processes "
+                         "(default: min(4, cpu count))")
+    ap.add_argument("--rerolls", type=int, default=2,
+                    help="batch mode: gate re-rolls per failing line "
+                         "(default: 2)")
+    ap.add_argument("--first-index", type=int, default=1,
+                    help=argparse.SUPPRESS)
     ap.add_argument("--gen-take", nargs=3, metavar=("LANG", "TEXT", "OUT"),
+                    help=argparse.SUPPRESS)
+    ap.add_argument("--batch-gen", nargs=2, metavar=("IN_JSON", "OUT_JSON"),
                     help=argparse.SUPPRESS)
     args = ap.parse_args()
 
     if args.gen_take:
         gen_take(args.gen_take[0], args.gen_take[1], args.gen_take[2])
         return 0
+
+    if args.batch_gen:
+        return batch_gen_worker(args.batch_gen[0], args.batch_gen[1])
+
+    if args.batch:
+        if not args.lang or not args.outdir:
+            ap.error("--batch requires --lang and --outdir")
+        settings = load_settings()
+        gen_env = dict(os.environ)  # snapshot BEFORE the gates import
+        import gates  # noqa: F401  (strips proxies in this process only;
+        # batch workers are spawned with gen_env, the original env)
+        return run_batch(args, settings, gen_env)
 
     if not args.lang or not args.out:
         ap.error("--lang and --out are required")

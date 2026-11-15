@@ -84,6 +84,64 @@ Notes:
   engine isolates it in a subprocess so it never contaminates the local
   ASR gates.
 
+## Fast batch mode
+
+Voicing a whole script line-by-line used to cost a full model load plus
+reference conditioning **for every line** — on a small CPU that overhead
+alone is minutes per line, before a single word is generated. Batch mode
+removes it:
+
+```bash
+# one line per row in lines.txt; writes out/001.mp3, out/002.mp3, …
+python3 engine.py --batch lines.txt --lang en --outdir out/
+python3 engine.py --batch lines.txt --lang te --outdir out/ --jobs 4 --rerolls 2
+```
+
+- **Load once:** each worker process loads the model and computes the
+  reference conditioning **once**, then generates all of its lines
+  in-process. `--jobs N` (default `min(4, cpu count)`) runs N workers in
+  parallel; lines are dealt round-robin so long and short lines spread
+  evenly.
+- **Re-roll only failures:** every take still goes through all five
+  gates. A line that fails is re-rolled on its own (`--rerolls`, default
+  2 extra attempts); passing lines are never regenerated. A line that
+  never passes gets **no mp3** and is named in `out/batch.qc.json`,
+  which also records per-line rolls, gate results and timings (wall
+  time, generation seconds, model-load count).
+- Single-line mode (`--text` / `--text-file`) is unchanged.
+
+Realistic expectations: batch mode removes the per-line overhead, but
+local generation is still CPU-bound — the words themselves take the
+time they take. Measured on a small shared VM (6 short English lines,
+Chatterbox): see `BENCHMARK.md`. The big lever for a full script is the
+free cloud route below.
+
+### Free cloud compute — GitHub Actions (`github` backend)
+
+`.github/workflows/voice-batch.yml` runs batch mode on up to **10 free
+GitHub-hosted runners in parallel** (this repo is public, so standard
+runners cost nothing). A 209-line script becomes ~21 lines per runner,
+each loading the model once.
+
+1. Put your lines in a file in this repo (e.g. `lines.txt`, one line per
+   row) and push it.
+2. Dispatch the workflow:
+   ```bash
+   gh workflow run voice-batch.yml -f lines_path=lines.txt -f lang=en -f chunks=10
+   gh run watch                      # wait for the run to finish
+   ```
+   (or: GitHub → Actions → *julie-voice-batch* → Run workflow.)
+3. Download every line's mp3 plus the QC reports, merged into one
+   artifact with the script's original line numbers:
+   ```bash
+   gh run download <run-id> -n julie-voice-batch-all
+   ```
+A chunk job can show red when some of its lines never pass the gates —
+its artifact still uploads with every passing line and a
+`batch.qc.json` naming the failures. Setting
+`JULIE_TTS_BACKEND=github` locally just prints these instructions: it is
+a route name, not a synthesizer.
+
 ## Connect your own model (fast path)
 
 The built-in routes are free, and you pay in time instead: the IndicF5
@@ -132,9 +190,13 @@ Leave `JULIE_TTS_BACKEND` unset to return to the default free routes.
 ## Layout
 
 ```
-engine.py                 CLI: generate -> gate -> re-roll -> assemble
-backends.py               pluggable TTS backends (defaults, elevenlabs, http)
+engine.py                 CLI: generate -> gate -> re-roll -> assemble (+ --batch)
+backends.py               pluggable TTS backends (defaults, elevenlabs, http, github)
 gates.py                  the five gates, importable
+.github/workflows/
+  voice-batch.yml         free parallel batch voicing on GitHub Actions
+BENCHMARK.md              measured batch-vs-per-line timings on a small VM
+test_batch.py             offline batch-mode tests (stub generation)
 phonetics.py              Telugu / Devanagari / ASR-script phonetic normalizers
 voice/
   settings.json           ALL locked settings (single source of truth)
