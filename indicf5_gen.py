@@ -53,6 +53,11 @@ ROLLS = int(os.environ.get("ROLLS", "6"))
 # (f5_tts/infer/utils_infer.py: duration = ref_len + ref_len/ref_text_len
 # * gen_text_len / speed). speed<1 = slower/longer. Default 1.0 = the
 # behaviour of every previous wave.
+# SPEED-LAW AUDIT (Divi Engine, 2026-11-16): SPEED here is an explicit
+# OPERATOR parameter — a workflow_dispatch input set by whoever
+# dispatched the run — never computed or adapted by the tool, and it
+# is recorded on every take row (the "speed" column) so any run's
+# speed source is auditable.
 SPEED = float(os.environ.get("SPEED", "1.0"))
 LANG = os.environ.get("LANG", "te").strip().lower()
 if LANG not in ("te", "hi"):

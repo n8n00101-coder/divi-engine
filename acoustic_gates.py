@@ -1,4 +1,4 @@
-"""Acoustic take-shape gates 6 + 7 for the Julie AI Voice Engine
+"""Acoustic take-shape gates 6 + 7 for Divi Engine
 (Ajju's orders, 2026-11-16). Self-contained (numpy / librosa /
 soundfile only, NO environment side effects) so engine.py can call it
 inside the generation subprocess — gates.py strips proxy vars at

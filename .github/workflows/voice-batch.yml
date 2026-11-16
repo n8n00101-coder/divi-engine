@@ -1,10 +1,12 @@
-name: julie-voice-batch
-# Free cloud batch voicing: split a lines file into contiguous chunks and
-# run the engine's batch mode on up to 20 GitHub-hosted runners in
-# parallel (public repos: standard runners are free). Each runner loads
-# the model once for its whole chunk. Download the merged artifact
-# "julie-voice-batch-all" when the run finishes:
-#   gh run download <run-id> -n julie-voice-batch-all
+name: divi-voice-batch
+# Divi Engine — free cloud batch voicing: split a lines file into
+# contiguous chunks and run the engine's batch mode on up to 40
+# GitHub-hosted runners in parallel (public repos: standard runners
+# are free). Each runner loads the model once for its whole chunk and
+# runs the self-healing repair loop (best-of-N waves) for its lines.
+# Download the merged artifact "divi-voice-batch-all" when the run
+# finishes:
+#   gh run download <run-id> -n divi-voice-batch-all
 # A chunk job can go red when some of its lines never pass the gates —
 # its artifact still uploads (if: always) with every passing line's mp3
 # plus batch.qc.json naming the failures.
@@ -23,15 +25,30 @@ on:
         options: [en, te, hi]
         default: en
       chunks:
-        description: "Parallel runners (1-20)"
+        description: "Parallel runners (1-40)"
         required: true
         type: string
-        default: "20"
+        default: "40"
       rerolls:
-        description: "Gate re-rolls per failing line"
+        description: "Extra repair waves per failing line"
         required: true
         type: string
         default: "2"
+      candidates:
+        description: "Candidates per line per wave (best-of-N)"
+        required: false
+        type: string
+        default: "3"
+      backend:
+        description: "Backend override (empty = locked default per language; e.g. omnivoice, indicf5-space)"
+        required: false
+        type: string
+        default: ""
+      speed:
+        description: "USER-REQUESTED tempo factor for this job (empty = LOCKED recipe speed; the tool never adjusts speed on its own)"
+        required: false
+        type: string
+        default: ""
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -50,7 +67,7 @@ jobs:
           lines = [l.strip() for l in open(os.environ["LINES_PATH"]) if l.strip()]
           if not lines:
               raise SystemExit(f"no lines in {os.environ['LINES_PATH']}")
-          n = max(1, min(20, int(os.environ["CHUNKS"]), len(lines)))
+          n = max(1, min(40, int(os.environ["CHUNKS"]), len(lines)))
           per = math.ceil(len(lines) / n)
           os.makedirs("chunks", exist_ok=True)
           used = []
@@ -77,7 +94,7 @@ jobs:
     timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 20
+      max-parallel: 40
       matrix:
         chunk: ${{ fromJSON(needs.prepare.outputs.chunks) }}
     steps:
@@ -106,15 +123,27 @@ jobs:
           key: hf-models-${{ hashFiles('requirements.txt') }}
       - name: Install deps
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg wamerican > /dev/null
           pip install -q torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
           pip install -q httpx -r requirements.txt 2>&1 | tail -3
+      - name: Install Resemblyzer (identity gate)
+        run: |
+          if ! pip install -q resemblyzer==0.1.4 2>resemb_err.log; then
+            echo "resemblyzer install failed; trying webrtcvad-wheels fallback"
+            cat resemb_err.log | tail -3
+            pip install -q webrtcvad-wheels
+            pip install -q --no-deps resemblyzer==0.1.4
+          fi
+          python3 -c "from resemblyzer import VoiceEncoder; print('resemblyzer ok')"
       - name: Generate this chunk (batch mode, model loads once)
         env:
           PYTHONUNBUFFERED: "1"
           CHUNK: ${{ matrix.chunk }}
           LANG: ${{ inputs.lang }}
           REROLLS: ${{ inputs.rerolls }}
+          CANDIDATES: ${{ inputs.candidates }}
+          BACKEND: ${{ inputs.backend }}
+          SPEED: ${{ inputs.speed }}
           # Runners have 4 cores and each chunk runs a single worker:
           # give torch all 4 threads instead of the small-machine default.
           JULIE_CLONE_THREADS: "4"
@@ -122,8 +151,12 @@ jobs:
           MKL_NUM_THREADS: "4"
         run: |
           FIRST=$(python3 -c "import json; print(json.load(open('chunks/chunk-${CHUNK}.json'))['first_index'])")
+          if [ -n "$BACKEND" ]; then export JULIE_TTS_BACKEND="$BACKEND"; fi
+          SPEED_ARG=""
+          if [ -n "$SPEED" ]; then SPEED_ARG="--speed $SPEED"; fi
           python3 engine.py --batch "chunks/chunk-${CHUNK}.txt" --lang "$LANG" \
-            --outdir out --jobs 1 --rerolls "$REROLLS" --first-index "$FIRST"
+            --outdir out --jobs 1 --rerolls "$REROLLS" --candidates "$CANDIDATES" \
+            $SPEED_ARG --first-index "$FIRST"
       - name: Name this chunk's QC report (merged artifact keeps them all)
         if: always()
         env:
@@ -152,5 +185,5 @@ jobs:
           merge-multiple: true
       - uses: actions/upload-artifact@v4
         with:
-          name: julie-voice-batch-all
+          name: divi-voice-batch-all
           path: merged/

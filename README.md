@@ -1,24 +1,69 @@
-# Julie AI Voice Engine
+# Divi Engine
 
-A gated voice-clone engine for one finalized house voice — **Julie AI** — in
-three languages: **English, Telugu, Hindi**.
+A gated, self-healing voice-clone engine for one finalized house voice —
+**Julie AI** (the voice's name; the tool is **Divi Engine**, renamed
+2026-11-16) — in three languages: **English, Telugu, Hindi**.
 
-You give it text. It generates the voice-over, then **proves** the take is
-clean before it lets you have it: every take must pass the quality gates,
-and the engine re-rolls automatically (up to 6 attempts per sentence) until
-one does. If no take passes, the engine exits non-zero, writes the gate
-table, and **refuses to write a final mp3**. Defective audio is not a
-deliverable this tool can produce.
+You give it a script. Divi **heals the script first** (script
+pre-flight), generates the voice-over with a **self-healing repair
+loop** — best-of-N candidate takes per sentence, defect-specific
+repairs, per-sentence route escalation — then **proves the assembled
+file is clean** with a final verification pass before you get it. A
+sentence that exhausts its whole escalation ladder ships nothing and
+is *named* in the QC report; the rest of the job still delivers —
+the work never stops, and defective audio is never a deliverable.
 
 ```
-python3 engine.py --text "…" --lang te --out line.mp3
-python3 engine.py --text-file script.txt --lang en --out out.mp3 --bed
-python3 engine.py --text-file script.txt --lang hi --out out.mp3 --rolls 8
+python3 divi.py --text-file script.txt --lang te --out out.mp3          # local
+python3 divi.py --text-file script.txt --lang hi --out out.mp3 --cloud  # speed-law path
+python3 engine.py --text "…" --lang te --out line.mp3                    # engine direct
 ```
 
 Next to every mp3 the engine writes `<name>.qc.json` — the full QC report:
-per sentence, per roll, every gate's measurements, and which take was
-chosen and why.
+the Script Corrections log, per sentence, per candidate, every gate's
+measurements, every repair (defect → action → result), the speed
+source (LOCKED / USER-REQUESTED), and the final verification verdict.
+
+## The speed law
+
+**A 20-minute voice-over must be READY within 10 minutes wall-clock**
+(owner's law, 2026-11-16), all three languages. The design: per-sentence
+generation + gates run in parallel chunks (local workers, or the
+`divi-voice-batch` Actions matrix — up to 40 free runners, one model
+load each), best-of-N candidates ride the same parallel pool so
+repairs cost no extra wall-clock, and assembly + final QC happen once
+at the end. Failed sentences re-roll in place; nothing restarts the
+job. Measured numbers (never claimed without measurement):
+[`BENCHMARK-DIVI.md`](BENCHMARK-DIVI.md).
+
+## Defaults locked — the speed law's other half
+
+By default the tool runs **exactly** the locked settings
+(`voice/settings.json` + the locked OmniVoice route). **Speed is never
+adjusted by the tool on its own** — the one tempo entry point is
+`speedpolicy.py`: locked recipe values (e.g. Hindi's ONE atempo 1.20)
+are part of the voice definition; the English pace guard no longer
+stretches a slow take — it rejects and re-rolls it. Any deviation
+happens only when the user explicitly passes `--speed` for that job,
+and every QC report prints the speed source: **LOCKED** or
+**USER-REQUESTED**.
+
+## Script pre-flight — heal the input
+
+Before any generation, the whole script is analysed and auto-corrected
+(`preflight.py`, deterministic — no model, no key): typos (curated
+known-misspelling map + full-dictionary unique-neighbour rule),
+TTS format (spelled-out percent → the `%` symbol, markdown/emoji
+stripped, missing terminators supplied, duplicated lines removed),
+english-mix policy compliance for Telugu scripts (banned connectives
+corrected to Telugu; attested label words stay English), third-language
+words (corrected where a clear equivalent exists), and over-long
+sentences split only at natural clause boundaries. A correction that
+could change *meaning* is applied only at high confidence — otherwise
+the word is left and **flagged at the top of the QC report**. Nothing
+is silently rewritten: the QC report carries the full Script
+Corrections log and the corrected script is saved as
+`script.corrected.txt` beside the output.
 
 ## The voice
 
@@ -87,7 +132,9 @@ fixed6 calibration proved the identical suite fails her own genuine
 narration, and the ear-approved fixed13 takes do not pass all of them
 either (S1's F0 sits 0.8 Hz under the pitch band edge). `ship_decision()`
 in `engine.py` is the single implementation of the bar; a sentence with
-no passing take ships **nothing**. Clause/donor assembly and every
+no passing take ships **nothing** — and under the repair loop
+(2026-11-16) that sentence is *named* in the QC report while every
+other sentence in the job still delivers. Clause/donor assembly and every
 splice-inside-a-sentence edit are hard-disabled for te/hi in code
 (`forbid_inside_sentence_edit`).
 
@@ -105,7 +152,7 @@ the sentences to `indicf5-lines.txt`, commits, and dispatches the
 `indicf5-batch.yml` workflow — 10 parallel runners generating whole takes
 with rotating genuine-Telugu references and gating every take with the
 same suite. Exit code 3 means "dispatched"; takes and gate JSONs return as
-the run's `indicf5-batch-all` artifact.
+the run's `divi-indicf5-batch-all` artifact.
 
 ## Install
 
@@ -134,7 +181,7 @@ alone is minutes per line, before a single word is generated. Batch mode
 removes it:
 
 ```bash
-# one line per row in lines.txt; writes out/001.mp3, out/002.mp3, …
+# one line per row in lines.txt; writes out/001.wav, out/002.wav, … (lossless intermediates)
 python3 engine.py --batch lines.txt --lang en --outdir out/
 python3 engine.py --batch lines.txt --lang te --outdir out/ --jobs 4 --rerolls 2
 ```
@@ -144,13 +191,18 @@ python3 engine.py --batch lines.txt --lang te --outdir out/ --jobs 4 --rerolls 2
   in-process. `--jobs N` (default `min(4, cpu count)`) runs N workers in
   parallel; lines are dealt round-robin so long and short lines spread
   evenly.
-- **Re-roll only failures:** every take still goes through all five
-  gates. A line that fails is re-rolled on its own (`--rerolls`, default
-  2 extra attempts); passing lines are never regenerated. A line that
-  never passes gets **no mp3** and is named in `out/batch.qc.json`,
-  which also records per-line rolls, gate results and timings (wall
-  time, generation seconds, model-load count).
-- Single-line mode (`--text` / `--text-file`) is unchanged.
+- **Self-healing waves:** every line gets best-of-N candidates per
+  wave (`--candidates`, default 3), all gated and scored; the best
+  passing one ships. Failures escalate per the repair playbook
+  (`--rerolls` extra waves): seed re-rolls scored by completeness →
+  wider best-of-N → alternate backend route → alternate reference
+  span. Passing lines are never regenerated. A line that exhausts
+  the ladder gets **no mp3** and is named in `out/batch.qc.json`;
+  every other line ships. `--assemble-out final.mp3` additionally
+  assembles the shipped lines into one file and runs the final
+  assembled-file verification on it.
+- Single-line mode (`--text` / `--text-file`) runs the same wave
+  loop per sentence.
 
 Realistic expectations: batch mode removes the per-line overhead, but
 local generation is still CPU-bound — the words themselves take the
@@ -160,12 +212,14 @@ free cloud route below.
 
 ### Free cloud compute — GitHub Actions (`github` backend)
 
-`.github/workflows/voice-batch.yml` runs batch mode on up to **20 free
+`.github/workflows/voice-batch.yml` runs batch mode on up to **40 free
 GitHub-hosted runners in parallel** (this repo is public, so standard
-runners cost nothing). A 209-line script becomes ~21 lines per runner
-at `chunks=10`, or ~11 per runner at `chunks=20`, each loading the
+runners cost nothing). A 209-line script becomes ~11 lines per runner
+at `chunks=20`, or ~6 per runner at `chunks=40`, each loading the
 model once. Pip downloads and the Hugging Face models are cached
-across runs, so repeat runs skip both big downloads.
+across runs, so repeat runs skip both big downloads. The workflow
+also takes `backend`, `candidates` and `speed` inputs (speed is the
+user-requested tempo option; empty = LOCKED).
 
 **Measured** (2026-11-15, three real dispatches of the 6-line
 `test-lines.txt` on 3 runners): **5m46s–6m46s wall** for the whole
@@ -182,11 +236,11 @@ line-by-line. Full numbers: `BENCHMARK.md`.
    gh workflow run voice-batch.yml -f lines_path=lines.txt -f lang=en -f chunks=20
    gh run watch                      # wait for the run to finish
    ```
-   (or: GitHub → Actions → *julie-voice-batch* → Run workflow.)
+   (or: GitHub → Actions → *divi-voice-batch* → Run workflow.)
 3. Download every line's mp3 plus the QC reports, merged into one
    artifact with the script's original line numbers:
    ```bash
-   gh run download <run-id> -n julie-voice-batch-all
+   gh run download <run-id> -n divi-voice-batch-all
    ```
 A chunk job can show red when some of its lines never pass the gates —
 its artifact still uploads with every passing line and a
@@ -223,7 +277,8 @@ python3 engine.py --text-file script.txt --lang te --out out.mp3
   above): every take is head-grunt–muted at generation time (action
   recorded per roll in the QC report), and a take whose final word is
   truncated or detached fails gate 7 and is re-rolled — a sentence
-  with no whole take ships nothing.
+  with no whole take ships nothing (it is named in the QC report;
+  the rest of the job delivers).
 - ⚠️ **License:** OmniVoice model weights are **CC-BY-NC
   (non-commercial)**. That is a real constraint for monetized use —
   the route is in the tool because the owner ordered the test and
@@ -265,10 +320,10 @@ bottleneck:
      return audio bytes (mp3 or wav) as the response body.
 3. Run the engine exactly as before — same CLI, same languages.
 
-Nothing about quality control changes: the five gates, the re-roll loop
-and the QC report apply on top of **any** backend, each take's backend
-is recorded in `<name>.qc.json`, and a take that fails the gates is
-rejected no matter how fast it was generated. HTTP backends time out at
+Nothing about quality control changes: the gates, the self-healing
+repair loop and the QC report apply on top of **any** backend, each
+take's backend is recorded in `<name>.qc.json`, and a take that fails
+the gates is rejected no matter how fast it was generated. HTTP backends time out at
 120 s per take and fail loudly, naming the backend — no silent hangs.
 Leave `JULIE_TTS_BACKEND` unset to return to the default free routes.
 
@@ -277,8 +332,9 @@ Leave `JULIE_TTS_BACKEND` unset to return to the default free routes.
 - **IndicF5 diction varies per take.** Some takes will always smear a hard
   word or sprout a ghost word. The engine's answer is not to fix them in
   post — it is to *reject and re-roll*. Expect several rolls on hard
-  sentences; expect the occasional honest failure (exit 2 + gate table)
-  rather than a defective file.
+  sentences; a sentence that exhausts its escalation ladder fails
+  honestly (named in the QC report, exit 2) rather than shipping a
+  defective file — the rest of the job still delivers.
 - **The IndicF5 Space has outage streaks** (ZeroGPU). Generation retries
   with backoff, but a bad hour is a bad hour.
 - ASR probabilities are a proxy for diction, calibrated against the human
@@ -295,7 +351,19 @@ Leave `JULIE_TTS_BACKEND` unset to return to the default free routes.
 ## Layout
 
 ```
-engine.py                 CLI: generate -> gate -> re-roll -> assemble (+ --batch)
+divi.py                   the front door: pre-flight -> (local | --cloud)
+                          generation -> assembly -> final verification
+engine.py                 CLI: pre-flight -> generate -> gate -> heal ->
+                          assemble (+ --batch waves, --assemble-out)
+preflight.py              script pre-flight: heal the input (typos, TTS
+                          format, english-mix, purity, sentence shape)
+repair.py                 the self-healing playbook: defect classes,
+                          candidate scoring, escalation ladders
+speedpolicy.py            the speed law: the ONLY tempo entry point
+                          (LOCKED recipe vs USER-REQUESTED --speed)
+verify.py                 final assembled-file verification (completeness,
+                          language, grunt/cut per window, gaps, levels,
+                          duration, identity spot checks)
 backends.py               pluggable TTS backends (defaults, mms, omnivoice, elevenlabs, http, github)
 gates.py                  the gate suite, importable
 acoustic_gates.py         gates 6 + 7 (head grunt / cut word) — self-contained
@@ -307,10 +375,14 @@ indicf5_gen.py            whole-sentence IndicF5 take generator + full gates
                           (runs on the indicf5-batch runners)
 requirements-indicf5.txt  deps for the IndicF5 runners
 .github/workflows/
-  voice-batch.yml         free parallel batch voicing on GitHub Actions
-  indicf5-batch.yml       10-runner brute-force whole-sentence Telugu takes,
-                          every take fully gated (gates + identity + pace)
+  voice-batch.yml         divi-voice-batch: free parallel batch voicing
+                          on GitHub Actions (up to 40 runners)
+  indicf5-batch.yml       divi-indicf5-batch: 10-runner brute-force
+                          whole-sentence Telugu takes, every take fully
+                          gated (gates + identity + pace)
 BENCHMARK.md              measured batch-vs-per-line timings on a small VM
+BENCHMARK-DIVI.md         the speed-law benchmark: per-language measured
+                          wall-clock, per-sentence cost, 20-minute math
 test_batch.py             offline batch-mode tests (stub generation)
 phonetics.py              Telugu / Devanagari / ASR-script phonetic normalizers
 voice/
