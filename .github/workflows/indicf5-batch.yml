@@ -1,11 +1,11 @@
-name: julie-indicf5-batch
+name: divi-indicf5-batch
 # Brute-force whole-sentence Telugu takes on free runners: 10 runners in
 # parallel, each loads IndicF5 once and generates ROLLS whole takes of both
 # demo sentences with ONE rotating reference (span1/span2/span3/te3), then
 # runs the FULL gate suite (gates.py + Resemblyzer identity + pace) on
 # every take. All takes + per-take gate JSON land in the merged artifact
-# "indicf5-batch-all"; selection/assembly happens at harvest time.
-#   gh run download <run-id> -n indicf5-batch-all
+# "divi-indicf5-batch-all"; selection/assembly happens at harvest time.
+#   gh run download <run-id> -n divi-indicf5-batch-all
 on:
   workflow_dispatch:
     inputs:
@@ -108,5 +108,5 @@ jobs:
           merge-multiple: true
       - uses: actions/upload-artifact@v4
         with:
-          name: indicf5-batch-all
+          name: divi-indicf5-batch-all
           path: merged/

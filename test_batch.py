@@ -180,7 +180,8 @@ def e2e_tests():
         outdir = os.path.join(tmp, "out")
         p = subprocess.run([sys.executable, os.path.join(HERE, "engine.py"),
                             "--batch", lines_file, "--lang", "te",
-                            "--outdir", outdir, "--jobs", "2", "--rerolls", "0"],
+                            "--outdir", outdir, "--jobs", "2", "--rerolls", "0",
+                            "--candidates", "1"],
                            capture_output=True, text=True, env=env, timeout=1200)
         check("batch run exits 0 (all pass) or 2 (honest partial)",
               p.returncode in (0, 2), f"rc={p.returncode} " + (p.stderr or "")[-300:])
@@ -192,7 +193,7 @@ def e2e_tests():
             check("QC records backend + jobs",
                   qc.get("backend") == "http" and qc.get("jobs") == 2)
             check("QC has one entry per line", len(qc["lines"]) == 4)
-            check("QC per-line exactly one roll (rerolls=0)",
+            check("QC per-line exactly one roll (rerolls=0, candidates=1)",
                   all(len(l["rolls"]) == 1 for l in qc["lines"]))
             check("QC per-roll carries gen timing",
                   all(isinstance(l["rolls"][0].get("gen_s"), (int, float))

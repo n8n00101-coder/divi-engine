@@ -101,6 +101,7 @@ sys.path.insert(0, HERE)
 
 import backends  # noqa: E402  (pluggable TTS backends; see backends.py)
 import speedpolicy  # noqa: E402  (the speed law: LOCKED or USER-REQUESTED)
+import preflight  # noqa: E402  (script pre-flight: heal the input first)
 
 VOICE_DIR = os.path.join(HERE, "voice")
 EN_REF = os.path.join(VOICE_DIR, "english-reference.wav")
@@ -313,6 +314,11 @@ class _ChatterboxSession:
         pace["rate"] = round(rate, 2)
         band = cfg["pace_guard"]["band_frac"]
         decision = speedpolicy.pace_guard_decision(rate, ref_rate, band)
+        if decision == "reject":
+            raise PaceBandReject(
+                f"[pace-guard] onset rate {rate:.2f}/s is not measurable "
+                f"against the reference {ref_rate:.2f}/s — take "
+                "rejected, NOT tempo-stretched (speed law, 2026-11-16)")
         if decision == "regen":
             y = synth_all()  # ONE regeneration (a new take, not a stretch)
             rate = _onset_rate(y, SR)
@@ -728,6 +734,23 @@ def run_batch(args, settings, gen_env):
         print("ERROR: no lines in batch file", file=sys.stderr)
         return 2
     os.makedirs(args.outdir, exist_ok=True)
+    # SCRIPT PRE-FLIGHT: heal the lines file before anything
+    # generates; workers consume ONLY the corrected lines. Indices
+    # renumber over the corrected set (duplicates removed, over-long
+    # lines split) — every change is in the QC corrections log.
+    pf = preflight.preflight_lines([ln["text"] for ln in lines],
+                                   args.lang)
+    lines = [{"index": args.first_index + i, "text": t}
+             for i, t in enumerate(pf["lines"])]
+    with open(os.path.join(args.outdir, "script.corrected.txt"),
+              "w", encoding="utf-8") as fh:
+        fh.write("\n".join(pf["lines"]) + "\n")
+    for fl in pf["flags"]:
+        print(f"SCRIPT FLAG [{fl['class']}] {fl['word']}: {fl['reason']}",
+              file=sys.stderr)
+    if pf["corrections"]:
+        print(f"pre-flight: {len(pf['corrections'])} script "
+              "correction(s) applied — full log in batch.qc.json")
     jobs = max(1, args.jobs or min(4, os.cpu_count() or 1))
     waves = 1 + max(0, args.rerolls)
     cand_per_wave = max(1, args.candidates)
@@ -898,6 +921,8 @@ def run_batch(args, settings, gen_env):
           "candidates_per_wave": cand_per_wave,
           "speed": speedpolicy.speed_block(args.lang, settings,
                                             user_speed),
+          "script_flags": pf["flags"],
+          "script_corrections": pf["corrections"],
           "lines": [records[i] for i in sorted(records)],
           "timings": {"wall_s": round(time.time() - wall0, 1),
                       "model_loads": model_loads,
@@ -1258,7 +1283,7 @@ def dispatch_mass_rolls(sentences, lang, total_rolls, settings):
     write the sentences to indicf5-lines.txt in this repo, commit +
     push, and dispatch the workflow via gh. The runners generate WHOLE
     takes of every line and gate them with the same ship rule; takes +
-    gate JSONs come back as the run's indicf5-batch-all artifact.
+    gate JSONs come back as the run's divi-indicf5-batch-all artifact.
     Nothing is shipped locally on this path — the caller exits without
     writing an mp3. Raises on any failure (fail loudly)."""
     import math
@@ -1291,7 +1316,7 @@ def dispatch_mass_rolls(sentences, lang, total_rolls, settings):
     print(f"DISPATCHED indicf5-batch: {total_rolls} rolls requested "
           f"({per_runner}/runner x 10) for {len(sentences)} sentence(s)."
           + (f" Run: {url}" if url else ""))
-    print("Takes + gate JSONs arrive as the run's indicf5-batch-all "
+    print("Takes + gate JSONs arrive as the run's divi-indicf5-batch-all "
           "artifact; no local mp3 is written by this dispatch.")
     return True
 
@@ -1373,6 +1398,23 @@ def main():
     if not args.text and not args.text_file:
         ap.error("--text or --text-file is required")
     text = args.text if args.text else open(args.text_file).read()
+    # SCRIPT PRE-FLIGHT (owner's order, 2026-11-16): heal the input
+    # before anything generates. Generation below consumes ONLY the
+    # corrected text; every correction is logged in the QC report
+    # and the corrected script is saved beside the output.
+    pf = preflight.preflight_text(text, args.lang)
+    text = pf["text"]
+    corrected_path = os.path.join(
+        os.path.dirname(os.path.abspath(args.out)), "script.corrected.txt")
+    with open(corrected_path, "w", encoding="utf-8") as fh:
+        fh.write(text + "\n")
+    for fl in pf["flags"]:
+        print(f"SCRIPT FLAG [{fl['class']}] {fl['word']}: {fl['reason']}",
+              file=sys.stderr)
+    if pf["corrections"]:
+        print(f"pre-flight: {len(pf['corrections'])} script "
+              f"correction(s) applied — full log in the QC report; "
+              f"corrected script: {corrected_path}")
     settings = load_settings()
     max_rolls = args.rolls or settings["gates"]["max_rolls"]
     gen_env = dict(os.environ)  # snapshot BEFORE the gates import: gates
@@ -1428,6 +1470,8 @@ def main():
           "max_rolls": max_rolls,
           "speed": speedpolicy.speed_block(args.lang, settings,
                                             user_speed),
+          "script_flags": pf["flags"],
+          "script_corrections": pf["corrections"],
           "sentences": []}
     gen_cap = (1 if backend in repair.LOCAL_MODEL_BACKENDS
                else max(1, args.jobs or 4))
