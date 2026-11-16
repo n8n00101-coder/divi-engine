@@ -1,9 +1,25 @@
 #!/usr/bin/env python3
-"""Julie AI Voice Engine — gated voice-clone generation.
+"""Divi Engine — gated voice-clone generation for the Julie AI house voice.
 
     python3 engine.py --text "…" --lang te --out line.mp3
     python3 engine.py --text-file script.txt --lang en --out out.mp3 --bed
     python3 engine.py --batch lines.txt --lang en --outdir out/ --jobs 4
+    python3 divi.py --text-file script.txt --lang te --out out.mp3 --cloud
+
+SPEED LAW (owner's order, 2026-11-16): the tool NEVER adjusts speed
+on its own. By default every run uses exactly the locked recipes
+(voice/settings.json + the locked routes). The only legal tempo
+changes are a locked recipe value (Hindi's +20%, part of its voice
+definition) and an explicit user --speed for that job; the QC report
+states the speed source (LOCKED or USER-REQUESTED) on every run.
+speedpolicy.py is the single implementation. The English pace guard
+no longer stretches a slow take with atempo — an out-of-band take is
+rejected and re-rolled.
+
+FINAL VERIFICATION: every assembled mp3 is verified as a file
+(verify.py — completeness, language, head grunt, cut word, gaps,
+levels, duration, identity spot check) before the run may call
+itself a PASS; a failed verification removes the mp3 and exits 2.
 
 BATCH MODE (--batch): one line per row in the lines file. The old path
 reloads the TTS model and re-computes the reference conditioning for
@@ -36,11 +52,13 @@ rolling locally (see dispatch_mass_rolls).
 
 Generation routes (locked, see voice/settings.json):
   en  Chatterbox TTS zero-shot clone, exaggeration 0.35, phrase chunking,
-      pace guard (regen once, then atempo clamped to 1.12x, logged).
+      pace guard (regen once, then the take is REJECTED and re-rolled —
+      never atempo; speed law, 2026-11-16).
   te  IndicF5 (ai4bharat HF Space) from the Telugu reference. No atempo —
       pace is fixed by take selection.
   hi  IndicF5 cross-lingual from the Telugu reference, with the owner's
-      approved +20% pace calibration: ONE atempo 1.20 per take, logged.
+      approved +20% pace calibration: ONE atempo 1.20 per take — a
+      locked recipe value (the voice's definition), logged as LOCKED.
 
 Pluggable backends (backends.py): env JULIE_TTS_BACKEND overrides the
 route above for any language — "mms" (Meta MMS-TTS, native-diction
@@ -82,6 +100,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import backends  # noqa: E402  (pluggable TTS backends; see backends.py)
+import speedpolicy  # noqa: E402  (the speed law: LOCKED or USER-REQUESTED)
 
 VOICE_DIR = os.path.join(HERE, "voice")
 EN_REF = os.path.join(VOICE_DIR, "english-reference.wav")
@@ -212,11 +231,12 @@ def _onset_rate(y, sr):
     return (len(onsets) / dur) if dur > 0 else 0.0
 
 
-def _atempo_file(path, factor):
-    tmp = path + ".atempo.wav"
-    subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-af", f"atempo={factor}",
-                    tmp, "-y"], check=True)
-    os.replace(tmp, path)
+class PaceBandReject(RuntimeError):
+    """An English take whose onset rate stays outside the locked pace
+    band after its one regeneration. Under the speed law the take is
+    REJECTED (the caller's re-roll loop makes another) — the pre-law
+    pace guard stretched it with atempo instead, a silent speed change
+    the owner abolished on 2026-11-16."""
 
 
 class _ChatterboxSession:
@@ -255,11 +275,18 @@ class _ChatterboxSession:
         data = wav.detach().cpu().float().numpy()
         return (data[0] if data.ndim == 2 else data).astype(np.float32)
 
-    def generate(self, text, out_wav):
-        """English clone take: phrase chunking + pace guard (locked recipe)."""
+    def generate(self, text, out_wav, seed=None):
+        """English clone take: phrase chunking + pace guard (locked recipe).
+        `seed` (repair ladder only) reseeds torch before generation so
+        best-of-N candidates are distinct samples of the SAME locked
+        recipe — seed is the one variation the self-healing loop is
+        allowed; recipe values never change."""
         import numpy as np
         import soundfile as sf
+        import torch
 
+        if seed is not None:
+            torch.manual_seed(int(seed))
         cfg = self.cfg
         join = cfg["phrase_chunking"]["comma_gap_s"]
         # phrase chunking: units end at commas/semicolons/colons (0.06 s joins)
@@ -285,18 +312,24 @@ class _ChatterboxSession:
         rate = _onset_rate(y, SR)
         pace["rate"] = round(rate, 2)
         band = cfg["pace_guard"]["band_frac"]
-        if ref_rate > 0 and abs(rate - ref_rate) / ref_rate > band:
-            y = synth_all()  # ONE regeneration
+        decision = speedpolicy.pace_guard_decision(rate, ref_rate, band)
+        if decision == "regen":
+            y = synth_all()  # ONE regeneration (a new take, not a stretch)
             rate = _onset_rate(y, SR)
             pace["action"] = "regen"
             pace["rate_after_regen"] = round(rate, 2)
-            if abs(rate - ref_rate) / ref_rate > band:
-                factor = min(1.12, max(1 / 1.12, ref_rate / rate)) if rate > 0 else 1.0
-                sf.write(out_wav, y, SR, subtype="PCM_16")
-                _atempo_file(out_wav, round(factor, 3))
-                pace["action"] = "regen+atempo"
-                pace["atempo"] = round(factor, 3)
-                return pace
+            decision = speedpolicy.pace_guard_decision(rate, ref_rate,
+                                                       band)
+            if decision != "ok":
+                # SPEED LAW: the old guard applied an atempo nudge
+                # (clamped to 1.12x) here. That silent speed change is
+                # abolished — the take is rejected and re-rolled.
+                raise PaceBandReject(
+                    f"[pace-guard] onset rate {rate:.2f}/s still outside "
+                    f"the locked band (±{band:.0%}) of the reference "
+                    f"{ref_rate:.2f}/s after one regeneration — take "
+                    "rejected, NOT tempo-stretched (speed law, "
+                    "2026-11-16)")
         sf.write(out_wav, y, SR, subtype="PCM_16")
         return pace
 
@@ -310,7 +343,10 @@ def _chatterbox_take(text, ref_wav, out_wav, settings):
 def _bytes_to_take(audio, lang, out_wav, settings, info):
     """Shared downstream path for every service backend: audio bytes in
     (mp3/wav), normalised 24 kHz mono wav out. Hindi keeps its locked
-    +20% pace calibration (ONE atempo, logged) on every route."""
+    +20% pace calibration (ONE atempo, logged) on every route — under
+    the speed law that factor is a RECIPE value read from settings via
+    speedpolicy (part of the Hindi voice's definition), never an
+    adjustment the tool chose."""
     raw = out_wav + ".raw"
     with open(raw, "wb") as f:
         f.write(audio)
@@ -318,9 +354,10 @@ def _bytes_to_take(audio, lang, out_wav, settings, info):
                     "-ac", "1", out_wav, "-y"], check=True)
     os.unlink(raw)
     if lang == "hi":
-        atempo = settings["hindi_indicf5"]["pace_calibration"]["atempo"]
-        _atempo_file(out_wav, atempo)
-        info["atempo"] = atempo  # approved +20% pace calibration, logged
+        factor, note = speedpolicy.recipe_tempo("hi", settings)
+        if speedpolicy.apply_tempo(out_wav, factor, "recipe"):
+            info["atempo"] = factor  # approved +20% calibration, logged
+            info["speed_recipe"] = note
 
 
 # =========================================================================
@@ -490,27 +527,52 @@ def _omnivoice_take(text, lang, out_wav, settings, info):
     info["omnivoice"] = dict(OMNIVOICE_LOCKED)
 
 
-def _gen_take_core(backend, lang, text, out_wav, settings, session=None):
+def _ref_pair(ref_name):
+    """(wav, text) for a canonical reference: the default Telugu
+    reference (natspan2, == voice/telugu-reference.wav) or a named
+    entry of voice/refs/refs.json — the repair ladder's alternate
+    reference spans come from the same canonical set."""
+    if not ref_name:
+        return TE_REF, open(TE_REF_TEXT).read().strip()
+    refs = json.load(open(os.path.join(VOICE_DIR, "refs", "refs.json"),
+                          encoding="utf-8"))["refs"]
+    ref = refs[ref_name]
+    return os.path.join(HERE, ref["wav"]), ref["text"]
+
+
+def _gen_take_core(backend, lang, text, out_wav, settings, session=None,
+                   user_speed=None, ref_name=None, seed=None):
     """Synthesize ONE raw take via an already-resolved backend; returns
     the GEN_INFO dict. `session` is a reusable _ChatterboxSession —
     batch mode loads the model once and passes it in for every line;
     without one, the Chatterbox route builds a throwaway session, as
-    the old per-take subprocess path always did."""
-    info = {"lang": lang, "backend": backend}
+    the old per-take subprocess path always did. `user_speed` is the
+    job's explicit --speed factor (speedpolicy-validated by the
+    caller) or None; it is the ONLY non-recipe tempo change that may
+    ever touch a take, and it is recorded in GEN_INFO either way."""
+    info = {"lang": lang, "backend": backend,
+            "speed_source": (speedpolicy.SOURCE_USER if user_speed
+                             else speedpolicy.SOURCE_LOCKED)}
+    if user_speed:
+        info["user_speed"] = user_speed
     if backend == "chatterbox":
         if lang != "en":
             raise RuntimeError(
                 "[chatterbox] the Chatterbox route is the English clone; "
                 "for te/hi use indicf5-space, elevenlabs or http")
         sess = session or _ChatterboxSession(EN_REF, settings)
-        info["pace"] = sess.generate(text, out_wav)
+        info["pace"] = sess.generate(text, out_wav, seed=seed)
+        if seed is not None:
+            info["seed"] = seed
     elif backend == "indicf5-space":
         if lang == "en":
             raise RuntimeError(
                 "[indicf5-space] the IndicF5 route serves te/hi; "
                 "for en use chatterbox, elevenlabs or http")
-        ref_text = open(TE_REF_TEXT).read().strip()
-        audio = _indicf5_synthesize(text, TE_REF, ref_text)
+        ref_wav, ref_text = _ref_pair(ref_name)
+        if ref_name:
+            info["ref"] = ref_name
+        audio = _indicf5_synthesize(text, ref_wav, ref_text)
         _bytes_to_take(audio, lang, out_wav, settings, info)
     elif backend == "mms":
         _mms_take(text, lang, out_wav, settings, info)
@@ -534,16 +596,34 @@ def _gen_take_core(backend, lang, text, out_wav, settings, session=None):
     except Exception as e:  # a mute failure must not kill generation;
         # gate 6 in run_all_gates will still catch an unmuted grunt
         info["head_grunt_gate_error"] = str(e)[-200:]
+    # Speed law: an explicit user --speed for this job is the ONLY
+    # non-recipe tempo change that may touch a take. It is applied
+    # once, here, after synthesis (and after the grunt mute), and the
+    # gates then judge the take the user actually asked to hear.
+    if user_speed:
+        speedpolicy.apply_tempo(out_wav, user_speed, "user")
     return info
 
 
 def gen_take(lang, text, out_wav):
     """--gen-take mode: synthesize ONE raw take via the selected backend
     (env JULIE_TTS_BACKEND, default per language). Prints a JSON info
-    line that names the backend; the parent records it in the QC report."""
+    line that names the backend; the parent records it in the QC report.
+    DIVI_USER_SPEED / DIVI_TAKE_BACKEND / DIVI_TAKE_REF in the
+    environment are set ONLY by the parent process: the speed from the
+    user's explicit --speed option (never computed by the tool), the
+    backend/ref from the repair ladder's per-sentence escalation."""
     settings = load_settings()
-    backend = backends.resolve_backend(lang, settings)
-    info = _gen_take_core(backend, lang, text, out_wav, settings)
+    backend = (os.environ.get("DIVI_TAKE_BACKEND")
+               or backends.resolve_backend(lang, settings))
+    us = os.environ.get("DIVI_USER_SPEED")
+    user_speed = speedpolicy.resolve_user_speed(
+        float(us)) if us else None
+    ref = os.environ.get("DIVI_TAKE_REF") or None
+    seed = os.environ.get("DIVI_TAKE_SEED")
+    info = _gen_take_core(backend, lang, text, out_wav, settings,
+                          user_speed=user_speed, ref_name=ref,
+                          seed=int(seed) if seed else None)
     print("GEN_INFO " + json.dumps(info))
 
 
@@ -582,22 +662,32 @@ def batch_gen_worker(in_path, out_path):
     """--batch-gen mode (hidden): generate every take listed in a JSON
     manifest with ONE model load and ONE reference conditioning for the
     whole manifest — the batch speed core. A failing item is recorded
-    in the output manifest, never fatal to the rest of the chunk."""
+    in the output manifest, never fatal to the rest of the chunk.
+    Items may carry per-item backend / ref / seed / user_speed (the
+    repair ladder's escalation); the Chatterbox session is shared by
+    every chatterbox item in the manifest."""
     with open(in_path) as fh:
         manifest = json.load(fh)
     lang = manifest["lang"]
     settings = load_settings()
-    backend = backends.resolve_backend(lang, settings)
+    default_backend = backends.resolve_backend(lang, settings)
+    user_speed = manifest.get("user_speed")
     session = None
-    if backend == "chatterbox":
+    if any((it.get("backend") or default_backend) == "chatterbox"
+           for it in manifest["items"]):
         session = _ChatterboxSession(EN_REF, settings)  # load + condition ONCE
     results = []
     for item in manifest["items"]:
         t0 = time.time()
-        rec = {"index": item["index"], "roll": item["roll"]}
+        backend = item.get("backend") or default_backend
+        rec = {"index": item["index"], "roll": item["roll"],
+               "backend": backend}
         try:
-            rec["gen"] = _gen_take_core(backend, lang, item["text"],
-                                        item["out"], settings, session=session)
+            rec["gen"] = _gen_take_core(
+                backend, lang, item["text"], item["out"], settings,
+                session=session if backend == "chatterbox" else None,
+                user_speed=user_speed, ref_name=item.get("ref"),
+                seed=item.get("seed"))
             rec["ok"] = os.path.exists(item["out"])
             if not rec["ok"]:
                 rec["gen_error"] = "generation wrote no output file"
@@ -607,23 +697,31 @@ def batch_gen_worker(in_path, out_path):
         rec["gen_s"] = round(time.time() - t0, 1)
         results.append(rec)
     with open(out_path, "w") as fh:
-        json.dump({"backend": backend, "results": results}, fh,
+        json.dump({"backend": default_backend, "results": results}, fh,
                   ensure_ascii=False)
-    print(f"BATCH_GEN {len(results)} takes, backend={backend}")
+    print(f"BATCH_GEN {len(results)} takes, backend={default_backend}")
     return 0
 
 
 def run_batch(args, settings, gen_env):
-    """--batch orchestration: rounds of parallel worker processes.
+    """--batch orchestration: WAVES of parallel worker processes
+    implementing the self-healing repair loop (repair.py).
 
-    Round 1 generates one take per line (each worker loads the model
-    once for its whole chunk); the parent gates every take in-process;
-    only lines that failed go into the next round, up to --rerolls
-    extra rounds. Passing lines are assembled to <outdir>/<nnn>.mp3;
-    lines that never pass get no mp3 and are named in batch.qc.json.
-    Returns 0 when every line passed, 2 otherwise (same honesty rule
-    as single mode)."""
-    import gates  # already imported by main(); local ref for clarity
+    Wave 1 generates --candidates takes per line (best-of-N by
+    default — first-pass yield is the design goal); the parent gates
+    and scores every candidate and locks each line's best PASSING
+    one. Lines without a winner go to the next wave, whose candidate
+    plan is defect-directed (seed re-rolls scored by completeness,
+    route / reference-span escalation) — up to --rerolls extra
+    waves. A line that never passes gets no mp3 and is NAMED in
+    batch.qc.json; every other line ships — per-sentence
+    independence: the job completes, the failure is named, the work
+    does not stop. Passing lines are assembled to
+    <outdir>/<nnn>.mp3; --assemble-out additionally assembles the
+    shipped lines into one mp3 and runs the final assembled-file
+    verification (verify.py) on it. Returns 0 when every line
+    passed, 2 on any named failure or failed verification."""
+    import repair
 
     lines = read_batch_lines(args.batch, args.first_index)
     if not lines:
@@ -631,18 +729,25 @@ def run_batch(args, settings, gen_env):
         return 2
     os.makedirs(args.outdir, exist_ok=True)
     jobs = max(1, args.jobs or min(4, os.cpu_count() or 1))
-    max_attempts = 1 + max(0, args.rerolls)
+    waves = 1 + max(0, args.rerolls)
+    cand_per_wave = max(1, args.candidates)
+    try:
+        user_speed = speedpolicy.resolve_user_speed(args.speed)
+    except speedpolicy.SpeedPolicyError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
     try:
         backend = backends.resolve_backend(args.lang, settings)
     except RuntimeError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
-    if mass_roll_route(args.lang, max_attempts, settings) == "dispatch":
-        # Same rule as single mode: a large te/hi budget dispatches to
-        # the mass-roll workflow instead of rolling locally.
+    if mass_roll_route(args.lang, waves, settings) == "dispatch":
+        # Same rule as before: a very large te/hi wave budget
+        # dispatches to the mass-roll workflow instead of rolling
+        # locally (takes are harvested there, not shipped here).
         try:
             dispatch_mass_rolls([ln["text"] for ln in lines], args.lang,
-                                max_attempts, settings)
+                                waves * cand_per_wave, settings)
             return 3
         except Exception as e:
             print(f"ERROR: mass-roll dispatch failed: {e}", file=sys.stderr)
@@ -653,113 +758,199 @@ def run_batch(args, settings, gen_env):
         # pinned JULIE_CLONE_THREADS themselves.
         threads = max(1, (os.cpu_count() or 1) // jobs)
         worker_env.setdefault("JULIE_CLONE_THREADS", str(threads))
-    workdir = tempfile.mkdtemp(prefix="julie_batch_")
+    workdir = tempfile.mkdtemp(prefix="divi_batch_")
     engine_path = os.path.abspath(__file__)
     line_by_idx = {ln["index"]: ln for ln in lines}
     records = {ln["index"]: {"index": ln["index"], "text": ln["text"],
-                             "rolls": [], "chosen_roll": None, "out": None}
+                             "rolls": [], "chosen_roll": None,
+                             "repairs": [], "status": "pending",
+                             "out": None}
                for ln in lines}
-    chosen_takes = {}
+    winners = {}
     model_loads = 0
     wall0 = time.time()
     pending = list(lines)
-    for attempt in range(1, max_attempts + 1):
+    for wave in range(1, waves + 1):
         if not pending:
             break
-        chunks = split_round_robin(pending, jobs)
-        procs = []
+        n = cand_per_wave + (1 if wave >= 3 else 0)
+        items_all = []
+        for ln in pending:
+            rec = records[ln["index"]]
+            specs = repair.candidate_plan(
+                args.lang, backend, wave, rec.get("last_defects") or [],
+                n, seed_base=ln["index"] * 1000 + wave * 17)
+            for ci, spec in enumerate(specs):
+                items_all.append({
+                    "index": ln["index"], "roll": wave * 100 + ci,
+                    "text": ln["text"],
+                    "out": os.path.join(
+                        workdir,
+                        f"line{ln['index']}_w{wave}c{ci}.wav"),
+                    "backend": spec["backend"], "ref": spec["ref"],
+                    "seed": spec["seed"], "spec": spec})
+        chunks = split_round_robin(items_all, jobs)
+        results = {}
         for ci, chunk in enumerate(chunks):
-            items = [{"index": ln["index"], "roll": attempt,
-                      "text": ln["text"],
-                      "out": os.path.join(
-                          workdir, f"line{ln['index']}_r{attempt}.wav")}
-                     for ln in chunk]
-            man_in = os.path.join(workdir, f"manifest_{attempt}_{ci}.in.json")
-            man_out = os.path.join(workdir, f"manifest_{attempt}_{ci}.out.json")
+            man_items = [{k: it[k] for k in
+                          ("index", "roll", "text", "out", "backend",
+                           "ref", "seed")} for it in chunk]
+            man_in = os.path.join(workdir, f"manifest_w{wave}_{ci}.in.json")
+            man_out = os.path.join(workdir,
+                                   f"manifest_w{wave}_{ci}.out.json")
             with open(man_in, "w") as fh:
-                json.dump({"lang": args.lang, "items": items}, fh,
-                          ensure_ascii=False)
+                json.dump({"lang": args.lang, "user_speed": user_speed,
+                           "items": man_items}, fh, ensure_ascii=False)
             proc = subprocess.Popen(
-                [sys.executable, engine_path, "--batch-gen", man_in, man_out],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                env=worker_env)
-            procs.append((proc, man_out, items))
+                [sys.executable, engine_path, "--batch-gen", man_in,
+                 man_out],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                text=True, env=worker_env)
             model_loads += 1
-        still = []
-        for proc, man_out, items in procs:
             try:
-                proc.communicate(timeout=1800 * len(items) + 1800)
+                proc.communicate(timeout=1800 * len(chunk) + 1800)
             except subprocess.TimeoutExpired:
                 proc.kill()
                 proc.communicate()
-            results = []
             if os.path.exists(man_out):
                 with open(man_out) as fh:
-                    results = json.load(fh).get("results", [])
-            by_idx = {r["index"]: r for r in results}
-            item_by_idx = {it["index"]: it for it in items}
-            for idx, item in item_by_idx.items():
-                rec = records[idx]
-                res = by_idx.get(idx)
-                if res is None:
-                    rec["rolls"].append(
-                        {"roll": attempt, "backend": backend,
-                         "gen_error": "batch worker died before reporting"})
-                    still.append(line_by_idx[idx])
+                    for r in json.load(fh).get("results", []):
+                        results[(r["index"], r["roll"])] = r
+        still = []
+        for ln in pending:
+            rec = records[ln["index"]]
+            wave_actions = []
+            for it in items_all:
+                if it["index"] != ln["index"]:
                     continue
-                entry = {"roll": attempt, "backend": backend,
-                         "gen_s": res.get("gen_s")}
-                if not res.get("ok"):
-                    entry["gen_error"] = res.get("gen_error", "worker failed")
-                    rec["rolls"].append(entry)
-                    still.append(line_by_idx[idx])
-                    continue
-                entry["gen"] = res.get("gen")
-                g0 = time.time()
-                rep = gates.run_all_gates(item["out"], args.lang,
-                                          rec["text"], settings)
-                entry["gate_s"] = round(time.time() - g0, 1)
-                entry.update(rep)
-                ship, ship_extra = ship_decision(item["out"], args.lang,
-                                                 rec["text"], settings, rep)
-                if ship_extra:
-                    entry["ship_check"] = ship_extra
-                rec["rolls"].append(entry)
-                if ship:
-                    rec["chosen_roll"] = attempt
-                    chosen_takes[idx] = item["out"]
+                spec = it["spec"]
+                if spec["action"] not in wave_actions:
+                    wave_actions.append(spec["action"])
+                res = results.get((it["index"], it["roll"]))
+                cand = {"roll": it["roll"], "wave": wave,
+                        "backend": spec["backend"], "ref": spec["ref"],
+                        "seed": spec["seed"], "action": spec["action"],
+                        "ship": False}
+                if res is None or not res.get("ok"):
+                    cand["gen_error"] = (res or {}).get(
+                        "gen_error",
+                        "batch worker died before reporting")
+                    cand["defects"] = [repair.GENERATION]
                 else:
-                    still.append(line_by_idx[idx])
+                    cand["gen"] = res.get("gen")
+                    cand["gen_s"] = res.get("gen_s")
+                    g0 = time.time()
+                    rep, ship, extra, score, defects = _gate_and_score(
+                        it["out"], args.lang, ln["text"], settings)
+                    cand["gate_s"] = round(time.time() - g0, 1)
+                    cand.update(rep)
+                    if extra:
+                        cand["ship_check"] = extra
+                    cand["ship"] = ship
+                    cand["score"] = score
+                    cand["defects"] = defects
+                    cand["take"] = it["out"]
+                rec["rolls"].append(cand)
+            best = repair.best_passing(rec["rolls"])
+            if best is not None:
+                rec["chosen_roll"] = best["roll"]
+                rec["chosen"] = {"wave": best["wave"],
+                                 "backend": best["backend"],
+                                 "score": best.get("score"),
+                                 "take": best["take"]}
+                winners[ln["index"]] = best
+                rec["status"] = "passed"
+                if wave > 1:
+                    rec["repairs"].append(
+                        {"wave": wave, "actions": wave_actions,
+                         "result": f"winner locked (score "
+                                   f"{best.get('score')})"})
+            else:
+                wave_cands = [c for c in rec["rolls"]
+                              if c["wave"] == wave]
+                best_fail = max(wave_cands,
+                                key=lambda c: c.get("score", -100.0)) \
+                    if wave_cands else None
+                rec["last_defects"] = (best_fail or {}).get(
+                    "defects", [repair.GENERATION])
+                rec["repairs"].append(
+                    {"wave": wave, "defects": rec["last_defects"],
+                     "actions": wave_actions,
+                     "result": ("no passing candidate — escalating"
+                                if wave < waves else
+                                "no passing candidate — ladder "
+                                "exhausted; sentence named as failed")})
+                still.append(ln)
         pending = still
 
     for idx in sorted(records):
         rec = records[idx]
         if rec["chosen_roll"] is not None:
             out_mp3 = os.path.join(args.outdir, batch_line_name(idx))
-            info = assemble([chosen_takes[idx]], out_mp3, settings, args.bed)
+            info = assemble([winners[idx]["take"]], out_mp3, settings,
+                            args.bed)
             rec["out"] = out_mp3
             rec["duration_s"] = info["duration_s"]
     failed = [r for r in records.values() if r["chosen_roll"] is None]
-    qc = {"engine": "julie-ai-voice-engine 1.0", "mode": "batch",
+    qc = {"engine": "Divi Engine 2.0", "mode": "batch",
           "voice": settings["voice_name"], "lang": args.lang,
           "backend": backend, "jobs": jobs, "rerolls": args.rerolls,
+          "candidates_per_wave": cand_per_wave,
+          "speed": speedpolicy.speed_block(args.lang, settings,
+                                            user_speed),
           "lines": [records[i] for i in sorted(records)],
           "timings": {"wall_s": round(time.time() - wall0, 1),
                       "model_loads": model_loads,
                       "gen_s_total": round(sum(
                           e.get("gen_s") or 0
-                          for r in records.values() for e in r["rolls"]), 1)},
-          "verdict": ("PASS — every line passed all gates"
+                          for r in records.values() for e in r["rolls"]),
+                          1)},
+          "verdict": ("PASS — every line passed the gates "
+                      "(best-of-N repair loop)"
                       if not failed else
-                      f"PARTIAL — {len(failed)} of {len(records)} lines "
-                      "never passed the gates; no mp3 written for them")}
+                      f"PARTIAL — {len(failed)} of {len(records)} "
+                      "lines failed the full escalation ladder and "
+                      "are named here; every other line shipped")}
+    if args.assemble_out:
+        shipped = [records[i] for i in sorted(records)
+                   if records[i]["chosen_roll"] is not None]
+        if shipped:
+            info = assemble([winners[r["index"]]["take"]
+                             for r in shipped],
+                            args.assemble_out, settings, args.bed)
+            import verify
+            rep = verify.verify_file(
+                args.assemble_out, [r["text"] for r in shipped],
+                args.lang, settings, sentence_spans=info["spans"],
+                expected_duration_s=info["duration_s"])
+            final_qc = os.path.splitext(args.assemble_out)[0] + ".qc.json"
+            qc["final"] = {"out": args.assemble_out, **info,
+                           "verification": rep, "qc_path": final_qc}
+            with open(final_qc, "w") as fh:
+                json.dump({"engine": "Divi Engine 2.0",
+                           "mode": "batch-final", **qc["final"]}, fh,
+                          ensure_ascii=False, indent=1)
+            if not rep["pass"]:
+                os.unlink(args.assemble_out)
+                qc["final"]["removed"] = (
+                    "assembled mp3 removed — final verification failed")
+                qc["verdict"] = ("FAIL — final assembled-file "
+                                 "verification failed; the assembled "
+                                 "mp3 was removed (per-line mp3s and "
+                                 "the gate tables remain)")
+                failed = failed or [1]  # force exit 2 below
+        else:
+            qc["final"] = {"out": args.assemble_out,
+                           "error": "no line passed — nothing to "
+                                    "assemble"}
     qc_path = os.path.join(args.outdir, "batch.qc.json")
     with open(qc_path, "w") as fh:
         json.dump(qc, fh, ensure_ascii=False, indent=1)
     print(f"BATCH {'OK' if not failed else 'PARTIAL'}: "
-          f"{len(records) - len(failed)}/{len(records)} lines -> {args.outdir} "
-          f"({qc['timings']['wall_s']}s wall, {model_loads} model loads) "
-          f"— QC: {qc_path}")
+          f"{len(records) - len(failed)}/{len(records)} lines "
+          f"-> {args.outdir} "
+          f"({qc['timings']['wall_s']}s wall, {model_loads} model "
+          f"loads) — QC: {qc_path}")
     return 0 if not failed else 2
 
 
@@ -877,11 +1068,16 @@ def assemble(take_paths, out_mp3, settings, use_bed):
     target = float(np.median(rmss))
     gap = np.zeros(int(acfg["sentence_gap_s"] * SR), dtype=np.float32)
     parts = []
+    spans = []
+    cursor = 0.0
     for i, t in enumerate(takes):
         g = target / rmss[i]
         parts.append((t * g).astype(np.float32))
+        spans.append([round(cursor, 3), round(len(t) / SR, 3)])
+        cursor += len(t) / SR
         if i < len(takes) - 1:
             parts.append(gap)
+            cursor += acfg["sentence_gap_s"]
     voice = np.concatenate(parts) if parts else np.zeros(1, dtype=np.float32)
     peak = float(np.max(np.abs(voice))) if len(voice) else 0.0
     if peak > 0.98:
@@ -914,7 +1110,7 @@ def assemble(take_paths, out_mp3, settings, use_bed):
                     "-q:a", "2", out_mp3, "-y"], check=True)
     os.unlink(tmp_wav)
     return {"duration_s": round(len(mix) / SR, 2), "bed": use_bed,
-            "level_match_target_rms": target}
+            "level_match_target_rms": target, "spans": spans}
 
 
 # =========================================================================
@@ -1034,6 +1230,19 @@ def ship_decision(take_path, lang, text, settings, rep):
     return bool(extra["identity_pass"] and extra["pace_pass"]), extra
 
 
+def _gate_and_score(take_path, lang, text, settings):
+    """Gate one candidate take and package the repair loop's view of
+    it: (gate report, ship bool, ship extra, quality score, defects).
+    The single funnel both run modes heal through."""
+    import gates
+    import repair
+    rep = gates.run_all_gates(take_path, lang, text, settings)
+    ship, extra = ship_decision(take_path, lang, text, settings, rep)
+    score = repair.take_score(rep, extra)
+    defects = repair.defect_classes(rep, extra)
+    return rep, ship, extra, score, defects
+
+
 def mass_roll_route(lang, rolls, settings):
     """'local' or 'dispatch': te/hi roll budgets above the local limit
     go to the indicf5-batch.yml mass-roll workflow (10 parallel
@@ -1096,13 +1305,25 @@ def split_sentences(text):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Julie AI Voice Engine")
+    ap = argparse.ArgumentParser(
+        description="Divi Engine — the house voice engine (locked "
+                    "recipes, self-healing repair loop, speed law)")
     ap.add_argument("--text")
     ap.add_argument("--text-file")
     ap.add_argument("--lang", choices=["en", "te", "hi"])
     ap.add_argument("--out")
     ap.add_argument("--rolls", type=int, default=None,
                     help="max generation attempts per sentence (default: settings)")
+    ap.add_argument("--speed", type=float, default=None,
+                    help="USER-REQUESTED tempo factor for THIS job "
+                         "only (e.g. 1.1). Default: none — the locked "
+                         "recipe speed runs exactly; the tool never "
+                         "adjusts speed on its own. The QC report "
+                         "prints the speed source (LOCKED / "
+                         "USER-REQUESTED).")
+    ap.add_argument("--candidates", type=int, default=3,
+                    help="candidates generated per sentence per wave "
+                         "(best-of-N repair loop; default: 3)")
     ap.add_argument("--bed", action="store_true",
                     help="add the quiet piano bed under the voice")
     ap.add_argument("--keep-takes", action="store_true",
@@ -1117,8 +1338,12 @@ def main():
                     help="batch mode: parallel worker processes "
                          "(default: min(4, cpu count))")
     ap.add_argument("--rerolls", type=int, default=2,
-                    help="batch mode: gate re-rolls per failing line "
-                         "(default: 2)")
+                    help="batch mode: extra repair waves per failing "
+                         "line (default: 2)")
+    ap.add_argument("--assemble-out",
+                    help="batch mode: also assemble the shipped lines "
+                         "into this single mp3 and run the final "
+                         "assembled-file verification on it")
     ap.add_argument("--first-index", type=int, default=1,
                     help=argparse.SUPPRESS)
     ap.add_argument("--gen-take", nargs=3, metavar=("LANG", "TEXT", "OUT"),
@@ -1169,83 +1394,204 @@ def main():
         except Exception as e:
             print(f"ERROR: mass-roll dispatch failed: {e}", file=sys.stderr)
             return 2
-    workdir = tempfile.mkdtemp(prefix="julie_takes_")
+    workdir = tempfile.mkdtemp(prefix="divi_takes_")
     try:
         backend = backends.resolve_backend(args.lang, settings)
     except RuntimeError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
-    qc = {"engine": "julie-ai-voice-engine 1.0", "voice": settings["voice_name"],
-          "lang": args.lang, "backend": backend, "text": text,
-          "max_rolls": max_rolls, "sentences": []}
-    chosen = []
-    if backend in ("elevenlabs", "http"):
-        gen_timeout = 300  # 120 s HTTP cap per take + conversion margin
-    else:
-        gen_timeout = 1800 if args.lang == "en" else 1200
-    for si, sent in enumerate(sentences, start=1):
-        entry = {"index": si, "text": sent, "rolls": [], "chosen_roll": None}
-        passed_path = None
-        for roll in range(1, max_rolls + 1):
-            take = os.path.join(workdir, f"s{si}_r{roll}.wav")
-            t0 = time.time()
-            proc = subprocess.run(
-                [sys.executable, os.path.abspath(__file__), "--gen-take",
-                 args.lang, sent, take],
-                capture_output=True, text=True, timeout=gen_timeout,
-                env=gen_env)
-            gen_info = {}
-            for line in (proc.stdout or "").splitlines():
-                if line.startswith("GEN_INFO "):
-                    gen_info = json.loads(line[len("GEN_INFO "):])
-            if proc.returncode != 0 or not os.path.exists(take):
-                entry["rolls"].append({"roll": roll, "backend": backend,
-                                       "gen_error":
-                                       (proc.stderr or "")[-400:],
-                                       "gen_s": round(time.time() - t0, 1)})
-                continue
-            rep = gates.run_all_gates(take, args.lang, sent, settings)
-            ship, ship_extra = ship_decision(take, args.lang, sent,
-                                             settings, rep)
-            entry["rolls"].append({"roll": roll, "backend": backend,
-                                   "gen": gen_info,
-                                   "gen_s": round(time.time() - t0, 1), **rep,
-                                   **({"ship_check": ship_extra}
-                                      if ship_extra else {})})
-            if ship:
-                entry["chosen_roll"] = roll
-                passed_path = take
-                break
-        qc["sentences"].append(entry)
-        if passed_path is None:
-            qc["verdict"] = "FAIL — no take passed the ship checks; NO final mp3 written"
-            qc_path = os.path.splitext(args.out)[0] + ".qc.json"
-            with open(qc_path, "w") as fh:
-                json.dump(qc, fh, ensure_ascii=False, indent=1)
-            print(f"FAIL: sentence {si} never passed the ship checks in "
-                  f"{max_rolls} rolls. Gate table: {qc_path}", file=sys.stderr)
-            return 2
-        dest = os.path.join(workdir, f"chosen_s{si}.wav")
-        os.replace(passed_path, dest)
-        chosen.append(dest)
+    try:
+        user_speed = speedpolicy.resolve_user_speed(args.speed)
+    except speedpolicy.SpeedPolicyError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
+    if user_speed is not None:
+        # The ONLY path a user speed reaches generation: the parent
+        # exports it to the --gen-take subprocesses. The tool itself
+        # never computes a speed (speedpolicy.py).
+        gen_env["DIVI_USER_SPEED"] = str(user_speed)
+    # The self-healing repair loop (repair.py): each sentence gets
+    # best-of-N candidates per wave (--candidates), all gated and
+    # scored; the best PASSING candidate ships. Failures escalate
+    # per the playbook (seed re-rolls scored by completeness ->
+    # wider best-of-N -> alternate route -> alternate reference
+    # span) until the sentence's candidate budget (--rolls /
+    # settings gates.max_rolls, total takes) is spent. A sentence
+    # that exhausts its ladder is NAMED in the QC report and the
+    # job CONTINUES with the rest — the work never stops; only when
+    # NO sentence passes is nothing shipped (verdict FAIL, exit 2).
+    import repair
+    from concurrent.futures import ThreadPoolExecutor
 
-    info = assemble(chosen, args.out, settings, args.bed)
-    qc["verdict"] = ("PASS — every sentence passed the ear-approved "
-                     "ship bar (gate1 + gate2 + identity + pace, whole "
-                     "takes; gates 3/4/5 recorded advisory)"
-                     if args.lang in WHOLE_TAKE_LANGS else
-                     "PASS — every sentence passed all gates")
-    qc["final"] = {"out": args.out, "backend": backend, **info}
+    qc = {"engine": "Divi Engine 2.0", "voice": settings["voice_name"],
+          "lang": args.lang, "backend": backend, "text": text,
+          "max_rolls": max_rolls,
+          "speed": speedpolicy.speed_block(args.lang, settings,
+                                            user_speed),
+          "sentences": []}
+    gen_cap = (1 if backend in repair.LOCAL_MODEL_BACKENDS
+               else max(1, args.jobs or 4))
+    engine_path = os.path.abspath(__file__)
+    chosen = []          # (1-based sentence index, take path)
+    gen_calls = 0
+    wall0 = time.time()
+
+    def gen_candidate(spec, si, take, text):
+        """One candidate take via a --gen-take subprocess; the spec's
+        backend/ref/seed ride the environment (the repair ladder's
+        only levers). Returns (gen_info, error)."""
+        env = dict(gen_env)
+        env["DIVI_TAKE_BACKEND"] = spec["backend"]
+        if spec.get("ref"):
+            env["DIVI_TAKE_REF"] = spec["ref"]
+        if spec.get("seed") is not None:
+            env["DIVI_TAKE_SEED"] = str(spec["seed"])
+        if spec["backend"] in ("elevenlabs", "http"):
+            timeout = 300  # 120 s HTTP cap per take + conversion margin
+        else:
+            timeout = 1800 if args.lang == "en" else 1200
+        try:
+            proc = subprocess.run(
+                [sys.executable, engine_path, "--gen-take",
+                 args.lang, text, take],
+                capture_output=True, text=True, timeout=timeout,
+                env=env)
+        except subprocess.TimeoutExpired:
+            return None, f"generation timed out ({timeout}s)"
+        info = None
+        for line in (proc.stdout or "").splitlines():
+            if line.startswith("GEN_INFO "):
+                info = json.loads(line[len("GEN_INFO "):])
+        if proc.returncode != 0 or info is None \
+                or not os.path.exists(take):
+            return None, (proc.stderr or "")[-400:] or \
+                f"gen exit {proc.returncode}"
+        return info, None
+
+    for si, sent in enumerate(sentences, start=1):
+        entry = {"index": si, "text": sent, "rolls": [],
+                 "chosen_roll": None, "repairs": []}
+        budget = max_rolls
+        wave = 0
+        defects = []
+        winner = None
+        while budget > 0 and winner is None:
+            wave += 1
+            n = min(budget, args.candidates + (1 if wave >= 3 else 0))
+            specs = repair.candidate_plan(
+                args.lang, backend, wave, defects, n,
+                seed_base=si * 1000 + wave * 17)
+            budget -= len(specs)
+            jobs_spec = [(spec, os.path.join(
+                workdir, f"s{si}_w{wave}c{ci}.wav"))
+                for ci, spec in enumerate(specs)]
+            t0 = time.time()
+            with ThreadPoolExecutor(
+                    max_workers=max(1, min(gen_cap,
+                                           len(jobs_spec)))) as pool:
+                results = list(pool.map(
+                    lambda a: gen_candidate(a[0], si, a[1], sent),
+                    jobs_spec))
+            gen_calls += len(results)
+            wave_actions = []
+            for (spec, take), (info, err) in zip(jobs_spec, results):
+                if spec["action"] not in wave_actions:
+                    wave_actions.append(spec["action"])
+                cand = {"roll": len(entry["rolls"]) + 1, "wave": wave,
+                        "backend": spec["backend"],
+                        "ref": spec.get("ref"), "seed": spec.get("seed"),
+                        "action": spec["action"], "gen": info,
+                        "gen_s": round(time.time() - t0, 1),
+                        "ship": False}
+                if err is not None:
+                    cand["gen_error"] = err
+                    cand["defects"] = [repair.GENERATION]
+                else:
+                    rep, ship, extra, score, cdefs = _gate_and_score(
+                        take, args.lang, sent, settings)
+                    cand.update(rep)
+                    if extra:
+                        cand["ship_check"] = extra
+                    cand["ship"] = ship
+                    cand["score"] = score
+                    cand["defects"] = cdefs
+                    cand["take"] = take
+                entry["rolls"].append(cand)
+            winner = repair.best_passing(entry["rolls"])
+            if winner is None:
+                wave_cands = [c for c in entry["rolls"]
+                              if c["wave"] == wave]
+                best_fail = max(wave_cands,
+                                key=lambda c: c.get("score", -100.0))
+                defects = best_fail.get("defects") or [repair.GENERATION]
+                entry["repairs"].append(
+                    {"wave": wave, "defects": defects,
+                     "actions": wave_actions,
+                     "result": ("no passing candidate — escalating"
+                                if budget > 0 else
+                                "no passing candidate — ladder "
+                                "exhausted; sentence named as failed")})
+            elif wave > 1:
+                entry["repairs"].append(
+                    {"wave": wave, "actions": wave_actions,
+                     "result": f"winner locked (score "
+                               f"{winner.get('score')})"})
+        entry["passed"] = winner is not None
+        if winner is not None:
+            entry["chosen_roll"] = winner["roll"]
+            dest = os.path.join(workdir, f"chosen_s{si}.wav")
+            os.replace(winner["take"], dest)
+            chosen.append((si, dest))
+        qc["sentences"].append(entry)
+
+    qc["timings"] = {"wall_s": round(time.time() - wall0, 1),
+                     "generation_calls": gen_calls}
+    failed = [e for e in qc["sentences"] if not e["passed"]]
     qc_path = os.path.splitext(args.out)[0] + ".qc.json"
+    if not chosen:
+        qc["verdict"] = ("FAIL — no sentence passed the full "
+                         "escalation ladder; NO final mp3 written")
+        with open(qc_path, "w") as fh:
+            json.dump(qc, fh, ensure_ascii=False, indent=1)
+        print("FAIL: no sentence passed the ship checks — see "
+              f"QC report: {qc_path}", file=sys.stderr)
+        return 2
+    info = assemble([t for _, t in chosen], args.out, settings, args.bed)
+    import verify
+    vrep = verify.verify_file(
+        args.out, [sentences[si - 1] for si, _ in chosen], args.lang,
+        settings, sentence_spans=info["spans"],
+        expected_duration_s=info["duration_s"])
+    qc["final"] = {"out": args.out, "backend": backend, **info,
+                   "verification": vrep}
+    if failed:
+        names = "; ".join(f"[{e['index']}] {e['text'][:60]}"
+                          for e in failed)
+        qc["verdict"] = (f"PARTIAL — {len(failed)} sentence(s) failed "
+                         f"the full escalation ladder and are NOT in "
+                         f"the file: {names}. Everything else shipped.")
+    else:
+        qc["verdict"] = ("PASS — every sentence passed the gates "
+                         "(best-of-N repair loop)")
+    if not vrep["pass"]:
+        qc["verdict"] = ("FAIL — final assembled-file verification "
+                         "failed; the mp3 was removed. " + qc["verdict"])
     with open(qc_path, "w") as fh:
         json.dump(qc, fh, ensure_ascii=False, indent=1)
+    if not vrep["pass"]:
+        os.unlink(args.out)
+        print("FAIL: final verification failed — mp3 removed, see "
+              f"QC report: {qc_path}", file=sys.stderr)
+        return 2
     if args.keep_takes:
         keep = os.path.splitext(args.out)[0] + "_takes"
         os.makedirs(keep, exist_ok=True)
         for f in os.listdir(workdir):
             os.replace(os.path.join(workdir, f), os.path.join(keep, f))
-    print(f"OK {args.out} ({info['duration_s']}s) — QC: {qc_path}")
-    return 0
+    print(f"{'OK' if not failed else 'PARTIAL'} {args.out} "
+          f"({info['duration_s']}s) — {len(chosen)}/{len(sentences)} "
+          f"sentences — QC: {qc_path}")
+    return 0 if not failed else 2
 
 
 if __name__ == "__main__":
