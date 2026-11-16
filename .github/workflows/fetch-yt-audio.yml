@@ -1,0 +1,58 @@
+name: fetch-yt-audio
+# ONE-OFF (2026-11-16): fetch a YouTube video's audio track from a clean
+# GitHub runner network (the local VM cannot reach YouTube directly).
+# Dispatch with a video URL; download the "yt-audio" artifact:
+#   gh workflow run fetch-yt-audio.yml -f url=<VIDEO_URL>
+#   gh run download <run-id> -n yt-audio
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "YouTube video URL"
+        required: true
+        type: string
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Install yt-dlp + ffmpeg check
+        run: |
+          python3 -m pip install --quiet --upgrade yt-dlp
+          yt-dlp --version
+          ffmpeg -version | head -1
+
+      - name: Download best audio
+        env:
+          YT_URL: ${{ inputs.url }}
+        run: |
+          set -x
+          # Try default client first, then known fallbacks.
+          yt-dlp -f bestaudio --no-playlist --no-warnings \
+            -o "raw.%(ext)s" "$YT_URL" \
+          || yt-dlp -f bestaudio --no-playlist --no-warnings \
+            --extractor-args "youtube:player_client=android,web" \
+            -o "raw.%(ext)s" "$YT_URL" \
+          || yt-dlp -f bestaudio --no-playlist --no-warnings \
+            --extractor-args "youtube:player_client=ios,tv" \
+            -o "raw.%(ext)s" "$YT_URL"
+          ls -la raw.*
+
+      - name: Convert to wav 24kHz mono + probe
+        run: |
+          RAW=$(ls raw.* | head -1)
+          ffmpeg -y -v error -i "$RAW" -ar 24000 -ac 1 audio.wav
+          ffprobe -v error -show_entries format=duration,size \
+            -of default=noprint_wrappers=1 audio.wav | tee meta.txt
+          echo "source_file=$RAW" >> meta.txt
+          ls -la audio.wav
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yt-audio
+          path: |
+            audio.wav
+            meta.txt
+          retention-days: 7
