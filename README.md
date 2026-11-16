@@ -117,7 +117,7 @@ The parallel split is **built in** — it is not a special mode and there
 is nothing else to invoke. The one command sentence-splits the script,
 commits the lines, and dispatches the `turbo` workflow, which fans the
 script out over many parallel GitHub Actions runners (auto-sized, ~4
-sentences per runner, up to 40). Each runner loads IndicF5 once,
+sentences per runner, up to 48). Each runner loads IndicF5 once,
 generates **whole takes** of its own chunk and gates them with the same
 locked ship bar (no-hint language + ghost scan + Resemblyzer identity
 ≥ 0.85 + pace band — a take that fails never ships). A failures-only
@@ -129,7 +129,7 @@ never passed, it exits non-zero and names the missing sentences instead
 of shipping a partial voice-over.
 
 Under the hood, if you ever need it: `gh workflow run turbo.yml -f
-lines_path=jobs/<lines>.txt -f chunks=40`, then `gh run download <id>
+lines_path=jobs/<lines>.txt -f chunks=48`, then `gh run download <id>
 -n turbo-final`. Measured timings: see `BENCHMARK.md`.
 
 ## Install

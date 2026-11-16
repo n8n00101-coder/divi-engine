@@ -34,8 +34,8 @@ import time
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 WORKFLOW = "turbo.yml"
-LINES_PER_RUNNER = 4
-MAX_CHUNKS = 40
+LINES_PER_RUNNER = 3
+MAX_CHUNKS = 48
 MIN_CHUNKS = 8
 
 

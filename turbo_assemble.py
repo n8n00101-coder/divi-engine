@@ -70,6 +70,7 @@ def main():
                  "identity": rec.get("identity"), "wps": rec.get("wps"),
                  "duration_s": rec.get("duration_s")})
     if missing:
+        os.makedirs(os.path.dirname(os.path.abspath(a.qc)), exist_ok=True)
         with open(a.qc, "w", encoding="utf-8") as fh:
             json.dump(qc, fh, ensure_ascii=False, indent=1)
         print(f"ASSEMBLE REFUSED: {len(missing)} sentences unshipped: "

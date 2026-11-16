@@ -14,7 +14,7 @@ import glob
 import json
 import os
 
-MAX_W2_CHUNKS = 24
+MAX_W2_CHUNKS = 48
 
 
 def load_lines(path):

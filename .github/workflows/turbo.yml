@@ -73,14 +73,14 @@ on:
       - "turbo_assemble.py"
 
 env:
-  LINES_PATH: ${{ inputs.lines_path || 'jobs/turbo-bench-short.txt' }}
-  CHUNKS: ${{ inputs.chunks || '10' }}
+  LINES_PATH: ${{ inputs.lines_path || 'jobs/turbo-proof-lines.txt' }}
+  CHUNKS: ${{ inputs.chunks || '48' }}
   LANG: ${{ inputs.lang || 'te' }}
   REF_NAME: ${{ inputs.ref_name || 'natspan2' }}
   SPEED: ${{ inputs.speed }}
   NFE_STEP: ${{ inputs.nfe_step || '8' }}
-  MAX_TAKES1: ${{ inputs.max_takes1 || '2' }}
-  MAX_TAKES2: ${{ inputs.max_takes2 || '5' }}
+  MAX_TAKES1: ${{ inputs.max_takes1 || '3' }}
+  MAX_TAKES2: ${{ inputs.max_takes2 || '8' }}
   WAVE2: ${{ inputs.wave2 || 'true' }}
 
 jobs:
@@ -101,7 +101,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      max-parallel: 40
+      max-parallel: 48
       matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
     steps:
       - run: echo "JOB_START $(date +%s)"
@@ -203,7 +203,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      max-parallel: 24
+      max-parallel: 48
       matrix: ${{ fromJSON(needs.collect.outputs.matrix2) }}
     steps:
       - run: echo "JOB_START $(date +%s)"
