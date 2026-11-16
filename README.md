@@ -193,6 +193,14 @@ bottleneck:
      voice id can instead live in `voice/settings.json` under
      `backends.elevenlabs.voice_id`). The voice then comes from that
      ElevenLabs voice id — the reference wavs are not used.
+   - **Meta MMS-TTS (Telugu, built-in local engine):**
+     `export JULIE_TTS_BACKEND=mms` — native-diction Telugu from
+     Meta's massively-multilingual VITS model (`facebook/mms-tts-tel`),
+     merged into this tool on 2026-11-16 alongside the locked
+     Chatterbox English route. It runs locally (no key, no server) and
+     is Telugu-only. It is **not a clone** — the voice is the model's
+     own Telugu speaker, chosen for diction the clone route kept
+     missing.
    - **Your own model server:** `export JULIE_TTS_BACKEND=http` and
      `export JULIE_TTS_URL=http://your-server/tts` (optional
      `JULIE_TTS_KEY`, sent as `Authorization: Bearer …`). Server
@@ -225,7 +233,7 @@ Leave `JULIE_TTS_BACKEND` unset to return to the default free routes.
 
 ```
 engine.py                 CLI: generate -> gate -> re-roll -> assemble (+ --batch)
-backends.py               pluggable TTS backends (defaults, elevenlabs, http, github)
+backends.py               pluggable TTS backends (defaults, mms, elevenlabs, http, github)
 gates.py                  the five gates, importable
 indicf5_gen.py            whole-sentence IndicF5 take generator + full gates
                           (runs on the indicf5-batch runners)

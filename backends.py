@@ -14,6 +14,14 @@ Backend selection (env JULIE_TTS_BACKEND):
                      te/hi -> indicf5-space) — the original behaviour
     indicf5-space    IndicF5 via the ai4bharat HF Space (te/hi)
     chatterbox       Chatterbox TTS local clone (en)
+    mms              Meta MMS-TTS (facebook/mms-tts-tel) — a LOCAL route
+                     implemented in engine.py alongside chatterbox and
+                     indicf5-space: native-diction Telugu from Meta's
+                     massively-multilingual VITS model (1,100+
+                     languages). Not a clone — the voice is the model's
+                     own Telugu speaker, merged into this tool on the
+                     owner's order (2026-11-16) next to the locked
+                     Chatterbox English route.
     elevenlabs       ElevenLabs API — needs env ELEVENLABS_API_KEY and a
                      voice id (env JULIE_EL_VOICE_ID, or
                      backends.elevenlabs.voice_id in voice/settings.json);
@@ -41,7 +49,8 @@ import os
 import requests
 
 HTTP_TIMEOUT_S = 120
-BACKENDS = ("indicf5-space", "chatterbox", "elevenlabs", "http", "github")
+BACKENDS = ("indicf5-space", "chatterbox", "mms", "elevenlabs", "http",
+            "github")
 _DEFAULTS = {"en": "chatterbox", "te": "indicf5-space", "hi": "indicf5-space"}
 
 
@@ -120,7 +129,12 @@ def synthesize_http(text, lang, settings):
 
 def synthesize(backend, text, lang, settings):
     """Dispatch for the service backends (the local routes —
-    indicf5-space and chatterbox — live in engine.py)."""
+    indicf5-space, chatterbox and mms — live in engine.py)."""
+    if backend == "mms":
+        raise RuntimeError(
+            "[mms] the MMS backend is a local route handled inside "
+            "engine.py (like chatterbox and indicf5-space), not a "
+            "service backend")
     if backend == "elevenlabs":
         return synthesize_elevenlabs(text, lang, settings)
     if backend == "http":

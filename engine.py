@@ -43,7 +43,10 @@ Generation routes (locked, see voice/settings.json):
       approved +20% pace calibration: ONE atempo 1.20 per take, logged.
 
 Pluggable backends (backends.py): env JULIE_TTS_BACKEND overrides the
-route above for any language — "elevenlabs" (your ElevenLabs voice,
+route above for any language — "mms" (Meta MMS-TTS, native-diction
+Telugu, local model — the second engine merged into this tool on
+2026-11-16 alongside the locked Chatterbox English route),
+"elevenlabs" (your ElevenLabs voice,
 key from env ELEVENLABS_API_KEY) or "http" (any model server you run,
 env JULIE_TTS_URL). The gates, re-roll loop and QC report are unchanged
 on top of every backend; each take's backend is recorded in the QC
@@ -308,6 +311,64 @@ def _bytes_to_take(audio, lang, out_wav, settings, info):
         info["atempo"] = atempo  # approved +20% pace calibration, logged
 
 
+# =========================================================================
+# Meta MMS-TTS route (local model — the "big Telugu engine", merged
+# into this tool 2026-11-16 next to the locked Chatterbox English)
+# =========================================================================
+MMS_MODEL_ID = "facebook/mms-tts-tel"
+_MMS_CACHE = {}
+
+
+def _mms_take(text, lang, out_wav, settings, info):
+    """One Meta MMS-TTS take (Telugu only). MMS is a native-speaker
+    VITS model (Massively Multilingual Speech, 1,100+ languages) — NOT
+    a clone: the voice is the model's own Telugu speaker, selected for
+    its native diction (proven clean on the channel's hard conjuncts
+    in the Nov 14 wtu-dub route, gen_mms.py). The model runs locally;
+    the load first tries the normal hub path (which also fetches the
+    model on first use) and falls back to the local HF cache
+    (local_files_only) when the hub is unreachable. The waveform rides
+    the shared _bytes_to_take normalisation to 24 kHz mono, so
+    gates/QC see the same shape as every other backend."""
+    if lang != "te":
+        raise RuntimeError(
+            "[mms] the MMS route in this tool is Telugu-only "
+            f"({MMS_MODEL_ID}); for en use chatterbox, for hi use "
+            "indicf5-space, elevenlabs or http")
+    if "model" not in _MMS_CACHE:
+        from transformers import AutoTokenizer, VitsModel
+        try:
+            model = VitsModel.from_pretrained(MMS_MODEL_ID)
+            tok = AutoTokenizer.from_pretrained(MMS_MODEL_ID)
+        except Exception as e:  # hub unreachable — use the local cache
+            try:
+                model = VitsModel.from_pretrained(MMS_MODEL_ID,
+                                                  local_files_only=True)
+                tok = AutoTokenizer.from_pretrained(MMS_MODEL_ID,
+                                                    local_files_only=True)
+            except Exception:
+                raise RuntimeError(
+                    f"[mms] could not load {MMS_MODEL_ID} (hub: {e}; "
+                    "local cache also failed)") from e
+        _MMS_CACHE["model"] = model
+        _MMS_CACHE["tok"] = tok
+    model = _MMS_CACHE["model"]
+    tok = _MMS_CACHE["tok"]
+    import io
+
+    import soundfile as sf
+    import torch
+    inputs = tok(text, return_tensors="pt")
+    with torch.no_grad():
+        waveform = model(**inputs).waveform
+    audio = waveform.squeeze().cpu().numpy().astype("float32")
+    buf = io.BytesIO()
+    sf.write(buf, audio, model.config.sampling_rate, format="WAV")
+    info["mms_model"] = MMS_MODEL_ID
+    info["mms_native_sr"] = model.config.sampling_rate
+    _bytes_to_take(buf.getvalue(), lang, out_wav, settings, info)
+
+
 def _gen_take_core(backend, lang, text, out_wav, settings, session=None):
     """Synthesize ONE raw take via an already-resolved backend; returns
     the GEN_INFO dict. `session` is a reusable _ChatterboxSession —
@@ -330,6 +391,8 @@ def _gen_take_core(backend, lang, text, out_wav, settings, session=None):
         ref_text = open(TE_REF_TEXT).read().strip()
         audio = _indicf5_synthesize(text, TE_REF, ref_text)
         _bytes_to_take(audio, lang, out_wav, settings, info)
+    elif backend == "mms":
+        _mms_take(text, lang, out_wav, settings, info)
     elif backend in ("elevenlabs", "http", "github"):
         audio = backends.synthesize(backend, text, lang, settings)
         _bytes_to_take(audio, lang, out_wav, settings, info)

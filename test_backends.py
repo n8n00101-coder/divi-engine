@@ -172,6 +172,32 @@ def unit_tests():
     except RuntimeError as e:
         check("unknown backend raises", "bogus" in str(e))
 
+    # mms routing (merged 2026-11-16): selectable for te via the env,
+    # the English default stays the locked chatterbox route, the
+    # service dispatcher refuses mms by name (it is a local route),
+    # and the engine refuses mms for non-Telugu languages.
+    with Env(JULIE_TTS_BACKEND="mms"):
+        check("mms selectable for te", backends.resolve_backend("te") == "mms")
+    with Env(JULIE_TTS_BACKEND=None):
+        check("en default still chatterbox (mms merge untouched)",
+              backends.resolve_backend("en") == "chatterbox")
+    try:
+        backends.synthesize("mms", "x", "te", SETTINGS)
+        check("mms service dispatch raises", False)
+    except RuntimeError as e:
+        check("mms service dispatch raises named error",
+              str(e).startswith("[mms]"))
+    import engine as _engine
+    try:
+        _engine._gen_take_core("mms", "en", "Hello.",
+                               os.path.join(tempfile.gettempdir(),
+                                            "mms_route_probe.wav"),
+                               SETTINGS)
+        check("mms refuses en in engine routing", False)
+    except RuntimeError as e:
+        check("mms refuses en in engine routing",
+              str(e).startswith("[mms]"))
+
 
 # ------------------------------------------------------------- end-to-end --
 class StubHandler(BaseHTTPRequestHandler):
