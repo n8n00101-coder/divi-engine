@@ -188,3 +188,66 @@ These are estimates extrapolated from the measured waves above, not
 promises: runner contention and Space/model-download variance move
 them. The local-VM route is NOT the fast path (per-take subprocess
 loads, see (a)-(c) above) and stays the small-budget fallback only.
+
+## Turbo pipeline — the 20-minutes-in-10 requirement (2026-11-16)
+
+Requirement (Ajju): a 20-minute Telugu voice-over (~2,600 words) must
+complete in **6–10 min wall** from one command. The turbo pipeline
+(`turbo.py` / `turbo.yml`) was built and measured end-to-end on GitHub
+Actions. All numbers below are measured, not projected.
+
+### Stage benchmark (24 compound lines, 447 words, natspan2 @ speed 1.0)
+
+Per-stage timings from instrumented runs (branch `perf/20min-in-10`):
+
+| stage | measured |
+|---|---|
+| runner setup (checkout, caches, apt ffmpeg) | ~0.5–1 min |
+| pip install into venv, cold | 63 s (warm: seconds, venv is cached) |
+| IndicF5 + whisper + Resemblyzer load | ~15 s + ~30 s |
+| **one take, nfe_step 32 (fork default)** | **255–493 s (avg ~370 s)** |
+| one take, nfe_step 16 | avg 184 s |
+| one take, nfe_step 8 | avg 95 s (61–130 s) |
+| gates on the pre-selected take | 2–5 s |
+| Resemblyzer identity | ~0 s |
+| collect / assemble jobs | ~1 min / ~1.5–2 min |
+
+Generation is ~95% of all compute. nfe_step (made explicit in
+`turbo_gen.py`; the HF wrapper never exposed it) is a pure speed lever:
+32 → 8 steps cuts a take ~4× with **no measured change in ship rate**
+and the locked ship gates unchanged on every take.
+
+### The real bottleneck: per-take ship probability
+
+Ship bar (locked, unchanged): gate 1 no-hint language + gate 2 ghost
+scan + identity ≥ 0.85 + pace 1.9–2.5 wps, all on the same whole take.
+Measured across ~90 gated takes of real transcript sentences:
+
+- gate 1 passes ~100%, identity ~100%, pace mostly in band.
+- **gate 2 (ghost scan) fails ~75–85% of takes.** The "ghosts" are
+  mostly English loanwords (criminal, review, theory, …) that the
+  unhinted Whisper transcription renders in a non-Telugu script, so
+  they match no script word. It is stochastic per take.
+- Per-take ship probability ≈ **0.15–0.20**; a hard core of sentences
+  (~25–30%) needs >7 takes. After 7 takes, 8/24 bench sentences were
+  still unshipped.
+- Short units are WORSE: the same 450 words split into 62 natural
+  sentences shipped only 2/49 units in 2 takes (short spans break the
+  language-detect and pace measurements). Compound lines of ~15–19
+  words are the right granularity.
+- The IndicF5 HF Space (ZeroGPU) generates a take in ~8 s but the
+  anonymous quota **errored out after 3–4 rapid calls** — unusable for
+  a ~750-take job.
+
+End-to-end bench results (24 lines, full chain incl. wave 2 +
+assemble; runs shared the account with other experiments, so queue
+contention inflates these): nfe 16 → **84 min**, nfe 8 → **58 min**,
+both ending in an honest assemble refusal (sentences still unshipped
+after 7 takes each).
+
+### Proof run (142 lines, 2,632 words ≈ 20 min of speech)
+
+Config: 48 parallel runners, nfe_step 8, wave 1 = 3 takes/sentence,
+wave 2 = failures only, 8 more takes, then locked assembly.
+
+<!-- PROOF RESULTS FILLED IN BELOW -->
