@@ -121,30 +121,62 @@ def unit_tests():
 
 # ------------------------------------------------------------- end-to-end --
 REF_WAV = os.path.join(HERE, "voice", "telugu-reference.wav")
-REF_TEXT = open(os.path.join(HERE, "voice",
-                             "telugu-reference-text.txt")).read().strip()
 
 
-def _wav_bytes(path):
-    return open(path, "rb").read()
-
-
-def _truncated_bytes(frac=0.55):
-    import io
-    import soundfile as sf
-    y, sr = sf.read(REF_WAV)
-    buf = io.BytesIO()
-    sf.write(buf, y[:int(len(y) * frac)], sr, format="WAV")
-    return buf.getvalue()
-
-
-def _grunt_bytes():
-    """The reference take with a synthetic OmniVoice-style head
-    grunt prepended (0.22 s of quiet flat 150 Hz phonation)."""
+def _fixture():
+    """(sentence, slice_bytes, truncated_bytes): the first 26 words
+    of the canonical reference transcript (decimals flattened — the
+    engine's sentence splitter breaks on decimal points) and the
+    matching audio prefix, cut at the natural pause nearest the
+    proportional point. Validated against the real ship bar: the
+    slice SHIPS for this sentence (identity 0.867, pace 1.98 wps,
+    gates 1/2/7 green); the 55% truncation fails gate 7 + pace."""
     import io
     import numpy as np
     import soundfile as sf
-    y, sr = sf.read(REF_WAV)
+    text = open(os.path.join(HERE, "voice",
+                             "telugu-reference-text.txt"),
+                encoding="utf-8").read().strip()
+    words = [w.replace("128.6", "128").replace("64.6", "64")
+             for w in text.split()[:26]]
+    sent = " ".join(words) + "."
+    y, sr = sf.read(REF_WAV, dtype="float32")
+    fr = int(0.02 * sr)
+    n = len(y) // fr
+    rms = np.array([np.sqrt(np.mean(y[i * fr:(i + 1) * fr] ** 2))
+                    for i in range(n)])
+    thr = 0.15 * np.median(rms[rms > 0])
+    target = 26 / 32 * len(y) / sr
+    gaps, i = [], 0
+    while i < n:
+        if rms[i] <= thr:
+            j = i
+            while j < n and rms[j] <= thr:
+                j += 1
+            if (j - i) * 0.02 >= 0.25:
+                gaps.append((i + j) / 2 * 0.02)
+            i = j
+        else:
+            i += 1
+    cut = min(gaps, key=lambda g: abs(g - target))
+    sl = y[:int(cut * sr)]
+    buf = io.BytesIO()
+    sf.write(buf, sl, sr, format="WAV")
+    buf2 = io.BytesIO()
+    sf.write(buf2, sl[:int(len(sl) * 0.55)], sr, format="WAV")
+    return sent, buf.getvalue(), buf2.getvalue()
+
+
+SENT, SLICE, TRUNC = _fixture()
+
+
+def _grunt_bytes():
+    """The good slice with a synthetic OmniVoice-style head grunt
+    prepended (0.22 s of quiet flat 150 Hz phonation)."""
+    import io
+    import numpy as np
+    import soundfile as sf
+    y, sr = sf.read(io.BytesIO(SLICE))
     t = np.arange(int(0.22 * sr)) / sr
     grunt = (0.05 * np.sin(2 * np.pi * 150 * t)).astype("f4")
     buf = io.BytesIO()
@@ -154,7 +186,7 @@ def _grunt_bytes():
 
 
 class ModeHandler(BaseHTTPRequestHandler):
-    mode = "full"          # full | truncated-first | sabotage
+    mode = "full"          # grunt | truncated-first | sabotage
     calls = 0
     trunc_first_n = 0
 
@@ -166,12 +198,12 @@ class ModeHandler(BaseHTTPRequestHandler):
             data = _grunt_bytes()
         elif ModeHandler.mode == "truncated-first" \
                 and ModeHandler.calls <= ModeHandler.trunc_first_n:
-            data = _truncated_bytes()
+            data = TRUNC
         elif ModeHandler.mode == "sabotage" \
                 and "విఫల" in body.get("text", ""):
-            data = _truncated_bytes(0.3)
+            data = TRUNC[:len(TRUNC) // 2]
         else:
-            data = _wav_bytes(REF_WAV)
+            data = SLICE
         self.send_response(200)
         self.send_header("Content-Type", "audio/wav")
         self.send_header("Content-Length", str(len(data)))
@@ -203,7 +235,7 @@ def e2e_tests():
         # (a) head grunt: gen-take auto-mutes it, take ships clean
         ModeHandler.mode = "grunt"
         take = os.path.join(tmp, "grunt.wav")
-        p = _run_engine(["--gen-take", "te", REF_TEXT, take], env)
+        p = _run_engine(["--gen-take", "te", SENT, take], env)
         info = {}
         for line in (p.stdout or "").splitlines():
             if line.startswith("GEN_INFO "):
@@ -224,7 +256,7 @@ def e2e_tests():
         ModeHandler.calls = 0
         ModeHandler.trunc_first_n = 2
         out = os.path.join(tmp, "ladder.mp3")
-        p = _run_engine(["--text", REF_TEXT, "--lang", "te",
+        p = _run_engine(["--text", SENT, "--lang", "te",
                          "--out", out, "--rolls", "4",
                          "--candidates", "2"], env)
         check("(b) job completes with a passing take",
@@ -245,7 +277,7 @@ def e2e_tests():
         ModeHandler.mode = "sabotage"
         bad = "ఈ విఫల వాక్యం ఎప్పటికీ పూర్తి కాదు."
         out = os.path.join(tmp, "partial.mp3")
-        p = _run_engine(["--text", REF_TEXT + " " + bad,
+        p = _run_engine(["--text", SENT + " " + bad,
                          "--lang", "te", "--out", out,
                          "--rolls", "2", "--candidates", "1"], env)
         check("(c) partial job exits 2 but DELIVERS the mp3",

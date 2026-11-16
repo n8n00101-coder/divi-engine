@@ -1,4 +1,4 @@
-# Julie AI Voice Engine
+# Divi Engine
 # ffmpeg must also be installed and on PATH.
 numpy
 scipy

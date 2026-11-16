@@ -75,7 +75,7 @@ def main():
         check(f"A{i} cut-word passes", r["pass"], str(r["fails"]))
 
     print("== 4. gate 6 mute round-trip on a copy of B6 ==")
-    tmp = tempfile.mkdtemp(prefix="julie_grunt_proof_")
+    tmp = tempfile.mkdtemp(prefix="divi_grunt_proof_")
     try:
         probe = os.path.join(tmp, "b6.wav")
         shutil.copy(os.path.join(W, "sentB6.wav"), probe)

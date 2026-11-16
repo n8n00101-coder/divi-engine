@@ -1,4 +1,4 @@
-# Julie AI Voice Engine — Kaggle GPU batch runner
+# Divi Engine — Kaggle GPU batch runner
 #
 # STATUS: PREPARED, NOT YET RUN. This script was written for a Kaggle
 # notebook with a T4 GPU attached. It has NOT been executed on Kaggle

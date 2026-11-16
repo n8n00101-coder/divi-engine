@@ -1,4 +1,4 @@
-"""Pluggable TTS generation backends for the Julie AI Voice Engine.
+"""Pluggable TTS generation backends for Divi Engine.
 
 The built-in routes are free but slow: Telugu/Hindi ride the public
 IndicF5 Hugging Face Space (long free queue, outage streaks) and English

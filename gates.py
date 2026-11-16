@@ -1,4 +1,4 @@
-"""The quality gates of the Julie AI Voice Engine.
+"""The quality gates of Divi Engine.
 
 These gates exist because every one of them maps to a real defect that was
 once shipped by hand and caught by a human ear (2026-11-14):
