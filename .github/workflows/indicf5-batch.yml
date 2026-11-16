@@ -19,6 +19,11 @@ on:
         required: false
         type: string
         default: ""
+      ref_order:
+        description: "Comma-separated refs.json keys to rotate over runners; empty = default span1,span2,span3,te3"
+        required: false
+        type: string
+        default: ""
 jobs:
   gen:
     runs-on: ubuntu-latest
@@ -70,6 +75,7 @@ jobs:
           RUNNER_INDEX: ${{ matrix.idx }}
           ROLLS: ${{ inputs.rolls }}
           LINES_PATH: ${{ inputs.lines_path }}
+          REF_ORDER: ${{ inputs.ref_order }}
           OMP_NUM_THREADS: "4"
           MKL_NUM_THREADS: "4"
         run: python3 indicf5_gen.py

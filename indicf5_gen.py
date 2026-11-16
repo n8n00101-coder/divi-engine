@@ -61,7 +61,11 @@ def load_sentences():
 
 
 SENTS = load_sentences()
-REF_ORDER = ["span1", "span2", "span3", "te3"]
+# Ref rotation: REF_ORDER env (comma-separated refs.json keys) overrides the
+# fixed6 default — fixed7 (2026-11-16) uses it to run natural-pace refs only.
+REF_ORDER = [x.strip() for x in
+             os.environ.get("REF_ORDER", "").split(",") if x.strip()] \
+    or ["span1", "span2", "span3", "te3"]
 IDENTITY_MIN = 0.85
 WPS_MIN, WPS_MAX = 1.9, 2.5
 
