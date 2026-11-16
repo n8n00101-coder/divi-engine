@@ -250,4 +250,50 @@ after 7 takes each).
 Config: 48 parallel runners, nfe_step 8, wave 1 = 3 takes/sentence,
 wave 2 = failures only, 8 more takes, then locked assembly.
 
-<!-- PROOF RESULTS FILLED IN BELOW -->
+**Result (run 43881089750, 2026-11-16): 2 h 52 min 43 s wall**
+(13:59:11Z → 16:51:54Z) — and still incomplete:
+
+- 849 takes generated = **29.5 runner-hours** of pure generation.
+- Wave 1 shipped 53/142 sentences (37%); wave 2 added 55 → **108/142
+  shipped (76%)**; **34 sentences never passed in up to 11 takes
+  each**, so assembly honestly refused and no mp3 was written.
+- Gate 2 failed 514 of 781 gated takes (66%) — and the failures are
+  concentrated: the sentences that fail wave 1 are a hard core whose
+  loanwords Whisper mis-scripts on essentially every take. More takes
+  barely help them (wave 2 converted only 55 of 89).
+- GitHub's free tier ran **at most ~20 jobs concurrently** for this
+  account (observed repeatedly): the 48-chunk matrix queued in waves,
+  which alone stretches wave 1 past 50 min.
+
+**Verdict: the 6–10 minute target is NOT reachable on free GitHub
+CPU runners with the locked ship bar — it is ~20–30× away, and the
+binding constraints are structural, not tuning:**
+
+1. per-take ship probability (~0.15 average, ~0.03 for the hard core)
+   set by gate 2's stochastic loanword ghosts;
+2. ~95 s of CPU per take even at nfe_step 8;
+3. the ~20-job free-tier concurrency ceiling.
+
+What would close the gap, in leverage order:
+
+- **Gate-2 loanword handling (owner's call — it changes the locked
+  bar):** the ghosts are overwhelmingly English loanwords the ASR
+  renders in a non-Telugu script while the script writes them in
+  Telugu script ('criminal' heard correctly, matched at sim 0.40 vs
+  the 0.62 threshold). A loanword-aware phonetic match, recalibrated
+  against the ear like the fixed13 bar was, could raise per-take
+  ship probability several-fold. Not done here: the bar is locked.
+- **GPU runners:** the same model generates a take in ~8 s on GPU
+  (HF Space probe) vs 95 s on CPU — a ~12× compute cut, which with
+  the concurrency ceiling lands near ~15–20 min, and combined with
+  the gate fix would reach the target. No free GPU runner is
+  currently wired (Kaggle needs an account Ajju hasn't created; the
+  IndicF5 Space's anonymous ZeroGPU quota died after 3–4 calls).
+- Paid Actions minutes / larger runners — excluded by the ₹0 rule.
+
+Also found + fixed by this work: the assemble job's merged artifact
+download let wave-1 non-ship records overwrite wave-2 ship records
+with the same filename (38 shipped sentences lost in the first
+assembly count of 70; corrected count 108). `turbo_assemble.py` now
+scans per-artifact subdirs recursively and the workflow no longer
+merges the wave artifacts.

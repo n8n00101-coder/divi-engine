@@ -1,19 +1,16 @@
 name: julie-voice-turbo
-# 20-in-10 production path: a full ~20-minute Telugu voice-over in
-# 6-10 minutes wall. Fan-out chunks of a whole script over many
-# runners (one IndicF5 load per runner, whole takes, ship bar on the
-# selected take only), a failures-only wave 2, then assembly under the
-# locked settings. See turbo_gen.py / turbo_collect.py /
-# turbo_assemble.py and BENCHMARK.md ("20-in-10" section).
+# Turbo production path for long Telugu/Hindi scripts: fan-out chunks
+# of a whole script over many runners (one IndicF5 load per runner,
+# whole takes, the locked ship bar on the selected take only), a
+# failures-only wave 2, then assembly under the locked settings.
+# See turbo_gen.py / turbo_collect.py / turbo_assemble.py and
+# BENCHMARK.md (turbo section) for the measured timings.
 #
-# Hark's invocation (after this lands on the default branch —
-# workflow_dispatch requires the workflow file there):
+# Hark's invocation is ONE command — python3 turbo.py script.txt
+# (turbo.py dispatches this workflow, waits, and downloads the merged
+# mp3). Manual equivalent:
 #   gh workflow run turbo.yml -f lines_path=jobs/<script>.txt
 #   gh run download <run-id> -n turbo-final
-#
-# The push trigger below is branch-scoped development scaffolding for
-# the perf branch (dispatch cannot run from a non-default branch); it
-# is removed before merge.
 on:
   workflow_dispatch:
     inputs:
@@ -21,12 +18,12 @@ on:
         description: "Lines file in the repo (one sentence per line)"
         required: true
         type: string
-        default: "jobs/turbo-bench-lines.txt"
+        default: "lines.txt"
       chunks:
         description: "Wave-1 parallel runners"
         required: false
         type: string
-        default: "8"
+        default: "48"
       lang:
         description: "Gate language (te default; hi = cross-lingual)"
         required: false
@@ -43,37 +40,28 @@ on:
         type: string
         default: ""
       nfe_step:
-        description: "Diffusion steps per take (fork default 32; lower = faster)"
+        description: "Diffusion steps per take (fork default 32; 8 = measured fastest with unchanged ship rate)"
         required: false
         type: string
-        default: "32"
+        default: "8"
       max_takes1:
         description: "Wave-1 whole takes per sentence"
         required: false
         type: string
-        default: "2"
+        default: "3"
       max_takes2:
         description: "Wave-2 whole takes per failed sentence"
         required: false
         type: string
-        default: "5"
+        default: "8"
       wave2:
         description: "Run the failures-only wave 2 (true/false)"
         required: false
         type: string
         default: "true"
-  push:
-    branches: [perf/20min-in-10]
-    paths:
-      - ".github/workflows/turbo.yml"
-      - "jobs/turbo-bench-lines.txt"
-      - "jobs/turbo-proof-lines.txt"
-      - "turbo_gen.py"
-      - "turbo_collect.py"
-      - "turbo_assemble.py"
 
 env:
-  LINES_PATH: ${{ inputs.lines_path || 'jobs/turbo-proof-lines.txt' }}
+  LINES_PATH: ${{ inputs.lines_path || 'lines.txt' }}
   CHUNKS: ${{ inputs.chunks || '48' }}
   LANG: ${{ inputs.lang || 'te' }}
   REF_NAME: ${{ inputs.ref_name || 'natspan2' }}
@@ -307,7 +295,11 @@ jobs:
         with:
           pattern: turbo-w*-*
           path: stage
-          merge-multiple: true
+          # NO merge-multiple: wave-1 and wave-2 artifacts contain
+          # same-named s<idx>.json files; merging overwrites wave-2
+          # ship records with wave-1 non-ship records (proven in the
+          # 2026-11-16 proof run — 38 shipped sentences were lost).
+          # turbo_assemble.py scans per-artifact subdirs recursively.
       - name: Assemble final voice-over
         run: |
           "$PY" turbo_assemble.py --stage stage --lines "$LINES_PATH" --out final/voiceover.mp3 --qc final/turbo.qc.json

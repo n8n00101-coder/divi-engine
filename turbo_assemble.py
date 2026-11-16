@@ -44,7 +44,13 @@ def main():
     a = ap.parse_args()
     items = load_lines(a.lines)
     best = {}
-    for p in glob.glob(os.path.join(a.stage, "s*.json")):
+    # Recursive scan: the stage holds one subdir per artifact (wave-1
+    # and wave-2 artifacts contain SAME-NAMED s<idx>.json files, so
+    # they must never be merged into one flat directory — a merged
+    # download overwrote 38 wave-2 ship records in the 2026-11-16
+    # proof run). Each record's wav is resolved next to the record.
+    for p in glob.glob(os.path.join(a.stage, "**", "s*.json"),
+                       recursive=True):
         try:
             rec = json.load(open(p, encoding="utf-8"))
         except Exception:
@@ -52,18 +58,20 @@ def main():
         if not rec.get("ship"):
             continue
         idx = int(rec["sentence"])
-        wav = os.path.join(a.stage, f"s{idx}.wav")
+        wav = os.path.join(os.path.dirname(p), f"s{idx}.wav")
         if not os.path.exists(wav):
             continue
         prev = best.get(idx)
-        if prev is None or (rec.get("wave") or 1) >= (prev.get("wave") or 1):
-            best[idx] = rec
+        if prev is None or (rec.get("wave") or 1) >= \
+                (prev[0].get("wave") or 1):
+            best[idx] = (rec, wav)
     missing = [idx for idx, _ in items if idx not in best]
     qc = {"sentences": len(items), "shipped": len(best),
           "missing": missing, "rows": []}
     for idx, _text in items:
-        rec = best.get(idx)
-        if rec:
+        got = best.get(idx)
+        if got:
+            rec = got[0]
             qc["rows"].append(
                 {"sentence": idx, "wave": rec.get("wave"),
                  "take": rec.get("shipped_take"),
@@ -78,7 +86,7 @@ def main():
         sys.exit(2)
     import engine
     settings = engine.load_settings()
-    paths = [os.path.join(a.stage, f"s{idx}.wav") for idx, _ in items]
+    paths = [best[idx][1] for idx, _ in items]
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     info = engine.assemble(paths, a.out, settings, use_bed=True)
     qc["assembly"] = info
