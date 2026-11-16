@@ -1,0 +1,49 @@
+== 1. gate 6 fires on all 8 Sample B v1 sentences ==
+PASS B1 head grunt detected
+PASS B2 head grunt detected
+PASS B3 head grunt detected
+PASS B4 head grunt detected
+PASS B5 head grunt detected
+PASS B6 head grunt detected
+PASS B7 head grunt detected
+PASS B8 head grunt detected
+== 2. gate 6 silent on genuine narration ==
+PASS no grunt in voice/refs/natspan2.wav
+PASS no grunt in voice/telugu-reference.wav
+PASS no grunt in voice/english-reference.wav
+== 3. gate 7 flags B6 v1 only ==
+PASS B1 cut-word passes
+PASS B2 cut-word passes
+PASS B3 cut-word passes
+PASS B4 cut-word passes
+PASS B5 cut-word passes
+PASS B6 cut-word fails
+PASS B7 cut-word passes
+PASS B8 cut-word passes
+PASS A1 cut-word passes
+PASS A2 cut-word passes
+PASS A3 cut-word passes
+PASS A4 cut-word passes
+== 4. gate 6 mute round-trip on a copy of B6 ==
+PASS mute applied
+PASS file length unchanged
+PASS grunt gone after mute
+== 5. v3 sentence set passes both gates ==
+PASS v3 B1 gate 6 passes
+PASS v3 B1 gate 7 passes
+PASS v3 B2 gate 6 passes
+PASS v3 B2 gate 7 passes
+PASS v3 B3 gate 6 passes
+PASS v3 B3 gate 7 passes
+PASS v3 B4 gate 6 passes
+PASS v3 B4 gate 7 passes
+PASS v3 B5 gate 6 passes
+PASS v3 B5 gate 7 passes
+PASS v3 B6 gate 6 passes
+PASS v3 B6 gate 7 passes
+PASS v3 B7 gate 6 passes
+PASS v3 B7 gate 7 passes
+PASS v3 B8 gate 6 passes
+PASS v3 B8 gate 7 passes
+
+ALL PASS

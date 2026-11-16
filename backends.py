@@ -22,6 +22,13 @@ Backend selection (env JULIE_TTS_BACKEND):
                      own Telugu speaker, merged into this tool on the
                      owner's order (2026-11-16) next to the locked
                      Chatterbox English route.
+    omnivoice        OmniVoice zero-shot clone via the official
+                     k2-fsa/OmniVoice HF Space — a route implemented in
+                     engine.py alongside indicf5-space. Telugu only,
+                     LOCKED settings (canonical natspan2 reference,
+                     speed 1.0 exactly, no speed correction ever;
+                     owner's order, 2026-11-16). Model weights are
+                     CC-BY-NC (non-commercial) — see README.
     elevenlabs       ElevenLabs API — needs env ELEVENLABS_API_KEY and a
                      voice id (env JULIE_EL_VOICE_ID, or
                      backends.elevenlabs.voice_id in voice/settings.json);
@@ -49,8 +56,8 @@ import os
 import requests
 
 HTTP_TIMEOUT_S = 120
-BACKENDS = ("indicf5-space", "chatterbox", "mms", "elevenlabs", "http",
-            "github")
+BACKENDS = ("indicf5-space", "chatterbox", "mms", "omnivoice",
+            "elevenlabs", "http", "github")
 _DEFAULTS = {"en": "chatterbox", "te": "indicf5-space", "hi": "indicf5-space"}
 
 
@@ -135,6 +142,11 @@ def synthesize(backend, text, lang, settings):
             "[mms] the MMS backend is a local route handled inside "
             "engine.py (like chatterbox and indicf5-space), not a "
             "service backend")
+    if backend == "omnivoice":
+        raise RuntimeError(
+            "[omnivoice] the OmniVoice backend is a Space route handled "
+            "inside engine.py (like indicf5-space), not a service "
+            "backend")
     if backend == "elevenlabs":
         return synthesize_elevenlabs(text, lang, settings)
     if backend == "http":
