@@ -46,11 +46,23 @@ Pluggable backends (backends.py): env JULIE_TTS_BACKEND overrides the
 route above for any language — "mms" (Meta MMS-TTS, native-diction
 Telugu, local model — the second engine merged into this tool on
 2026-11-16 alongside the locked Chatterbox English route),
-"elevenlabs" (your ElevenLabs voice,
+"omnivoice" (OmniVoice zero-shot clone via the official k2-fsa HF
+Space, Telugu, LOCKED settings — canonical natspan2 reference, speed
+1.0 exactly, NO speed correction ever; added 2026-11-16 after the
+owner's ear approved it over the earlier routes; weights CC-BY-NC,
+see README), "elevenlabs" (your ElevenLabs voice,
 key from env ELEVENLABS_API_KEY) or "http" (any model server you run,
 env JULIE_TTS_URL). The gates, re-roll loop and QC report are unchanged
 on top of every backend; each take's backend is recorded in the QC
 report. See README, "Connect your own model (fast path)".
+
+Every generated take, on EVERY backend, passes the gate-6 head-grunt
+auto-mute (acoustic_gates.py) before gating: the OmniVoice route
+prepends a short quiet flat low grunt to nearly every sentence, and
+the mute — non-word phonation sitting in silence, muted in place —
+is recorded per roll in the QC report. Gate 7 (cut word) runs inside
+gates.run_all_gates and is a hard ship condition in ship_decision:
+a take whose ending is truncated ships nothing.
 
 Each take is synthesized in a subprocess (this file, --gen-take) so the
 network environment the Space needs (proxy env intact) never contaminates
@@ -385,6 +397,99 @@ def _mms_take(text, lang, out_wav, settings, info):
     _bytes_to_take(buf.getvalue(), lang, out_wav, settings, info)
 
 
+# =========================================================================
+# OmniVoice route (official k2-fsa HF Space — Telugu clone, LOCKED
+# settings, added 2026-11-16 on the owner's ear approval)
+# =========================================================================
+OMNIVOICE_BASE = "https://k2-fsa-omnivoice.hf.space"
+OMNI_REF = os.path.join(VOICE_DIR, "refs", "natspan2.wav")
+# LOCKED (owner's order, 2026-11-16): same voice, same speed, every
+# run. The reference is the canonical natspan2 (the same audio as
+# voice/telugu-reference.wav); speed is 1.0 EXACTLY and no speed
+# correction (generation-side or atempo) may ever be applied on this
+# route — pace comes from the reference, as approved. Steps/guidance
+# are the values the approved samples were generated with.
+OMNIVOICE_LOCKED = {"space": "k2-fsa/OmniVoice", "language": "Telugu",
+                    "speed": 1.0, "num_steps": 32, "guidance": 2.0,
+                    "ref": "voice/refs/natspan2.wav (canonical natspan2)",
+                    "speed_correction": "FORBIDDEN on this route"}
+
+
+def _omnivoice_synthesize(text, ref_wav, ref_text):
+    """One OmniVoice clone generation via the official Space's Gradio
+    API (_clone_fn); returns raw audio bytes. Retries Space error
+    events with backoff — the free anonymous quota drops calls in
+    streaks; pacing clears them (nothing evaded, nothing paid)."""
+    import requests
+    s = requests.Session()
+
+    def upload():
+        with open(ref_wav, "rb") as f:
+            up = s.post(OMNIVOICE_BASE + "/gradio_api/upload",
+                        files={"files": (os.path.basename(ref_wav), f,
+                                         "audio/wav")},
+                        timeout=180)
+        return up.json()[0]
+
+    last = None
+    for attempt in range(3):
+        try:
+            ref_path = upload()
+            data = [text, OMNIVOICE_LOCKED["language"],
+                    {"path": ref_path, "meta": {"_type": "gradio.FileData"}},
+                    ref_text, "", OMNIVOICE_LOCKED["num_steps"],
+                    OMNIVOICE_LOCKED["guidance"], True,
+                    OMNIVOICE_LOCKED["speed"], None, True, True]
+            r = s.post(OMNIVOICE_BASE + "/gradio_api/call/_clone_fn",
+                       json={"data": data}, timeout=180)
+            eid = r.json()["event_id"]
+            with s.get(OMNIVOICE_BASE + f"/gradio_api/call/_clone_fn/{eid}",
+                       stream=True, timeout=1200) as resp:
+                buf = ""
+                for chunk in resp.iter_content(chunk_size=None,
+                                               decode_unicode=True):
+                    buf += chunk
+            if "event: error" in buf and "event: complete" not in buf:
+                raise RuntimeError("space error event")
+            m = re.findall(r"event: complete\ndata: (.*)", buf)
+            if not m:
+                raise RuntimeError("no complete event: " + buf[-150:])
+            out = json.loads(m[-1])[0]
+            audio = s.get(OMNIVOICE_BASE + "/gradio_api/file="
+                          + out["path"], timeout=180).content
+            if len(audio) < 5000:
+                raise RuntimeError(f"tiny output {len(audio)}b")
+            return audio
+        except Exception as e:  # Space flakiness is routine; retry
+            last = e
+            if attempt < 2:
+                time.sleep(45)
+    raise RuntimeError(
+        f"[omnivoice] OmniVoice failed after retries: {last}")
+
+
+def _omnivoice_take(text, lang, out_wav, settings, info):
+    """One OmniVoice take (Telugu only, locked settings). The route
+    generates ONE sentence per take — the engine's main loop already
+    splits text into sentences, so per-sentence generation is the
+    engine's own shape, unchanged."""
+    if lang != "te":
+        raise RuntimeError(
+            "[omnivoice] the OmniVoice route in this tool is Telugu-only "
+            "(locked natspan2 house voice); for en use chatterbox, for "
+            "hi use indicf5-space, elevenlabs or http")
+    env_speed = os.environ.get("JULIE_OMNIVOICE_SPEED")
+    if env_speed is not None and float(env_speed) != 1.0:
+        raise RuntimeError(
+            "[omnivoice] speed is LOCKED at 1.0 on this route — no "
+            "speed correction is permitted (owner's order, 2026-11-16); "
+            f"refusing JULIE_OMNIVOICE_SPEED={env_speed}")
+    ref_text = open(TE_REF_TEXT).read().strip()
+    audio = _omnivoice_synthesize(text, OMNI_REF, ref_text)
+    _bytes_to_take(audio, lang, out_wav, settings, info)
+    info["omnivoice"] = dict(OMNIVOICE_LOCKED)
+
+
 def _gen_take_core(backend, lang, text, out_wav, settings, session=None):
     """Synthesize ONE raw take via an already-resolved backend; returns
     the GEN_INFO dict. `session` is a reusable _ChatterboxSession —
@@ -409,11 +514,26 @@ def _gen_take_core(backend, lang, text, out_wav, settings, session=None):
         _bytes_to_take(audio, lang, out_wav, settings, info)
     elif backend == "mms":
         _mms_take(text, lang, out_wav, settings, info)
+    elif backend == "omnivoice":
+        _omnivoice_take(text, lang, out_wav, settings, info)
     elif backend in ("elevenlabs", "http", "github"):
         audio = backends.synthesize(backend, text, lang, settings)
         _bytes_to_take(audio, lang, out_wav, settings, info)
     else:  # resolve_backend already rejects unknown values
         raise RuntimeError(f"[backends] unhandled backend {backend!r}")
+    # Gate 6 (2026-11-16): auto-mute the head grunt on EVERY route
+    # before the take is gated. acoustic_gates has no environment side
+    # effects (unlike gates.py, which strips proxies at import), so it
+    # is safe inside this generation process. The action is recorded
+    # in GEN_INFO -> the QC report's per-roll "gen" entry.
+    try:
+        import acoustic_gates
+        hg = acoustic_gates.head_grunt_gate(out_wav, apply=True)
+        if hg.get("action", {}).get("muted"):
+            info["head_grunt_gate"] = hg["action"]
+    except Exception as e:  # a mute failure must not kill generation;
+        # gate 6 in run_all_gates will still catch an unmuted grunt
+        info["head_grunt_gate_error"] = str(e)[-200:]
     return info
 
 
@@ -629,7 +749,7 @@ def run_batch(args, settings, gen_env):
                       "gen_s_total": round(sum(
                           e.get("gen_s") or 0
                           for r in records.values() for e in r["rolls"]), 1)},
-          "verdict": ("PASS — every line passed all five gates"
+          "verdict": ("PASS — every line passed all gates"
                       if not failed else
                       f"PARTIAL — {len(failed)} of {len(records)} lines "
                       "never passed the gates; no mp3 written for them")}
@@ -849,7 +969,8 @@ def _take_pace_wps(path, lang, n_words):
 def ship_decision(take_path, lang, text, settings, rep):
     """The single place a take is accepted for shipping.
 
-    en: the five gates decide (locked recipe, unchanged).
+    en: the five gates decide (locked recipe, unchanged) — plus
+    gates 6/7, which ride inside report['pass'].
     te/hi: WHOLE-TAKE ONLY, ear-approved bar (Ajju, 2026-11-16,
     fixed13 — gates.ship_bar_te_hi in settings.json): gate 1 (no-hint
     language) AND gate 2 (ghost scan) pass, PLUS identity >=
@@ -859,8 +980,12 @@ def ship_decision(take_path, lang, text, settings, rep):
     calibration proved the identical suite fails her own genuine
     narration, and the ear-approved fixed13 takes do not pass all of
     them either (S1 F0 184.2 Hz vs the 185 Hz band edge) — requiring
-    all five would refuse the very takes the owner approved. A check
-    that cannot be measured fails closed (ship=False): an
+    all five would refuse the very takes the owner approved. GATE 7
+    (cut word, added 2026-11-16 on the owner's order after Sample B
+    sentence 6 shipped a truncated ending) is NOT advisory: it is a
+    hard condition here, because a truncated final word is exactly
+    the class of defect the ear caught and the bar exists to kill.
+    A check that cannot be measured fails closed (ship=False): an
     unmeasurable take is not a passing take.
     Returns (ship, extra); extra is merged into the QC roll entry.
     """
@@ -872,14 +997,21 @@ def ship_decision(take_path, lang, text, settings, rep):
         return False, {}
     g = settings["gates"]
     extra = {"ship_rule": "whole-take ear-approved bar: gate1 + gate2 "
-                          "+ identity + pace (gates 3/4/5 advisory)",
+                          "+ identity + pace + gate7 cut-word "
+                          "(gates 3/4/5 advisory)",
              "gate1_pass": True, "gate2_pass": True,
+             "gate7_pass": rep.get("gate7_cut_word", {}).get("pass"),
              "advisory": {
                  "gate3_pass": rep.get("gate3_pronunciation", {})
                  .get("pass"),
                  "gate4_pass": rep.get("gate4_phys_swallowed", {})
                  .get("pass"),
                  "gate5_pass": rep.get("gate5_pitch", {}).get("pass")}}
+    if extra["gate7_pass"] is not True:
+        # Hard block (owner's order, 2026-11-16): a truncated ending
+        # never ships; an unmeasured ending fails closed like the rest.
+        extra["blocked_by"] = "gate7_cut_word"
+        return False, extra
     try:
         ident = _take_identity(take_path)
         extra["identity"] = round(ident, 3)
@@ -1102,7 +1234,7 @@ def main():
                      "ship bar (gate1 + gate2 + identity + pace, whole "
                      "takes; gates 3/4/5 recorded advisory)"
                      if args.lang in WHOLE_TAKE_LANGS else
-                     "PASS — every sentence passed all five gates")
+                     "PASS — every sentence passed all gates")
     qc["final"] = {"out": args.out, "backend": backend, **info}
     qc_path = os.path.splitext(args.out)[0] + ".qc.json"
     with open(qc_path, "w") as fh:
