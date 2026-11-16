@@ -181,7 +181,7 @@ alone is minutes per line, before a single word is generated. Batch mode
 removes it:
 
 ```bash
-# one line per row in lines.txt; writes out/001.mp3, out/002.mp3, …
+# one line per row in lines.txt; writes out/001.wav, out/002.wav, … (lossless intermediates)
 python3 engine.py --batch lines.txt --lang en --outdir out/
 python3 engine.py --batch lines.txt --lang te --outdir out/ --jobs 4 --rerolls 2
 ```

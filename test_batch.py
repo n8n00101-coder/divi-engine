@@ -94,8 +94,8 @@ def unit_tests():
     check("jobs=1 single chunk", engine.split_round_robin(items, 1) == [items])
     check("empty items -> no chunks", engine.split_round_robin([], 4) == [])
 
-    check("line names zero-padded", engine.batch_line_name(7) == "007.mp3"
-          and engine.batch_line_name(209) == "209.mp3")
+    check("line names zero-padded", engine.batch_line_name(7) == "007.wav"
+          and engine.batch_line_name(209) == "209.wav")
 
     # CLI contract
     p = subprocess.run([sys.executable, os.path.join(HERE, "engine.py"),

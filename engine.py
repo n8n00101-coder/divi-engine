@@ -661,7 +661,11 @@ def split_round_robin(items, n):
 
 
 def batch_line_name(index):
-    return f"{index:03d}.mp3"
+    # WAV, never mp3: line files are intermediates the final
+    # assembly (and its verification) is built from — a lossy
+    # round-trip degrades take tails (measured: it flips the
+    # cut-word gate on a take that passed as WAV).
+    return f"{index:03d}.wav"
 
 
 def batch_gen_worker(in_path, out_path):
@@ -1128,11 +1132,19 @@ def assemble(take_paths, out_mp3, settings, use_bed):
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tf:
         tmp_wav = tf.name
     sf.write(tmp_wav, mix, SR, subtype="PCM_16")
-    # ONE loudnorm pass, straight to the final mp3
+    # ONE loudnorm pass, straight to the output. A .wav target is a
+    # LOSSLESS intermediate (batch line files): an mp3 round-trip
+    # measurably degrades take tails and flips the cut-word gate
+    # between the take check and the final assembled-file check, so
+    # intermediates are never lossy. Only the final product is mp3.
+    if out_mp3.lower().endswith(".wav"):
+        enc = ["-ar", "24000", "-ac", "1", "-codec:a", "pcm_s16le"]
+    else:
+        enc = ["-ar", "48000", "-ac", "2", "-codec:a", "libmp3lame",
+               "-q:a", "2"]
     subprocess.run(["ffmpeg", "-v", "error", "-i", tmp_wav,
                     "-af", "loudnorm=I=-15:TP=-1.5:LRA=11",
-                    "-ar", "48000", "-ac", "2", "-codec:a", "libmp3lame",
-                    "-q:a", "2", out_mp3, "-y"], check=True)
+                    *enc, out_mp3, "-y"], check=True)
     os.unlink(tmp_wav)
     return {"duration_s": round(len(mix) / SR, 2), "bed": use_bed,
             "level_match_target_rms": target, "spans": spans}

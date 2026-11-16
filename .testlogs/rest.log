@@ -1,0 +1,254 @@
+===== test_repair.py =====
+PASS wave1: 3 candidates on the primary route
+PASS wave1: seeds are distinct
+PASS wave2 ghost: escalates to the alternate clone route
+PASS wave2 cut-word: primary re-rolls + alternate route
+PASS wave3: full ladder includes alternate references
+PASS hi wave2 language: alternate reference span
+PASS en ladder: chatterbox seed variants only
+PASS service backend: fresh candidates, same route
+PASS defect classes read the gate report
+PASS generation error class
+PASS score prefers the clean take
+PASS best_passing picks the best PASSING candidate only
+PASS best_passing of no passes is None
+PASS (a) grunt take generated
+PASS (a) grunt auto-mute recorded in GEN_INFO
+PASS (a) grunt head is silent after the mute
+PASS (b) job completes with a passing take
+PASS (b) winner came from a later wave (ladder worked)
+PASS (b) repair log records the escalation
+PASS (c) partial job exits 2 but DELIVERS the mp3
+PASS (c) verdict is PARTIAL and names the failed sentence
+PASS (c) good sentence passed, bad one marked failed
+
+ALL PASS
+----- test_repair.py exit: 0 -----
+===== test_batch.py =====
+PASS blank rows skipped
+PASS default numbering from 1
+PASS first_index offsets numbering
+PASS round-robin chunk sizes
+PASS round-robin covers every item once
+PASS round-robin spreads consecutive items
+PASS jobs > items clamps
+PASS jobs=1 single chunk
+PASS empty items -> no chunks
+PASS line names zero-padded
+PASS --batch without --outdir is an error
+PASS --help documents batch mode
+PASS github backend resolves
+PASS github synthesize raises named instructions
+PASS batch-gen worker exits 0
+PASS worker reports the backend
+PASS worker reports every item
+PASS worker results carry gen timing
+PASS worker takes normalised to 24 kHz mono
+PASS batch run exits 0 (all pass) or 2 (honest partial)
+PASS batch.qc.json written
+PASS QC mode is batch
+PASS QC records backend + jobs
+PASS QC has one entry per line
+PASS QC per-line exactly one roll (rerolls=0, candidates=1)
+PASS QC per-roll carries gen timing
+PASS one model load per chunk (2 chunks, 1 round)
+PASS QC timings carry wall time
+PASS exit code matches QC verdict
+
+ALL PASS
+----- test_batch.py exit: 0 -----
+===== test_backends.py =====
+PASS elevenlabs returns audio bytes
+PASS elevenlabs URL carries voice id
+PASS elevenlabs xi-api-key header from env
+PASS elevenlabs default model
+PASS elevenlabs body text
+PASS elevenlabs JULIE_EL_MODEL override
+PASS elevenlabs voice id falls back to settings.json
+PASS elevenlabs 401 raises named error
+PASS elevenlabs error leaks no key
+PASS http returns audio bytes
+PASS http JSON body {text, lang, voice}
+PASS http bearer header from JULIE_TTS_KEY
+PASS http timeout is 120 s
+PASS http no key -> no Authorization header
+PASS elevenlabs missing key raises named fast-fail
+PASS elevenlabs missing voice id raises named fast-fail
+PASS http missing url raises named fast-fail
+PASS default backend en
+PASS default backend te
+PASS default backend hi
+PASS env override wins
+PASS unknown backend raises
+PASS mms selectable for te
+PASS en default still chatterbox (mms merge untouched)
+PASS mms service dispatch raises named error
+PASS mms refuses en in engine routing
+PASS gen-take via http exits 0
+PASS GEN_INFO names the http backend
+PASS take normalised to 24 kHz mono
+PASS stub server got {text, lang, voice}
+PASS stub server got bearer token
+PASS full run exits 0 or honest 2
+PASS QC json written
+PASS QC records backend overall
+PASS QC records backend per take
+PASS QC per-take backend matches GEN_INFO
+
+ALL PASS
+----- test_backends.py exit: 0 -----
+===== test_wholetake.py =====
+PASS forbid_inside_sentence_edit raises for te
+PASS forbid_inside_sentence_edit raises for hi
+PASS forbid_inside_sentence_edit allows en
+PASS _squash_gaps_np refuses te
+PASS _squash_gaps_np refuses hi
+PASS _squash_gaps_np still works for en
+PASS _gen_take_core chatterbox refuses te
+PASS te gate-fail take never ships
+PASS en gate-pass take ships on gates alone
+PASS en gate-fail take does not ship
+PASS te small budget stays local
+PASS te large budget dispatches
+PASS hi large budget dispatches
+PASS en never dispatches
+PASS te run with no passing take exits 2
+PASS no mp3 written when no te take passes
+PASS QC report still written (gate table kept)
+PASS QC verdict is the FAIL honesty line
+PASS QC records both rolls
+
+ALL PASS
+----- test_wholetake.py exit: 0 -----
+===== test_speedlock.py =====
+PASS pace guard outcomes are ok/regen/reject only
+PASS in-band rate is ok
+PASS out-of-band rate is regen (never a stretch)
+PASS unmeasurable rate is reject
+PASS hindi recipe tempo is the locked 1.20
+PASS te/en recipe tempo is 1.0
+PASS no flag -> None (locked)
+PASS valid user speed passes through
+PASS user speed 0.3 refused
+PASS user speed 2.5 refused
+PASS user speed 0.0 refused
+PASS user speed -1.0 refused
+PASS QC block without flag says LOCKED
+PASS QC block with flag says USER-REQUESTED
+PASS apply_tempo why='auto' refused
+PASS apply_tempo why='pace-guard' refused
+PASS apply_tempo why='correction' refused
+PASS apply_tempo why='' refused
+PASS apply_tempo factor 1.0 is a no-op
+PASS apply_tempo user 2.0 halves the duration
+PASS no atempo call site outside speedpolicy.py
+PASS engine has no _atempo_file anymore
+PASS out-of-band take raises PaceBandReject
+PASS no tempo step executed for the rejected take
+Traceback (most recent call last):
+  File "/home/hatch/workspace/divi-engine-work/test_speedlock.py", line 205, in <module>
+    e2e_tests()
+  File "/home/hatch/workspace/divi-engine-work/test_speedlock.py", line 183, in e2e_tests
+    p = subprocess.run(
+        ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2116, in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+  File "/usr/lib/python3.12/subprocess.py", line 1253, in _check_timeout
+    raise TimeoutExpired(
+subprocess.TimeoutExpired: Command '['/home/hatch/workspace/.venv-voice/bin/python', '/home/hatch/workspace/divi-engine-work/engine.py', '--text', 'లక్ష ఆడవాళ్ళకి 128.6 నేషనల్ 64.6 6 కి దాదాపు డబుల్ కానీ జాగ్రత్త ఈ నెంబర్స్ రిపోర్ట్ అయిన కేసులే కేసులు ఎక్కువ అంటే రిపోర్టింగ్ ఎక్కువ కావచ్చు నేరాలు కాదు పైగా జూలై 2024 లో కొత్త క్రిమినల్ చట్టాలు వచ్చాయి.', '--lang', 'te', '--out', '/tmp/divi_speedlock_e2e_gj509y6j/locked.mp3', '--rolls', '1', '--candidates', '1']' timed out after 900 seconds
+----- test_speedlock.py exit: 1 -----
+===== test_preflight.py =====
+PASS en typo corrected
+PASS en typo logged
+PASS en percent -> symbol
+PASS en percent logged as format
+PASS en clean sentence byte-identical
+PASS en clean sentence: no corrections
+PASS en duplicate removed
+PASS en duplicate logged
+PASS en terminator supplied
+PASS en markdown+emoji stripped
+PASS en over-long split
+PASS te connective corrected
+PASS te connective class english_mix
+PASS te percent -> symbol
+PASS te purity corrected
+PASS te purity class
+PASS te purity flagged not rewritten
+PASS te unattested word converted
+PASS te pronoun flagged not rewritten
+PASS hi percent -> symbol
+PASS hi percent logged
+PASS hi connective corrected
+PASS hi connective logged
+PASS hi clean line byte-identical
+PASS hi clean line: no corrections
+PASS te clean line byte-identical
+PASS batch dup line removed
+PASS batch missing terminator supplied
+PASS engine run completes (0 or honest 2)
+PASS generation consumed ONLY the corrected script
+PASS script.corrected.txt saved beside the output
+PASS QC carries the Script Corrections log
+PASS QC carries script_flags
+
+ALL PASS
+----- test_preflight.py exit: 0 -----
+===== proof_omnivoice_gates.py =====
+== 1. gate 6 fires on all 8 Sample B v1 sentences ==
+PASS B1 head grunt detected
+PASS B2 head grunt detected
+PASS B3 head grunt detected
+PASS B4 head grunt detected
+PASS B5 head grunt detected
+PASS B6 head grunt detected
+PASS B7 head grunt detected
+PASS B8 head grunt detected
+== 2. gate 6 silent on genuine narration ==
+PASS no grunt in voice/refs/natspan2.wav
+PASS no grunt in voice/telugu-reference.wav
+PASS no grunt in voice/english-reference.wav
+== 3. gate 7 flags B6 v1 only ==
+PASS B1 cut-word passes
+PASS B2 cut-word passes
+PASS B3 cut-word passes
+PASS B4 cut-word passes
+PASS B5 cut-word passes
+PASS B6 cut-word fails
+PASS B7 cut-word passes
+PASS B8 cut-word passes
+PASS A1 cut-word passes
+PASS A2 cut-word passes
+PASS A3 cut-word passes
+PASS A4 cut-word passes
+== 4. gate 6 mute round-trip on a copy of B6 ==
+PASS mute applied
+PASS file length unchanged
+PASS grunt gone after mute
+== 5. v3 sentence set passes both gates ==
+PASS v3 B1 gate 6 passes
+PASS v3 B1 gate 7 passes
+PASS v3 B2 gate 6 passes
+PASS v3 B2 gate 7 passes
+PASS v3 B3 gate 6 passes
+PASS v3 B3 gate 7 passes
+PASS v3 B4 gate 6 passes
+PASS v3 B4 gate 7 passes
+PASS v3 B5 gate 6 passes
+PASS v3 B5 gate 7 passes
+PASS v3 B6 gate 6 passes
+PASS v3 B6 gate 7 passes
+PASS v3 B7 gate 6 passes
+PASS v3 B7 gate 7 passes
+PASS v3 B8 gate 6 passes
+PASS v3 B8 gate 7 passes
+
+ALL PASS
+----- proof_omnivoice_gates.py exit: 0 -----
+ALLDONE

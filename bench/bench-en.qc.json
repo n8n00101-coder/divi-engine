@@ -1,0 +1,939 @@
+{
+ "engine": "Divi Engine 2.0",
+ "mode": "divi",
+ "out": "/home/hatch/workspace/divi-engine-work/bench/bench-en.mp3",
+ "duration_s": 220.53,
+ "bed": null,
+ "level_match_target_rms": 0.12886730581521988,
+ "spans": [
+  [
+   0.0,
+   4.839
+  ],
+  [
+   5.439,
+   5.383
+  ],
+  [
+   11.421,
+   5.041
+  ],
+  [
+   17.063,
+   4.675
+  ],
+  [
+   22.337,
+   5.063
+  ],
+  [
+   28.0,
+   3.736
+  ],
+  [
+   32.336,
+   5.468
+  ],
+  [
+   38.404,
+   5.287
+  ],
+  [
+   44.291,
+   3.64
+  ],
+  [
+   48.531,
+   5.624
+  ],
+  [
+   54.755,
+   4.419
+  ],
+  [
+   59.773,
+   3.779
+  ],
+  [
+   64.152,
+   5.155
+  ],
+  [
+   69.907,
+   4.397
+  ],
+  [
+   74.904,
+   4.013
+  ],
+  [
+   79.517,
+   3.555
+  ],
+  [
+   83.672,
+   4.263
+  ],
+  [
+   88.535,
+   2.872
+  ],
+  [
+   92.007,
+   4.184
+  ],
+  [
+   96.791,
+   6.072
+  ],
+  [
+   103.463,
+   3.555
+  ],
+  [
+   107.617,
+   4.6
+  ],
+  [
+   112.817,
+   5.347
+  ],
+  [
+   118.764,
+   4.856
+  ],
+  [
+   124.22,
+   4.013
+  ],
+  [
+   128.833,
+   2.897
+  ],
+  [
+   132.331,
+   5.652
+  ],
+  [
+   138.583,
+   3.139
+  ],
+  [
+   142.321,
+   5.159
+  ],
+  [
+   148.08,
+   5.624
+  ],
+  [
+   154.304,
+   2.975
+  ],
+  [
+   157.879,
+   3.64
+  ],
+  [
+   162.119,
+   4.543
+  ],
+  [
+   167.261,
+   4.024
+  ],
+  [
+   171.885,
+   4.536
+  ],
+  [
+   177.021,
+   4.312
+  ],
+  [
+   181.933,
+   4.845
+  ],
+  [
+   187.379,
+   3.721
+  ],
+  [
+   191.7,
+   4.792
+  ],
+  [
+   197.092,
+   5.04
+  ],
+  [
+   202.732,
+   4.515
+  ],
+  [
+   207.847,
+   4.056
+  ],
+  [
+   212.503,
+   3.544
+  ],
+  [
+   216.647,
+   3.879
+  ]
+ ],
+ "verification": {
+  "file": "/home/hatch/workspace/divi-engine-work/bench/bench-en.mp3",
+  "lang": "en",
+  "sentences_expected": 44,
+  "checks": {
+   "sentence_count": {
+    "pass": true,
+    "expected": 44,
+    "found": 44
+   },
+   "gaps": {
+    "pass": true,
+    "gaps_s": [
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6,
+     0.6
+    ],
+    "allowed_s": [
+     0.3,
+     1.05
+    ]
+   },
+   "completeness": {
+    "pass": true
+   },
+   "head_grunt": {
+    "pass": true
+   },
+   "cut_word": {
+    "pass": false
+   },
+   "interior_silence": {
+    "pass": true,
+    "max_allowed_s": 0.9
+   },
+   "levels": {
+    "pass": true,
+    "median_rms_db": -18.2,
+    "per_sentence_db": [
+     -18.6,
+     -18.4,
+     -18.4,
+     -18.2,
+     -18.1,
+     -18.1,
+     -18.0,
+     -18.0,
+     -18.2,
+     -18.1,
+     -18.1,
+     -18.2,
+     -18.4,
+     -18.1,
+     -18.2,
+     -18.2,
+     -18.1,
+     -18.3,
+     -18.1,
+     -18.2,
+     -18.2,
+     -18.1,
+     -18.1,
+     -18.1,
+     -18.2,
+     -18.3,
+     -18.1,
+     -18.3,
+     -18.2,
+     -18.1,
+     -18.3,
+     -18.2,
+     -18.2,
+     -18.1,
+     -18.2,
+     -18.2,
+     -18.1,
+     -18.2,
+     -18.2,
+     -18.2,
+     -18.1,
+     -18.2,
+     -18.2,
+     -17.8
+    ],
+    "allowed_spread_db": 7.0
+   },
+   "language": {
+    "pass": true,
+    "detected": "en",
+    "prob": 0.991,
+    "required": 0.8
+   },
+   "duration": {
+    "pass": true,
+    "actual_s": 220.53,
+    "expected_s": 220.53,
+    "tolerance_s": 0.5
+   },
+   "identity_spot": {
+    "status": "measured",
+    "values": {
+     "1": 0.835,
+     "23": 0.878,
+     "44": 0.837
+    },
+    "min_required": 0.75,
+    "pass": true
+   }
+  },
+  "sentences": [
+   {
+    "index": 1,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 1,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": false,
+    "cut_word_fails": [
+     "abrupt cut: island-final-30ms -37 dB vs peak -25 dB, post -56 dB"
+    ],
+    "interior_silence_max_s": 0.4,
+    "interior_silence_pass": true,
+    "rms_db": -18.6
+   },
+   {
+    "index": 2,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 2,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.49,
+    "interior_silence_pass": true,
+    "rms_db": -18.4
+   },
+   {
+    "index": 3,
+    "missing_words": [],
+    "mean_word_sim": 0.98,
+    "best_match_sentence": 3,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.34,
+    "interior_silence_pass": true,
+    "rms_db": -18.4
+   },
+   {
+    "index": 4,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 4,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.36,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 5,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 5,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.5,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 6,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 6,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 7,
+    "missing_words": [],
+    "mean_word_sim": 0.98,
+    "best_match_sentence": 7,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.44,
+    "interior_silence_pass": true,
+    "rms_db": -18.0
+   },
+   {
+    "index": 8,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 8,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.38,
+    "interior_silence_pass": true,
+    "rms_db": -18.0
+   },
+   {
+    "index": 9,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 9,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.34,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 10,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 10,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.44,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 11,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 11,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.4,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 12,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 12,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 13,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 13,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.57,
+    "interior_silence_pass": true,
+    "rms_db": -18.4
+   },
+   {
+    "index": 14,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 14,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.36,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 15,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 15,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.36,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 16,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 16,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.36,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 17,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 17,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.33,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 18,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 18,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.36,
+    "interior_silence_pass": true,
+    "rms_db": -18.3
+   },
+   {
+    "index": 19,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 19,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.36,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 20,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 20,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.55,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 21,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 21,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.39,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 22,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 22,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.34,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 23,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 23,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 24,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 24,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 25,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 25,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 26,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 26,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.61,
+    "interior_silence_pass": true,
+    "rms_db": -18.3
+   },
+   {
+    "index": 27,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 27,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.73,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 28,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 28,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.33,
+    "interior_silence_pass": true,
+    "rms_db": -18.3
+   },
+   {
+    "index": 29,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 29,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.62,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 30,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 30,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.52,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 31,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 31,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.3
+   },
+   {
+    "index": 32,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 32,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 33,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 33,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.36,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 34,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 34,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.34,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 35,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 35,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.59,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 36,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 36,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.36,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 37,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 37,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 38,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 38,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 39,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 39,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.35,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 40,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 40,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.3,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 41,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 41,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.34,
+    "interior_silence_pass": true,
+    "rms_db": -18.1
+   },
+   {
+    "index": 42,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 42,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.56,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 43,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 43,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.33,
+    "interior_silence_pass": true,
+    "rms_db": -18.2
+   },
+   {
+    "index": 44,
+    "missing_words": [],
+    "mean_word_sim": 1.0,
+    "best_match_sentence": 44,
+    "completeness_pass": true,
+    "head_grunt_present": false,
+    "cut_word_pass": true,
+    "interior_silence_max_s": 0.36,
+    "interior_silence_pass": true,
+    "rms_db": -17.8
+   }
+  ],
+  "pass": false,
+  "duration_s": 220.53,
+  "window_source": "assembler spans",
+  "sentences_found": 44
+ },
+ "cloud_run_id": "43906319836",
+ "chunks": 27,
+ "script_corrections": [],
+ "script_flags": [],
+ "lines_total": 54,
+ "lines_shipped": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  7,
+  8,
+  9,
+  11,
+  12,
+  13,
+  14,
+  15,
+  17,
+  18,
+  20,
+  21,
+  22,
+  23,
+  24,
+  25,
+  26,
+  27,
+  28,
+  29,
+  30,
+  31,
+  32,
+  33,
+  34,
+  35,
+  36,
+  38,
+  40,
+  42,
+  43,
+  45,
+  46,
+  47,
+  49,
+  50,
+  51,
+  53,
+  54
+ ],
+ "lines_failed": [
+  6,
+  10,
+  16,
+  19,
+  37,
+  39,
+  41,
+  44,
+  48,
+  52
+ ],
+ "cloud_wall_s": 3394,
+ "note": "post-processed after watcher loss (VM /tmp wipe); cloud wall = run created->updated via API",
+ "verdict": "PARTIAL — 10 of 54 lines failed the full escalation ladder and are NOT in the file: [6, 10, 16, 19, 37, 39, 41, 44, 48, 52]. Everything else shipped."
+}
