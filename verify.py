@@ -175,17 +175,26 @@ def verify_file(path, sentences, lang, settings=None,
         phons = [t["phon"] or en_simple(t["tok"]) for t in toks]
         words = [w for w in script_text.strip().split() if w]
         wphon = [simple(w) for w in words]
+        # Words with NO phonetic form (digits, '%', symbols) cannot
+        # be judged in phonetic space — ASR renders numbers too
+        # unstably (the genuine reference narration itself would
+        # fail). They are excluded from missing/mean and reported
+        # as unjudged; every speakable word is judged strictly.
+        judged = [(wi, wphon[wi]) for wi in range(len(words))
+                  if wphon[wi]]
+        if not judged:
+            return [], (1.0 if toks else 0.0)
         assign, _junk = gates_mod.align(
-            wphon, [{"phon": p} for p in phons])
+            [p for _wi, p in judged], [{"phon": p} for p in phons])
         missing, sims = [], []
-        for wi, w in enumerate(words):
-            a = assign[wi] if wi < len(assign) else None
+        for k, (wi, p) in enumerate(judged):
+            a = assign[k] if k < len(assign) else None
             if a is None or a.get("missing") or not a.get("toks"):
-                missing.append(w)
+                missing.append(words[wi])
                 sims.append(0.0)
             else:
                 cat = "".join(phons[t] for t in a["toks"])
-                sims.append(gates_mod.sim(wphon[wi], cat))
+                sims.append(gates_mod.sim(p, cat))
         return missing, (float(np.mean(sims)) if sims else 0.0)
 
     completeness_ok = count_ok
