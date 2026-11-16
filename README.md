@@ -31,10 +31,17 @@ One female Indian narration voice, measured and locked on 2026-11-14:
   F0 median 221 Hz, controlled range 168–311 Hz, emphasis by *stretching*
   hinge words rather than pitch drama. **Status: LOCKED / owner-approved.**
 - **Telugu** — [IndicF5](https://huggingface.co/spaces/ai4bharat/IndicF5)
-  zero-shot clone from her Telugu reference. Pace is set by take
-  *selection* (the owner's ear calibration: −30% vs the raw first take);
-  time-stretching Telugu is banned — it stretched silences and broke the
-  channel rhythm.
+  zero-shot clone from her Telugu reference. **Status: FIXED —
+  owner ear-approved 2026-11-16 (fixed13).** The fix was the reference:
+  every earlier ref had been cut from a 1.4705× time-squeezed copy of
+  her narration; the canonical refs are now natspan1/2/3, cut from the
+  owner-supplied natural-pace audio after Demucs music removal. Pace is
+  set by the generation-side speed parameter with pre-calibrated
+  per-ref anchors (see `telugu_indicf5.speed_anchors` in
+  `voice/settings.json`) plus take *selection*; time-stretching Telugu
+  (atempo) is banned — it stretched silences and broke the channel
+  rhythm. Approved pair: `voice/samples/telugu-approved-s1-fixed13.mp3`
+  + `telugu-approved-s2-fixed13.mp3`.
 - **Hindi** — IndicF5 cross-lingual from the same Telugu reference, with
   the owner's approved +20% pace calibration (one atempo 1.20 per take,
   always logged). No Hindi reference sample exists yet, so Hindi is marked
@@ -68,10 +75,18 @@ route leaves a ~91 Hz hum in gaps), and exactly **one** loudnorm pass
 ## Why whole-take only (Telugu/Hindi)
 
 Telugu and Hindi sentences are generated as **whole takes** and ship only
-from a single take that passes the full suite: the five gates **plus**
-speaker identity (≥ 0.85 vs the English reference) **plus** the pace band
-(1.9–2.5 words/s). Clause/donor assembly and every splice-inside-a-sentence
-edit are hard-disabled for te/hi in code (`forbid_inside_sentence_edit`).
+from a single take that passes the ear-approved bar (Ajju, 2026-11-16,
+fixed13): gate 1 (no-hint language) **and** gate 2 (ghost scan) pass,
+**plus** speaker identity (≥ 0.85 vs the English reference) **plus** the
+pace band (1.9–2.5 words/s) — all on that one take. Gates 3/4/5 are still
+computed and recorded on every take but are advisory for te/hi: the
+fixed6 calibration proved the identical suite fails her own genuine
+narration, and the ear-approved fixed13 takes do not pass all of them
+either (S1's F0 sits 0.8 Hz under the pitch band edge). `ship_decision()`
+in `engine.py` is the single implementation of the bar; a sentence with
+no passing take ships **nothing**. Clause/donor assembly and every
+splice-inside-a-sentence edit are hard-disabled for te/hi in code
+(`forbid_inside_sentence_edit`).
 
 The reason is the owner's ear. Three patchwork builds — fixed2, fixed3 and
 fixed5 (2026-11-15) — were each rejected: every splice is a discontinuity a
@@ -249,11 +264,16 @@ voice/
   settings.json           ALL locked settings (single source of truth)
   english-reference.wav   canonical 25 s English reference (+ .m4a original)
   telugu-reference.wav    Telugu reference (+ its transcript .txt) — default is
-                          span2, the gold Telugu Part 2 span (see refs/)
-  refs/                   genuine Telugu reference set: span1/span2/span3
-                          (Telugu Part 2 narration slices) + te3 (slower
-                          Silent-Habit span), indexed by refs/refs.json
-  samples/                owner-approved samples per language
+                          natspan2, the Demucs-cleaned NATURAL-pace Telugu
+                          Part 2 span (fixed13, see refs/)
+  refs/                   genuine Telugu reference set: natspan1/2/3
+                          (natural-pace, music-removed, canonical) +
+                          span1/span2/span3 + te3 archived (cut from the
+                          1.4705x time-squeezed copy), indexed by
+                          refs/refs.json (incl. the ear-approved takes
+                          and their measurements)
+  samples/                owner-approved samples per language (Telugu pair:
+                          telugu-approved-s1/s2-fixed13.mp3)
   VOICE.md                voice provenance
 PRONUNCIATION-PROFILE.md  the measured delivery profile the settings encode
 ```

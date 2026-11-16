@@ -1,5 +1,5 @@
 {
- "note": "CANONICAL (2026-11-16, fixed13): natspan1/2/3 — cut from the owner-supplied NATURAL-pace Telugu Part 2 audio (827.81 s, the original YouTube timeline) after Demucs htdemucs music removal (vocals stem; piano bed suppressed ~30 dB). All earlier refs (span1/span2/span3, span2nat/span3nat, span2130, te3) derive from the 562.94 s TIME-SQUEEZED copy of the same narration (1.4705x) and are kept archived for comparison. Default = natspan2 (crime-stats passage). All 24000 Hz mono.",
+ "note": "TELUGU VOICE FIXED — Ajju ear-approved 2026-11-16 (fixed13, clean natural refs). CANONICAL (2026-11-16, fixed13): natspan1/2/3 — cut from the owner-supplied NATURAL-pace Telugu Part 2 audio (827.81 s, the original YouTube timeline) after Demucs htdemucs music removal (vocals stem; piano bed suppressed ~30 dB). All earlier refs (span1/span2/span3, span2nat/span3nat, span2130, te3) derive from the 562.94 s TIME-SQUEEZED copy of the same narration (1.4705x) and are kept archived for comparison. Default = natspan2 (crime-stats passage). All 24000 Hz mono.",
  "default": "natspan2",
  "refs": {
   "span1": {
@@ -49,5 +49,31 @@
    "text": "వన్ మార్కెటింగ్ ఈ పాటలు చాలాసార్లు రిలీజ్ కి ముందే సినిమాని ప్రమోట్ చేసే మార్కెటింగ్ టూల్ అని కంపోజర్స్ ప్రొడ్యూసర్స్ ఇండియా టుడే కి చెప్పారు. 2025 లో ఇలాంటి మూడు పాటలు ఉన్న థమ్మా సినిమా డైరెక్టర్ ఈ పాటలు ఆడియన్స్ ని సినిమాలోకి తీసుకొచ్చే మార్కెటింగ్ ఆసెట్స్ అన్నారు.",
    "source": "Telugu Part 2 NATURAL-pace narration, Demucs-cleaned vocals, 637.5-656.28 s of the 827.81 s original"
   }
+ },
+ "approved_takes": {
+  "status": "TELUGU VOICE FIXED — Ajju ear-approved 2026-11-16 ('Eee rendi voices ok'); the first Telugu ear-pass. These two takes are the practical calibration anchor for the te ship bar.",
+  "s1": {
+   "file": "voice/samples/telugu-approved-s1-fixed13.mp3",
+   "ref": "natspan3",
+   "speed": 0.78,
+   "duration_s": 6.92,
+   "identity_vs_en_ref": 0.881,
+   "f0_med_hz": 184.2,
+   "gate1_nohint": "PASS (te 0.948)",
+   "gate2_ghosts": "PASS",
+   "ship_bar": "g1+g2 pass + identity >= 0.85 + pace 1.9-2.5 wps, whole take"
+  },
+  "s2": {
+   "file": "voice/samples/telugu-approved-s2-fixed13.mp3",
+   "ref": "natspan3",
+   "speed": 0.84,
+   "duration_s": 8.82,
+   "identity_vs_en_ref": 0.869,
+   "f0_med_hz": 192.4,
+   "gate1_nohint": "PASS (te 0.993)",
+   "gate2_ghosts": "PASS",
+   "ship_bar": "g1+g2 pass + identity >= 0.85 + pace 1.9-2.5 wps, whole take"
+  },
+  "calibration_note": "Gates 3/4/5 are recorded on every take but are ADVISORY for te/hi since the fixed6 calibration (2026-11-16): the identical suite fails her own genuine narration spans (g3 min word-prob 0.000-0.326, PHYS flags on real takes), and the ear-approved takes above do not pass all of g3/g4/g5 either (S1 F0 184.2 sits 0.8 Hz under the pitch band edge). The ear-approved bar is g1+g2+identity+pace on one whole take; ship_decision() in engine.py implements exactly that bar."
  }
 }

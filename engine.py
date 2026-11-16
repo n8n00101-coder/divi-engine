@@ -845,18 +845,36 @@ def ship_decision(take_path, lang, text, settings, rep):
     """The single place a take is accepted for shipping.
 
     en: the five gates decide (locked recipe, unchanged).
-    te/hi: WHOLE-TAKE ONLY — the five gates PLUS identity >=
-    gates.identity_min_te_hi PLUS pace within gates.pace_wps_te_hi,
-    all on the SAME whole take. A check that cannot be measured fails
-    closed (ship=False): an unmeasurable take is not a passing take.
+    te/hi: WHOLE-TAKE ONLY, ear-approved bar (Ajju, 2026-11-16,
+    fixed13 — gates.ship_bar_te_hi in settings.json): gate 1 (no-hint
+    language) AND gate 2 (ghost scan) pass, PLUS identity >=
+    gates.identity_min_te_hi, PLUS pace within gates.pace_wps_te_hi,
+    all on the SAME whole take. Gates 3/4/5 are still computed and
+    recorded on every take but are ADVISORY for te/hi: the fixed6
+    calibration proved the identical suite fails her own genuine
+    narration, and the ear-approved fixed13 takes do not pass all of
+    them either (S1 F0 184.2 Hz vs the 185 Hz band edge) — requiring
+    all five would refuse the very takes the owner approved. A check
+    that cannot be measured fails closed (ship=False): an
+    unmeasurable take is not a passing take.
     Returns (ship, extra); extra is merged into the QC roll entry.
     """
     if lang not in WHOLE_TAKE_LANGS:
         return bool(rep["pass"]), {}
-    if not rep["pass"]:
+    g1 = rep.get("gate1_nohint_language", {}).get("pass")
+    g2 = rep.get("gate2_ghost_words", {}).get("pass")
+    if not (g1 and g2):
         return False, {}
     g = settings["gates"]
-    extra = {"ship_rule": "whole-take: 5 gates + identity + pace"}
+    extra = {"ship_rule": "whole-take ear-approved bar: gate1 + gate2 "
+                          "+ identity + pace (gates 3/4/5 advisory)",
+             "gate1_pass": True, "gate2_pass": True,
+             "advisory": {
+                 "gate3_pass": rep.get("gate3_pronunciation", {})
+                 .get("pass"),
+                 "gate4_pass": rep.get("gate4_phys_swallowed", {})
+                 .get("pass"),
+                 "gate5_pass": rep.get("gate5_pitch", {}).get("pass")}}
     try:
         ident = _take_identity(take_path)
         extra["identity"] = round(ident, 3)
@@ -1075,8 +1093,9 @@ def main():
         chosen.append(dest)
 
     info = assemble(chosen, args.out, settings, args.bed)
-    qc["verdict"] = ("PASS — every sentence passed the full ship suite "
-                     "(five gates + identity + pace)"
+    qc["verdict"] = ("PASS — every sentence passed the ear-approved "
+                     "ship bar (gate1 + gate2 + identity + pace, whole "
+                     "takes; gates 3/4/5 recorded advisory)"
                      if args.lang in WHOLE_TAKE_LANGS else
                      "PASS — every sentence passed all five gates")
     qc["final"] = {"out": args.out, "backend": backend, **info}

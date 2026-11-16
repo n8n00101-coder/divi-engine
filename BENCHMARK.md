@@ -149,3 +149,42 @@ gate re-roll luck moves individual lines, as runs 2–3 show.
   quota, oversubscribed threads thrash. The benchmark therefore pins
   2 threads everywhere; on a normal machine the `cpu // jobs`
   auto-size is the sensible default.
+
+## Telugu fast path (fixed13 anchors, measured 2026-11-16)
+
+The default Telugu route is the parallel Actions batch
+(`indicf5-batch.yml`: 10 runners, one IndicF5 load per runner, whole
+takes + the ship bar on every take). What makes it fast is NOT raw
+generation speed — it is the pre-calibrated per-ref speed anchors in
+`voice/settings.json` (`telugu_indicf5.speed_anchors`), which put the
+FIRST pass in the pace band so re-roll waves are the exception:
+
+- fixed13 calibrated waves (runs 43821187877 / 43821196336 /
+  43821204495 / 43821211163): 20 takes per run (10 runners x 1 roll x
+  2 sentences), wall **20-31 min per run** end-to-end (checkout, deps,
+  model load, generation, gates, artifact merge). First-pass yield at
+  the anchors: **S1 19/20, S2 20/20** takes in band with identity
+  >= 0.85.
+- fixed6 mass-roll (for contrast): 240 takes in ~98 min wall
+  (~4 min per take per runner, setup included) — brute force WITHOUT
+  calibrated anchors needed 120 takes to find its best pair; the
+  anchored route needed 20.
+
+### A 15-minute script, end to end (ESTIMATE)
+
+A 15-min narration at her pace is ~1,900-2,000 words, roughly
+120-135 whole sentences. One `indicf5-batch` dispatch with the full
+lines file at rolls=1 puts ~13 takes on each of the 10 runners:
+~25 min of setup/load (measured above) + ~13 x 2-4 min of
+generation+gates per runner.
+
+- **Estimate: ~1-1.5 h wall** for the anchored single-roll pass,
+  plus a small top-up dispatch for the handful of sentences with no
+  passing take (at the measured 95%+ first-pass yield, expect
+  ~5-10 sentences).
+- rolls=2 everywhere roughly doubles generation: **~1.7-2.2 h**.
+
+These are estimates extrapolated from the measured waves above, not
+promises: runner contention and Space/model-download variance move
+them. The local-VM route is NOT the fast path (per-take subprocess
+loads, see (a)-(c) above) and stays the small-budget fallback only.
