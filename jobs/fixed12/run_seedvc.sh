@@ -11,6 +11,7 @@
 #    fp32 when CUDA is absent.
 set -eux
 WS="$GITHUB_WORKSPACE"
+sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
 pip install --upgrade pip
 pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
 pip install seed-vc "transformers==4.46.3"
