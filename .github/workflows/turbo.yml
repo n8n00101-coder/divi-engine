@@ -73,8 +73,8 @@ on:
       - "turbo_assemble.py"
 
 env:
-  LINES_PATH: ${{ inputs.lines_path || 'jobs/turbo-bench-lines.txt' }}
-  CHUNKS: ${{ inputs.chunks || '8' }}
+  LINES_PATH: ${{ inputs.lines_path || 'jobs/turbo-bench-short.txt' }}
+  CHUNKS: ${{ inputs.chunks || '10' }}
   LANG: ${{ inputs.lang || 'te' }}
   REF_NAME: ${{ inputs.ref_name || 'natspan2' }}
   SPEED: ${{ inputs.speed }}

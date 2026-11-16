@@ -104,6 +104,34 @@ with rotating genuine-Telugu references and gating every take with the
 same suite. Exit code 3 means "dispatched"; takes and gate JSONs return as
 the run's `indicf5-batch-all` artifact.
 
+## Turbo — long Telugu/Hindi scripts: ONE command (the default)
+
+For a full script, run exactly one command:
+
+```bash
+python3 turbo.py script.txt --lang te --out voiceover.mp3
+# (same thing, via the engine: python3 engine.py --turbo script.txt --lang te --out voiceover.mp3)
+```
+
+The parallel split is **built in** — it is not a special mode and there
+is nothing else to invoke. The one command sentence-splits the script,
+commits the lines, and dispatches the `turbo` workflow, which fans the
+script out over many parallel GitHub Actions runners (auto-sized, ~4
+sentences per runner, up to 40). Each runner loads IndicF5 once,
+generates **whole takes** of its own chunk and gates them with the same
+locked ship bar (no-hint language + ghost scan + Resemblyzer identity
+≥ 0.85 + pace band — a take that fails never ships). A failures-only
+second wave re-rolls whatever wave 1 missed, then a final job assembles
+**one** mp3 under the locked settings (whole-sentence units, gated
+silence gaps, piano bed, one loudnorm pass). `turbo.py` waits for the
+run, downloads the result, and reports the wall time; if any sentence
+never passed, it exits non-zero and names the missing sentences instead
+of shipping a partial voice-over.
+
+Under the hood, if you ever need it: `gh workflow run turbo.yml -f
+lines_path=jobs/<lines>.txt -f chunks=40`, then `gh run download <id>
+-n turbo-final`. Measured timings: see `BENCHMARK.md`.
+
 ## Install
 
 ```bash
@@ -252,11 +280,21 @@ backends.py               pluggable TTS backends (defaults, mms, elevenlabs, htt
 gates.py                  the five gates, importable
 indicf5_gen.py            whole-sentence IndicF5 take generator + full gates
                           (runs on the indicf5-batch runners)
+turbo.py                  ONE-command long te/hi voice-over (default route):
+                          dispatches the turbo workflow, waits, downloads
+                          the single merged mp3 + QC json
+turbo_gen.py              per-runner chunk generator for the turbo workflow
+                          (one IndicF5 load, cheap pre-selection, gates only
+                          on the surviving take, locked ship bar)
+turbo_collect.py          merges wave-1 results -> the failures-only list
+turbo_assemble.py         completeness check + locked engine.assemble()
 requirements-indicf5.txt  deps for the IndicF5 runners
 .github/workflows/
   voice-batch.yml         free parallel batch voicing on GitHub Actions
   indicf5-batch.yml       10-runner brute-force whole-sentence Telugu takes,
                           every take fully gated (gates + identity + pace)
+  turbo.yml               the built-in parallel split for long te/hi scripts:
+                          fan-out -> failures-only wave 2 -> one merged mp3
 BENCHMARK.md              measured batch-vs-per-line timings on a small VM
 test_batch.py             offline batch-mode tests (stub generation)
 phonetics.py              Telugu / Devanagari / ASR-script phonetic normalizers
