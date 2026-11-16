@@ -149,10 +149,10 @@ def run():
     rep = verify.verify_file(p, [REF_TEXT], "te", SETTINGS,
                              sentence_spans=[[0.0, round(len(yh) / SR, 3)]],
                              expected_duration_s=round(len(yh) / SR, 2))
-    check("padded silence FAILS gap sanity",
+    check("padded silence FAILS interior-silence sanity",
           rep["pass"] is False
-          and rep["checks"]["gaps"]["pass"] is False,
-          str(rep["checks"].get("gaps"))[:200])
+          and rep["checks"]["interior_silence"]["pass"] is False,
+          str(rep["checks"].get("interior_silence"))[:200])
 
 
 if __name__ == "__main__":
