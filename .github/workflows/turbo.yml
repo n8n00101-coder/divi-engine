@@ -191,7 +191,7 @@ jobs:
 
   gen2:
     needs: collect
-    if: ${{ env.WAVE2 == 'true' && needs.collect.outputs.n_failed != '0' && needs.collect.outputs.n_failed != '' }}
+    if: ${{ inputs.wave2 != 'false' && needs.collect.outputs.n_failed != '0' && needs.collect.outputs.n_failed != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
