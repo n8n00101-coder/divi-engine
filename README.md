@@ -4,7 +4,7 @@ A gated voice-clone engine for one finalized house voice — **Julie AI** — in
 three languages: **English, Telugu, Hindi**.
 
 You give it text. It generates the voice-over, then **proves** the take is
-clean before it lets you have it: every take must pass five quality gates,
+clean before it lets you have it: every take must pass the quality gates,
 and the engine re-rolls automatically (up to 6 attempts per sentence) until
 one does. If no take passes, the engine exits non-zero, writes the gate
 table, and **refuses to write a final mp3**. Defective audio is not a
@@ -52,7 +52,7 @@ English-mixing rules for Telugu scripts (which word types stay English, where, a
 References and locked values: [`voice/`](voice/) (`settings.json` is the
 single source of truth — the gates read their thresholds from it).
 
-## The five gates — and the defect each one exists to kill
+## The gates — and the defect each one exists to kill
 
 Every defect below was shipped by hand once, and caught by a human ear.
 The gates are the permanent fix: they run **inside** the engine, on every
@@ -65,6 +65,8 @@ take, before anything is assembled.
 | 3 | **Pronunciation** — forced-language ASR word probabilities (every word ≥ 0.50) plus phonetic similarity per word, with missing/merged/smeared words rejected | Conjunct-heavy and long words (క్షణం, తాత్కాలికంగా) smeared or merged while a sentence-level "all words present" check passed them. |
 | 4 | **PHYS — swallowed words** — per word: duration vs syllable count (absolute floor + 60% of take pace), mid-word energy collapse to the noise floor, abrupt-cut tails | Words **eaten mid-word** — ASR-readable, but audibly truncated. A sentence-level check cannot see this; acoustics can. (Validated: the owner-approved clean sample scores zero hard flags.) |
 | 5 | **Pitch band** — F0 median must sit in **185–220 Hz** | Take-to-take pitch-centre wander (163–251 Hz across splices) making one voice sound like several. Out-of-band takes are re-rolled, **never pitch-shifted**. |
+| 6 | **Head grunt** (2026-11-16) — the OmniVoice route prepends a short, quiet, flat low-pitched voiced grunt (~0.2 s, F0 ≈ 140–168 Hz) to nearly every generated sentence; the gate detects the signature and the engine **auto-mutes it at generation time**, recording the action in the QC report | A stray **"rey / ey orey"** heard after every sentence's last word in the owner's OmniVoice test sample. The segment is non-word phonation sitting in silence, so muting it in place cannot touch a word. Proof: `proof_omnivoice_gates.py`. |
+| 7 | **Cut word** (2026-11-16) — the take's ending must be whole: no abrupt cut, no speech chopped at the file edge, no pinched final island, and no **detached weak tail** (a short, quiet, flat, low island stranded after the main final island) | The ending **"mana varaku vasthayi"** of an OmniVoice test sentence never landed — the main island ended and the final word survived only as a detached fragment. The gate judges the ending's acoustic *shape*; which words were said remains gates 1–3's job. A te/hi take failing gate 7 is blocked in `ship_decision` even when the rest of the ear-approved bar passes. |
 
 Assembly is gated too: sentence takes are level-matched with plain gain
 only (stacked processing measurably eats voice identity), joined with one
@@ -192,6 +194,42 @@ its artifact still uploads with every passing line and a
 `JULIE_TTS_BACKEND=github` locally just prints these instructions: it is
 a route name, not a synthesizer.
 
+## OmniVoice route (Telugu, locked)
+
+Added 2026-11-16, on the owner's ear approval: in his side-by-side test
+the OmniVoice clone of the house voice — from the canonical natural-pace
+reference — was approved ("super bagundhi") over the earlier routes.
+
+```bash
+export JULIE_TTS_BACKEND=omnivoice
+python3 engine.py --text-file script.txt --lang te --out out.mp3
+```
+
+- **Source:** [OmniVoice](https://huggingface.co/spaces/k2-fsa/OmniVoice)
+  (k2-fsa) via the official Hugging Face Space's Gradio API — free,
+  anonymous, no key. Generation is **per sentence** (the engine's own
+  loop already splits text into sentences).
+- **LOCKED settings** (owner's order: *same speed, same voice, every
+  run* — enforced in `engine.py: OMNIVOICE_LOCKED`, not in editable
+  config): reference = canonical **natspan2**
+  (`voice/refs/natspan2.wav`, the same audio as
+  `voice/telugu-reference.wav`) with its exact transcript; language
+  Telugu; **speed 1.0 exactly**; steps 32; guidance 2.0. **No speed
+  correction is permitted on this route** — no generation-side speed
+  change, no atempo; setting `JULIE_OMNIVOICE_SPEED` to anything but
+  1.0 makes the route refuse to run. Pace comes from the reference,
+  as approved.
+- **Its two known defects are gated, permanently** (gates 6 + 7
+  above): every take is head-grunt–muted at generation time (action
+  recorded per roll in the QC report), and a take whose final word is
+  truncated or detached fails gate 7 and is re-rolled — a sentence
+  with no whole take ships nothing.
+- ⚠️ **License:** OmniVoice model weights are **CC-BY-NC
+  (non-commercial)**. That is a real constraint for monetized use —
+  the route is in the tool because the owner ordered the test and
+  approved the voice; weigh the license before shipping commercial
+  work on it.
+
 ## Connect your own model (fast path)
 
 The built-in routes are free, and you pay in time instead: the IndicF5
@@ -217,6 +255,9 @@ bottleneck:
      is Telugu-only. It is **not a clone** — the voice is the model's
      own Telugu speaker, chosen for diction the clone route kept
      missing.
+  - **OmniVoice (Telugu clone, built-in Space route):**
+     `export JULIE_TTS_BACKEND=omnivoice` — see the dedicated section
+     above. Locked settings, gates 6 + 7 apply, CC-BY-NC weights.
    - **Your own model server:** `export JULIE_TTS_BACKEND=http` and
      `export JULIE_TTS_URL=http://your-server/tts` (optional
      `JULIE_TTS_KEY`, sent as `Authorization: Bearer …`). Server
@@ -243,14 +284,25 @@ Leave `JULIE_TTS_BACKEND` unset to return to the default free routes.
 - ASR probabilities are a proxy for diction, calibrated against the human
   ear that caught these defects. The ear outranks the numbers — if a
   passing take sounds wrong to you, open an issue with the QC report.
+- **Gate 7 (cut word) is an acoustic shape check, not a transcript.** It
+  catches endings that are abruptly cut, chopped at the file edge,
+  pinched, or stranded as a detached weak tail. It cannot tell *which*
+  word was said (gates 1–3 do that), and it cannot detect a word that
+  was removed from a take in post — which is why this tool never edits
+  inside a sentence in the first place.
 - Hindi is cross-lingual and UNVERIFIED against its channel (see above).
 
 ## Layout
 
 ```
 engine.py                 CLI: generate -> gate -> re-roll -> assemble (+ --batch)
-backends.py               pluggable TTS backends (defaults, mms, elevenlabs, http, github)
-gates.py                  the five gates, importable
+backends.py               pluggable TTS backends (defaults, mms, omnivoice, elevenlabs, http, github)
+gates.py                  the gate suite, importable
+acoustic_gates.py         gates 6 + 7 (head grunt / cut word) — self-contained
+                          acoustics, no env side effects, safe in the
+                          generation subprocess
+proof_omnivoice_gates.py  gates 6 + 7 proof over the real Sample B evidence
+                          files (+ proof_omnivoice_gates.out.txt)
 indicf5_gen.py            whole-sentence IndicF5 take generator + full gates
                           (runs on the indicf5-batch runners)
 requirements-indicf5.txt  deps for the IndicF5 runners

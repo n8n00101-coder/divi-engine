@@ -1,4 +1,4 @@
-"""The five quality gates of the Julie AI Voice Engine.
+"""The quality gates of the Julie AI Voice Engine.
 
 These gates exist because every one of them maps to a real defect that was
 once shipped by hand and caught by a human ear (2026-11-14):
@@ -20,6 +20,18 @@ once shipped by hand and caught by a human ear (2026-11-14):
   5. PITCH band — take-to-take pitch-centre wander (163–251 Hz across
      splices) made one voice sound like several. A take outside the band is
      re-rolled, never pitch-shifted.
+
+Added 2026-11-16 (owner's ear, OmniVoice route — acoustic_gates.py):
+  6. HEAD GRUNT — the OmniVoice route prepends a short, quiet, flat
+     low-pitched voiced grunt to nearly every generated sentence; heard
+     at joins as a stray "rey / ey orey". engine.py auto-mutes it at
+     generation time and records the action in the QC report; this gate
+     verifies no grunt survives into a gated take.
+  7. CUT WORD — a take whose final word is truncated, chopped at the
+     file edge, or stranded as a detached weak tail after the main
+     final island fails and is re-rolled; a sentence with no whole
+     ending ships nothing. Acoustic shape only — gates 1–3 judge
+     which words were said.
 
 Local ASR only: proxy env vars are stripped in this process (a proxy breaks
 local model loads). Nothing in here needs the network.
@@ -508,7 +520,7 @@ def ghost_scan(unhinted_res, lang, script_words):
 # ------------------------------------------------------------- all gates ---
 def run_all_gates(path, lang, text, settings=None):
     """Run every gate on one take. Returns a report dict; report['pass'] is
-    True only if ALL five gates pass."""
+    True only if ALL gates pass (the original five plus gates 6/7)."""
     settings = settings or load_settings()
     g = settings["gates"]
     script_words = [w for w in re.split(r"\s+", text.strip()) if w]
@@ -519,9 +531,18 @@ def run_all_gates(path, lang, text, settings=None):
     fc = forced_check(path, lang, script_words, settings)
     lo, hi = g["pitch_band_hz"]
     pitch_pass = bool(lo <= fc["f0_med"] <= hi)
+    # Gates 6/7 (2026-11-16): acoustic take-shape checks. Gate 6 here is
+    # verification only — engine.py auto-mutes the head grunt at
+    # generation time (acoustic_gates.head_grunt_gate(apply=True)) and
+    # records the action in the QC report's per-roll "gen" entry, so a
+    # take reaching this point should already be grunt-free.
+    import acoustic_gates
+    hg = acoustic_gates.head_grunt_gate(path)
+    cw = acoustic_gates.cut_word_gate(path)
     report = {
         "pass": bool(lang_pass and not ghosts and fc["pron_pass"]
-                     and fc["phys_pass"] and pitch_pass),
+                     and fc["phys_pass"] and pitch_pass
+                     and hg["pass"] and cw["pass"]),
         "gate1_nohint_language": {"pass": lang_pass, "detected": det["lang"],
                                   "prob": det["prob"], "required": need,
                                   "unhinted_text": det["text"]},
@@ -533,6 +554,8 @@ def run_all_gates(path, lang, text, settings=None):
                                  "fail_words": fc["phys_fail_words"]},
         "gate5_pitch": {"pass": pitch_pass, "f0_med": fc["f0_med"], "band": [lo, hi],
                         "rms_db": fc["rms_db"], "dur": fc["dur"]},
+        "gate6_head_grunt": hg,
+        "gate7_cut_word": cw,
     }
     return report
 

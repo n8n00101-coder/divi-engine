@@ -180,11 +180,15 @@ def main():
                 rec["pace_pass"] = bool(wps is not None
                                         and WPS_MIN <= wps <= WPS_MAX)
                 # Ear-approved ship bar (fixed13): gate1 + gate2 +
-                # identity + pace on this whole take. rep["pass"]
-                # (all five gates) stays recorded as rec["gate_pass"].
+                # identity + pace on this whole take, PLUS gate 7
+                # (cut word — hard condition since 2026-11-16, the
+                # owner's order after a truncated ending shipped).
+                # rep["pass"] (all gates) stays recorded as
+                # rec["gate_pass"].
                 rec["full_pass"] = bool(
                     rep["gate1_nohint_language"]["pass"]
                     and rep["gate2_ghost_words"]["pass"]
+                    and rep["gate7_cut_word"]["pass"]
                     and rec["identity_pass"] and rec["pace_pass"])
                 rec["gates"] = rep
             except Exception as e:  # keep rolling; harvest sees the error
