@@ -38,6 +38,13 @@ OUT = os.environ.get("OUTDIR", "out")
 os.makedirs(OUT, exist_ok=True)
 IDX = int(os.environ.get("RUNNER_INDEX", "0"))
 ROLLS = int(os.environ.get("ROLLS", "6"))
+# fixed10 (2026-11-16): generation-side SPEED control. This IndicF5 build
+# takes speed as a CONFIG parameter; forward() reads config.speed per call
+# and infer_process scales the generated duration by 1/speed
+# (f5_tts/infer/utils_infer.py: duration = ref_len + ref_len/ref_text_len
+# * gen_text_len / speed). speed<1 = slower/longer. Default 1.0 = the
+# behaviour of every previous wave.
+SPEED = float(os.environ.get("SPEED", "1.0"))
 
 DEMO_SENTS = {
     1: "మీరు నిద్రలోకి జారుకున్న క్షణం నుంచి, మీ మెదడు పని ఆపదు. నిజానికి, దాని అసలు పని అప్పుడే మొదలవుతుంది.",
@@ -129,8 +136,9 @@ def main():
     # sys.path — it would shadow the correct fork with the bundled one.
     from transformers import AutoModel
     model = AutoModel.from_pretrained("Aditya02/IndicF5",
-                                      trust_remote_code=True)
-    print("IndicF5 loaded", flush=True)
+                                      trust_remote_code=True, speed=SPEED)
+    model.config.speed = SPEED  # forward() reads config at call time
+    print(f"IndicF5 loaded, config.speed={model.config.speed}", flush=True)
 
     summary = {"runner": IDX, "ref": ref_name, "rolls": ROLLS, "takes": []}
     for si, text in SENTS.items():
@@ -138,7 +146,8 @@ def main():
         for k in range(1, ROLLS + 1):
             name = f"s{si}_r{IDX}_t{k}"
             wp = os.path.join(OUT, name + ".wav")
-            rec = {"take": name, "sentence": si, "roll": k, "ref": ref_name}
+            rec = {"take": name, "sentence": si, "roll": k, "ref": ref_name,
+                   "speed": SPEED}
             try:
                 audio = model(text, ref_audio_path=ref_wav,
                               ref_text=ref_text)
@@ -146,6 +155,7 @@ def main():
                     audio = audio.astype(np.float32) / 32768.0
                 audio = np.array(audio, dtype=np.float32)
                 sf.write(wp, audio, 24000)
+                rec["duration_s"] = round(len(audio) / 24000.0, 2)
                 rep = gates.run_all_gates(wp, "te", text)
                 ident = identity(wp)
                 wps, span = pace_of(rep, len(words))
@@ -168,11 +178,12 @@ def main():
                 json.dump(rec, fh, ensure_ascii=False, indent=1)
             summary["takes"].append(
                 {k2: rec.get(k2) for k2 in
-                 ("take", "sentence", "roll", "ref", "full_pass", "gate_pass",
-                  "identity", "wps", "error")})
+                 ("take", "sentence", "roll", "ref", "speed", "duration_s",
+                  "full_pass", "gate_pass", "identity", "wps", "error")})
             print(f"{name}: full_pass={rec.get('full_pass')} "
                   f"gates={rec.get('gate_pass')} id={rec.get('identity')} "
-                  f"wps={rec.get('wps')} err={rec.get('error')}", flush=True)
+                  f"wps={rec.get('wps')} dur={rec.get('duration_s')} "
+                  f"err={rec.get('error')}", flush=True)
     with open(os.path.join(OUT, f"runner{IDX}_summary.json"), "w",
               encoding="utf-8") as fh:
         json.dump(summary, fh, ensure_ascii=False, indent=1)

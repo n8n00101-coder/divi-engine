@@ -24,6 +24,11 @@ on:
         required: false
         type: string
         default: ""
+      speed:
+        description: "IndicF5 generation speed (config param; <1 = slower/longer). Default 1.0 = all previous waves"
+        required: false
+        type: string
+        default: "1.0"
 jobs:
   gen:
     runs-on: ubuntu-latest
@@ -76,6 +81,7 @@ jobs:
           ROLLS: ${{ inputs.rolls }}
           LINES_PATH: ${{ inputs.lines_path }}
           REF_ORDER: ${{ inputs.ref_order }}
+          SPEED: ${{ inputs.speed }}
           OMP_NUM_THREADS: "4"
           MKL_NUM_THREADS: "4"
         run: python3 indicf5_gen.py
