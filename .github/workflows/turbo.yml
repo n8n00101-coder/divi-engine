@@ -1,0 +1,310 @@
+name: julie-voice-turbo
+# 20-in-10 production path: a full ~20-minute Telugu voice-over in
+# 6-10 minutes wall. Fan-out chunks of a whole script over many
+# runners (one IndicF5 load per runner, whole takes, ship bar on the
+# selected take only), a failures-only wave 2, then assembly under the
+# locked settings. See turbo_gen.py / turbo_collect.py /
+# turbo_assemble.py and BENCHMARK.md ("20-in-10" section).
+#
+# Hark's invocation (after this lands on the default branch —
+# workflow_dispatch requires the workflow file there):
+#   gh workflow run turbo.yml -f lines_path=jobs/<script>.txt
+#   gh run download <run-id> -n turbo-final
+#
+# The push trigger below is branch-scoped development scaffolding for
+# the perf branch (dispatch cannot run from a non-default branch); it
+# is removed before merge.
+on:
+  workflow_dispatch:
+    inputs:
+      lines_path:
+        description: "Lines file in the repo (one sentence per line)"
+        required: true
+        type: string
+        default: "jobs/turbo-bench-lines.txt"
+      chunks:
+        description: "Wave-1 parallel runners"
+        required: false
+        type: string
+        default: "8"
+      lang:
+        description: "Gate language (te default; hi = cross-lingual)"
+        required: false
+        type: string
+        default: "te"
+      ref_name:
+        description: "refs.json key (fixed voice default: natspan2)"
+        required: false
+        type: string
+        default: "natspan2"
+      speed:
+        description: "Speed override; empty = settings anchor for the ref"
+        required: false
+        type: string
+        default: ""
+      max_takes1:
+        description: "Wave-1 whole takes per sentence"
+        required: false
+        type: string
+        default: "2"
+      max_takes2:
+        description: "Wave-2 whole takes per failed sentence"
+        required: false
+        type: string
+        default: "5"
+      wave2:
+        description: "Run the failures-only wave 2 (true/false)"
+        required: false
+        type: string
+        default: "true"
+  push:
+    branches: [perf/20min-in-10]
+    paths:
+      - ".github/workflows/turbo.yml"
+      - "jobs/turbo-bench-lines.txt"
+      - "jobs/turbo-proof-lines.txt"
+      - "turbo_gen.py"
+      - "turbo_collect.py"
+      - "turbo_assemble.py"
+
+env:
+  LINES_PATH: ${{ inputs.lines_path || 'jobs/turbo-bench-lines.txt' }}
+  CHUNKS: ${{ inputs.chunks || '8' }}
+  LANG: ${{ inputs.lang || 'te' }}
+  REF_NAME: ${{ inputs.ref_name || 'natspan2' }}
+  SPEED: ${{ inputs.speed }}
+  MAX_TAKES1: ${{ inputs.max_takes1 || '2' }}
+  MAX_TAKES2: ${{ inputs.max_takes2 || '5' }}
+  WAVE2: ${{ inputs.wave2 || 'true' }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        run: |
+          python3 -c "import json,os; n=int(os.environ['CHUNKS']); print('matrix=' + json.dumps({'idx': list(range(n))}))" >> "$GITHUB_OUTPUT"
+          echo "JOB setup chunks=${CHUNKS} lines=${LINES_PATH}"
+
+  gen:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 40
+      matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
+    steps:
+      - run: echo "JOB_START $(date +%s)"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-turbo-v1-${{ runner.os }}-py311
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-turbo-v1
+          restore-keys: |
+            hf-turbo-
+      - name: Cache python venv
+        id: venvcache
+        uses: actions/cache@v4
+        with:
+          path: ~/tvenv
+          key: tvenv-v1-${{ runner.os }}-py311-${{ hashFiles('requirements-indicf5.txt') }}
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null && echo "ffmpeg ok"
+      - name: Install deps (venv cache miss)
+        if: steps.venvcache.outputs.cache-hit != 'true'
+        run: |
+          python3 -m venv ~/tvenv
+          ~/tvenv/bin/pip install -q --upgrade pip
+          ~/tvenv/bin/pip install -q torch==2.5.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -1
+          ~/tvenv/bin/pip install -q -r requirements-indicf5.txt 2>&1 | tail -1
+          ~/tvenv/bin/pip install -q requests
+          ~/tvenv/bin/pip install -q --no-deps git+https://github.com/AI4Bharat/IndicF5.git 2>&1 | tail -1
+          if ! ~/tvenv/bin/pip install -q resemblyzer==0.1.4 2>resemb_err.log; then
+            tail -3 resemb_err.log
+            ~/tvenv/bin/pip install -q webrtcvad-wheels
+            ~/tvenv/bin/pip install -q --no-deps resemblyzer==0.1.4
+          fi
+      - name: Verify venv
+        run: |
+          ~/tvenv/bin/python -c "import inspect; from f5_tts.infer.utils_infer import load_model; assert 'ckpt_path' not in inspect.signature(load_model).parameters or inspect.signature(load_model).parameters['ckpt_path'].default is not inspect.Parameter.empty, 'wrong f5_tts fork'; import torch, faster_whisper, resemblyzer; print('venv ok, torch', torch.__version__)"
+      - name: Generate + gate this chunk (wave 1)
+        env:
+          PYTHONUNBUFFERED: "1"
+          LINES_PATH: ${{ env.LINES_PATH }}
+          CHUNK_IDX: ${{ matrix.idx }}
+          NCHUNKS: ${{ env.CHUNKS }}
+          WAVE: "1"
+          MAX_TAKES: ${{ env.MAX_TAKES1 }}
+          REF_NAME: ${{ env.REF_NAME }}
+          SPEED: ${{ env.SPEED }}
+          LANG: ${{ env.LANG }}
+          OMP_NUM_THREADS: "4"
+          MKL_NUM_THREADS: "4"
+        run: ~/tvenv/bin/python turbo_gen.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: turbo-w1-${{ matrix.idx }}
+          path: out/
+
+  collect:
+    needs: gen
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      n_failed: ${{ steps.collect.outputs.n_failed }}
+      matrix2: ${{ steps.collect.outputs.matrix2 }}
+      n_chunks2: ${{ steps.collect.outputs.n_chunks2 }}
+    steps:
+      - run: echo "JOB_START $(date +%s)"
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: turbo-w1-*
+          path: stage
+          merge-multiple: true
+      - id: collect
+        run: |
+          python3 turbo_collect.py --stage stage --lines "$LINES_PATH" --outdir collect-out
+          echo "n_failed=$(cat collect-out/n_failed.txt)" >> "$GITHUB_OUTPUT"
+          echo "matrix2=$(cat collect-out/matrix2.json)" >> "$GITHUB_OUTPUT"
+          echo "n_chunks2=$(python3 -c "import json; print(len(json.load(open('collect-out/matrix2.json'))['idx']))")" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: turbo-collect
+          path: collect-out/
+
+  gen2:
+    needs: collect
+    if: ${{ env.WAVE2 == 'true' && needs.collect.outputs.n_failed != '0' && needs.collect.outputs.n_failed != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 24
+      matrix: ${{ fromJSON(needs.collect.outputs.matrix2) }}
+    steps:
+      - run: echo "JOB_START $(date +%s)"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-turbo-v1-${{ runner.os }}-py311
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-turbo-v1
+          restore-keys: |
+            hf-turbo-
+      - name: Cache python venv
+        id: venvcache
+        uses: actions/cache@v4
+        with:
+          path: ~/tvenv
+          key: tvenv-v1-${{ runner.os }}-py311-${{ hashFiles('requirements-indicf5.txt') }}
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null && echo "ffmpeg ok"
+      - name: Install deps (venv cache miss)
+        if: steps.venvcache.outputs.cache-hit != 'true'
+        run: |
+          python3 -m venv ~/tvenv
+          ~/tvenv/bin/pip install -q --upgrade pip
+          ~/tvenv/bin/pip install -q torch==2.5.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -1
+          ~/tvenv/bin/pip install -q -r requirements-indicf5.txt 2>&1 | tail -1
+          ~/tvenv/bin/pip install -q requests
+          ~/tvenv/bin/pip install -q --no-deps git+https://github.com/AI4Bharat/IndicF5.git 2>&1 | tail -1
+          if ! ~/tvenv/bin/pip install -q resemblyzer==0.1.4 2>resemb_err.log; then
+            tail -3 resemb_err.log
+            ~/tvenv/bin/pip install -q webrtcvad-wheels
+            ~/tvenv/bin/pip install -q --no-deps resemblyzer==0.1.4
+          fi
+      - name: Verify venv
+        run: |
+          ~/tvenv/bin/python -c "import inspect; from f5_tts.infer.utils_infer import load_model; assert 'ckpt_path' not in inspect.signature(load_model).parameters or inspect.signature(load_model).parameters['ckpt_path'].default is not inspect.Parameter.empty, 'wrong f5_tts fork'; import torch, faster_whisper, resemblyzer; print('venv ok, torch', torch.__version__)"
+      - uses: actions/download-artifact@v4
+        with:
+          name: turbo-collect
+          path: dl
+      - name: Re-roll failed sentences (wave 2)
+        env:
+          PYTHONUNBUFFERED: "1"
+          LINES_PATH: ${{ github.workspace }}/dl/failed-lines.txt
+          CHUNK_IDX: ${{ matrix.idx }}
+          NCHUNKS: ${{ needs.collect.outputs.n_chunks2 }}
+          WAVE: "2"
+          MAX_TAKES: ${{ env.MAX_TAKES2 }}
+          REF_NAME: ${{ env.REF_NAME }}
+          SPEED: ${{ env.SPEED }}
+          LANG: ${{ env.LANG }}
+          OMP_NUM_THREADS: "4"
+          MKL_NUM_THREADS: "4"
+        run: ~/tvenv/bin/python turbo_gen.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: turbo-w2-${{ matrix.idx }}
+          path: out/
+
+  assemble:
+    needs: [gen, collect, gen2]
+    if: ${{ always() && needs.collect.result == 'success' && (needs.gen2.result == 'success' || needs.gen2.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - run: echo "JOB_START $(date +%s)"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cache python venv
+        id: venvcache
+        uses: actions/cache@v4
+        with:
+          path: ~/tvenv
+          key: tvenv-v1-${{ runner.os }}-py311-${{ hashFiles('requirements-indicf5.txt') }}
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null && echo "ffmpeg ok"
+      - name: Prepare python (venv cache or light fallback)
+        run: |
+          if [ -x ~/tvenv/bin/python ] && ~/tvenv/bin/python -c "import engine" 2>/dev/null; then
+            echo "PY=$HOME/tvenv/bin/python" >> "$GITHUB_ENV"
+            echo "using cached tvenv"
+          else
+            python3 -m venv ~/avenv
+            ~/avenv/bin/pip install -q numpy scipy soundfile requests
+            echo "PY=$HOME/avenv/bin/python" >> "$GITHUB_ENV"
+            echo "using light avenv"
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: turbo-w*-*
+          path: stage
+          merge-multiple: true
+      - name: Assemble final voice-over
+        run: |
+          "$PY" turbo_assemble.py --stage stage --lines "$LINES_PATH" --out final/voiceover.mp3 --qc final/turbo.qc.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: turbo-final
+          path: final/
