@@ -778,6 +778,11 @@ def assemble(take_paths, out_mp3, settings, use_bed):
         b = bed * bed_gain
         if tail:
             b[-tail:] *= fade
+        if len(b) < len(mix):
+            # _piano_bed works in whole seconds/steps and can land one
+            # sample short of the mix; pad with silence, never crash.
+            b = np.concatenate(
+                [b, np.zeros(len(mix) - len(b), dtype=np.float32)])
         mix = mix + b[:len(mix)]
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tf:
         tmp_wav = tf.name
