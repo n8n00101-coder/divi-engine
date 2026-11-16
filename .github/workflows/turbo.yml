@@ -42,6 +42,11 @@ on:
         required: false
         type: string
         default: ""
+      nfe_step:
+        description: "Diffusion steps per take (fork default 32; lower = faster)"
+        required: false
+        type: string
+        default: "32"
       max_takes1:
         description: "Wave-1 whole takes per sentence"
         required: false
@@ -73,6 +78,7 @@ env:
   LANG: ${{ inputs.lang || 'te' }}
   REF_NAME: ${{ inputs.ref_name || 'natspan2' }}
   SPEED: ${{ inputs.speed }}
+  NFE_STEP: ${{ inputs.nfe_step || '16' }}
   MAX_TAKES1: ${{ inputs.max_takes1 || '2' }}
   MAX_TAKES2: ${{ inputs.max_takes2 || '5' }}
   WAVE2: ${{ inputs.wave2 || 'true' }}
@@ -150,6 +156,7 @@ jobs:
           MAX_TAKES: ${{ env.MAX_TAKES1 }}
           REF_NAME: ${{ env.REF_NAME }}
           SPEED: ${{ env.SPEED }}
+          NFE_STEP: ${{ env.NFE_STEP }}
           LANG: ${{ env.LANG }}
           OMP_NUM_THREADS: "4"
           MKL_NUM_THREADS: "4"
@@ -255,6 +262,7 @@ jobs:
           MAX_TAKES: ${{ env.MAX_TAKES2 }}
           REF_NAME: ${{ env.REF_NAME }}
           SPEED: ${{ env.SPEED }}
+          NFE_STEP: ${{ env.NFE_STEP }}
           LANG: ${{ env.LANG }}
           OMP_NUM_THREADS: "4"
           MKL_NUM_THREADS: "4"

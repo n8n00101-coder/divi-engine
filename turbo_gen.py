@@ -63,6 +63,13 @@ WAVE = int(os.environ.get("WAVE", "1"))
 MAX_TAKES = int(os.environ.get("MAX_TAKES", "2"))
 LANG = os.environ.get("LANG", "te").strip().lower()
 REF_NAME = os.environ.get("REF_NAME", "natspan2")
+# Diffusion steps per generation. The HF wrapper's forward() never
+# passes nfe_step, so the fork default (32) always applies; gen_audio()
+# below replicates forward() exactly (same weights, same ref
+# preprocessing, same silence removal + loudness normalize) with ONLY
+# this parameter made explicit. Quality is still guarded by the
+# unchanged ship gates on every take.
+NFE_STEP = int(os.environ.get("NFE_STEP", "32"))
 IDENTITY_MIN = 0.85
 WPS_MIN, WPS_MAX = 1.9, 2.5
 CHEAP_MIN, CHEAP_MAX = 1.5, 2.9  # total-duration wps pre-band (see docstring)
@@ -153,10 +160,43 @@ def main():
     model = AutoModel.from_pretrained("Aditya02/IndicF5",
                                       trust_remote_code=True, speed=speed)
     model.config.speed = speed
-    log(f"IndicF5 loaded in {time.time() - t_load:.1f}s, speed={speed}")
+    log(f"IndicF5 loaded in {time.time() - t_load:.1f}s, speed={speed} "
+        f"nfe_step={NFE_STEP}")
+
+    # Replicated INF5Model.forward() with an explicit nfe_step (see the
+    # NFE_STEP note above). The reference is preprocessed ONCE here —
+    # forward() redoes it per call for a few seconds of pure overhead.
+    import io
+    import soundfile as _sf
+    from pydub import AudioSegment, silence as _silence
+    from f5_tts.infer.utils_infer import (infer_process,
+                                          preprocess_ref_audio_text)
+    if getattr(model, "_buffers_need_recompute", False):
+        model._recompute_buffers()
+    _ref_audio, _ref_text = preprocess_ref_audio_text(ref_wav, ref_text)
+    model.ema_model.to(model.device)
+    model.vocoder.to(model.device)
+
+    def gen_audio(text):
+        audio, _sr, _spec = infer_process(
+            _ref_audio, _ref_text, text, model.ema_model, model.vocoder,
+            mel_spec_type="vocos", speed=model.config.speed,
+            device=model.device, nfe_step=NFE_STEP)
+        buffer = io.BytesIO()
+        _sf.write(buffer, audio, samplerate=24000, format="WAV")
+        buffer.seek(0)
+        seg = AudioSegment.from_file(buffer, format="wav")
+        if model.config.remove_sil:
+            parts = _silence.split_on_silence(
+                seg, min_silence_len=1000, silence_thresh=-50,
+                keep_silence=500, seek_step=10)
+            seg = sum(parts, AudioSegment.silent(duration=0))
+        seg = seg.apply_gain(-20.0 - seg.dBFS)
+        return np.array(seg.get_array_of_samples())
 
     summary = {"chunk": CHUNK_IDX, "nchunks": NCHUNKS, "wave": WAVE,
                "ref": REF_NAME, "speed": speed, "lang": LANG,
+               "nfe_step": NFE_STEP,
                "model_load_s": round(time.time() - t_load, 1),
                "sentences": []}
     for si, text in MINE:
@@ -170,8 +210,7 @@ def main():
             tmp = os.path.join(OUT, f".tmp_s{si}_t{k}.wav")
             try:
                 t_g = time.time()
-                audio = model(text, ref_audio_path=ref_wav,
-                              ref_text=ref_text)
+                audio = gen_audio(text)
                 tk["gen_s"] = round(time.time() - t_g, 1)
                 if audio.dtype == np.int16:
                     audio = audio.astype(np.float32) / 32768.0
@@ -209,6 +248,8 @@ def main():
                     rep["gate1_nohint_language"]["pass"])
                 tk["gate2_pass"] = bool(rep["gate2_ghost_words"]["pass"])
                 tk["gate_pass_all5"] = bool(rep["pass"])
+                tk["ghosts"] = rep["gate2_ghost_words"]["ghosts"]
+                tk["detected"] = rep["gate1_nohint_language"]["detected"]
                 ship = bool(tk["gate1_pass"] and tk["gate2_pass"]
                             and tk["pace_pass"])
                 tk["ship"] = ship
