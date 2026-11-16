@@ -1,0 +1,4352 @@
+{
+ "meta": {
+  "purpose": "Machine-readable English-mix policy for @who_taught_us-telugu Telugu narration — which word TYPES stay English, where, and how to write them in a TTS script.",
+  "generated_from": "extraction.json (see ENGLISH_MIX_POLICY.md for method)",
+  "corpus": {
+   "sources": [
+    {
+     "id": "part2_male_gaze",
+     "kind": "YouTube auto-caption transcript (genuine channel narration)",
+     "video": "Male Gaze Part 2 — 20nHsFoqK3s (13:47)",
+     "words": 1545,
+     "english_origin_tokens": 412
+    },
+    {
+     "id": "silent_habit_script",
+     "kind": "official channel voice-over script (ground truth for script convention)",
+     "video": "The Silent Habit — What Porn Does to Your Mind (~15.5 min)",
+     "words": 2081,
+     "english_origin_tokens": 357
+    },
+    {
+     "id": "ref_excerpt",
+     "kind": "genuine narration excerpt (same Silent Habit video)",
+     "video": "The Silent Habit",
+     "words": 13,
+     "english_origin_tokens": 4
+    }
+   ],
+   "total_words": 3639,
+   "total_english_origin_tokens": 773,
+   "attested_lexemes": 304,
+   "caveats": [
+    "2 distinct videos only — expansion fetch of 2 more channel videos was attempted via GitHub Actions on 2026-11-16; the channel listing succeeded (3 long-form videos) but per-video caption/audio downloads were refused by YouTube's bot check on the runner and were NOT evaded.",
+    "Part 2 counts rest on auto-captions (ASR spellings vary); the Silent Habit official script is the authority for the script-writing convention.",
+    "Stem matching counts a lexeme inside suffixed forms (Telugu agglutination); a few stems overlap (list/short list) — totals are indicative, per-word counts are exact for the given stem."
+   ]
+  },
+  "script_convention": {
+   "default": "Write English-origin words in TELUGU transliteration (dominant pattern of the official script: పోర్న్, స్టడీ, రీసెర్చ్, స్క్రీన్, వీడియో).",
+   "latin_only_for": [
+    "proper names of people/organisations/brands (Kent Berridge, World Health Organization, New York Times, Visa, Mastercard, Common Sense Media, University College London)",
+    "the small concept set the official script itself keeps in Latin: brain, subconscious, dopamine, striatum, grey matter, tolerance, escalation, neuroplasticity, continuity hypothesis, abstinence violation effect, objectification, sexual script, arousal, urge/urges, habit, ICD-11, Tele-MANAS"
+   ],
+   "numbers": "Years and statistics as digits (2023లో, 73%, ICD-11); counting numbers as Telugu words.",
+   "pronunciation": "English words are pronounced in her Indian-English at the SAME pace as the Telugu flow — never slowed, never paused for (PRONUNCIATION-PROFILE standing order)."
+  }
+ },
+ "classes": {
+  "research_evidence": {
+   "policy": "allowed",
+   "rule": "Research & evidence vocabulary stays in English: study, research, review, survey, report, experiment, effect, evidence, finding, prove/proof, result, link, analysis, scan. Statistics attach to these words.",
+   "placement": "Mid-sentence inside Telugu word order; commonly after a year/org ('2018 లో 50 స్టడీస్ అనాలసిస్', 'ఢిల్లీ రీసెర్చర్స్ చూశారు').",
+   "token_total": 78,
+   "words": [
+    {
+     "english": "study / studies",
+     "telugu_form_stem": "స్టడీ",
+     "count": 19,
+     "per_source": {
+      "part2_male_gaze": 14,
+      "silent_habit_script": 5,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2009 అమెరికన్ స్టడీలో అమ్మాయి",
+      "2025 హైదరాబాద్ స్టడీ కళ్ళని ట్రాక్ చేసింది."
+     ]
+    },
+    {
+     "english": "report",
+     "telugu_form_stem": "రిపోర్ట",
+     "count": 11,
+     "per_source": {
+      "part2_male_gaze": 10,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "6 6 కి దాదాపు డబుల్ కానీ జాగ్రత్త ఈ నెంబర్స్ రిపోర్ట్ అయిన కేసులే",
+      "కేసులు ఎక్కువ అంటే రిపోర్టింగ్ ఎక్కువ కావచ్చు నేరాలు కాదు పైగా జూలై 2024 లో కొత్త క్రిమినల్ చట్టాలు వచ్చాయి."
+     ]
+    },
+    {
+     "english": "link",
+     "telugu_form_stem": "లింక",
+     "count": 9,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 5,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రిజల్ట్ ఈ కంటెంట్ కి ఎక్కువ సెక్సెస్ నమ్మకాలకి ఆడవాళ్ళపై లైంగిక హింసని సహించడానికి లింక్ ఉంది.",
+      "థియరీ ఈ అలవాటుని సిగ్గు యంజైటీతో తర్వాత డిప్రెషన్ తిండి జబ్బులతో లింక్ చేస్తుంది."
+     ]
+    },
+    {
+     "english": "research / researcher(s)",
+     "telugu_form_stem": "రీసెర్చ",
+     "count": 7,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 4,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఢిల్లీ రీసెర్చర్స్ చూశారు చాలా మంది అమ్మాయిలు",
+      "కానీ ఆ మాట ఒక జడ్జ్ అభిప్రాయం రీసెర్చ్ ఫైండింగ్ కాదు 2016"
+     ]
+    },
+    {
+     "english": "effect",
+     "telugu_form_stem": "ఎఫెక్ట",
+     "count": 6,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఎఫెక్ట్ ఎంత 2018",
+      "కొద్దిసేపటి ఎఫెక్ట్ జీవితంంతా కాదు."
+     ]
+    },
+    {
+     "english": "prove / proof",
+     "telugu_form_stem": "ప్రూవ",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "అని ప్రూవ్ కాలేదు.",
+      "మరి కారణం సినిమానా ఎవరూ ప్రూవ్"
+     ]
+    },
+    {
+     "english": "review",
+     "telugu_form_stem": "రివ్యూ",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2060 లో సైకాలజిస్ట్ ఎల్ మోనిక్ వార్డ్ 20 ఏళ్ల 135 స్టడీస్ రివ్యూ చేశారు.",
+      "7 దేశాల నుంచి 22 స్టడీస్‌ని రివ్యూ చేసిన ఒక రివ్యూలో, పోర్న్ వాడకం sexual aggressionతో లింక్ అయ్యి ఉందని తేలింది, ముఖ్యంగా వెర్బల్ అగ్రెషన్‌తో."
+     ]
+    },
+    {
+     "english": "survey",
+     "telugu_form_stem": "సర్వే",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సెప్టెంబర్ 2026 ఢిల్లీ బెంగళూర్లో 4వేలకి పైగా ఆడవాళ్ళపై సర్వే ఈ చార్ట్ ని సిటీవీగా చదవండి.",
+      "రెండు చాలా స్టడీస్ సర్వేలు లేదా చిన్న ల్యాబ్ టెస్టులు ఎక్కువగా అమెరికన్ స్టూడెంట్స్ తో లింక్స్ మాత్రమే కారణం"
+     ]
+    },
+    {
+     "english": "experiment",
+     "telugu_form_stem": "ఎక్స్పెరిమెంట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఐదు స్లో మోషన్ 12 ఎక్స్పెరిమెంట్స్ లో ప్రొడక్ట్స్ లగ్జరీగా కనిపించాయి.",
+      "ఎక్స్పెరిమెంట్స్ లో జనాలు ఆమెకి తక్కువ సామర్థ్యం తక్కువ మనిషితనం ఇచ్చారు."
+     ]
+    },
+    {
+     "english": "finding",
+     "telugu_form_stem": "ఫైండింగ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "మల్లం ఫైండింగ్ ఈ సీన్స్",
+      "కానీ ఆ మాట ఒక జడ్జ్ అభిప్రాయం రీసెర్చ్ ఫైండింగ్ కాదు 2016"
+     ]
+    },
+    {
+     "english": "analysis",
+     "telugu_form_stem": "అనాలసిస్",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లో 50 స్టడీస్ అనాలసిస్ నిజమే కానీ మోడరేట్ చాలా పెద్దది కాదు జీరో కాదు.",
+      "సెక్షువలైజ్డ్ వీడియో గేమ్స్ పై 2022 అనాలసిస్ ఎవిడెన్స్ వీక్"
+     ]
+    },
+    {
+     "english": "evidence",
+     "telugu_form_stem": "ఎవిడెన్స",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సెక్షువలైజ్డ్ వీడియో గేమ్స్ పై 2022 అనాలసిస్ ఎవిడెన్స్ వీక్",
+      "దానికి సాలిడ్ ఎవిడెన్స్ ఏమీ లేదు."
+     ]
+    },
+    {
+     "english": "result",
+     "telugu_form_stem": "రిజల్ట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రిజల్ట్ ఆమె తక్కువ సమర్ధురాలిగా తక్కువ మనిషిగా కనిపించింది.",
+      "రిజల్ట్ ఈ కంటెంట్ కి ఎక్కువ సెక్సెస్ నమ్మకాలకి ఆడవాళ్ళపై లైంగిక హింసని సహించడానికి లింక్ ఉంది."
+     ]
+    },
+    {
+     "english": "correlation",
+     "telugu_form_stem": "కోర్లేషన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కోర్లేషన్ ప్రూఫ్ కాదు."
+     ]
+    },
+    {
+     "english": "scan",
+     "telugu_form_stem": "స్కాన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2014లో Cambridgeలో Valerie Voon లీడ్ చేసిన రీసెర్చర్స్, compulsive sexual behaviour ఉన్న మగవాళ్ళ brains స్కాన్ చేశారు."
+     ]
+    }
+   ]
+  },
+  "tech_platforms": {
+   "policy": "allowed",
+   "rule": "Technology & platform vocabulary stays in English: screen, video, phone, internet, online, website, app, click, tab, thumbnail, views, reels, platform, subscribe, comment, scroll, delete, host, session, autopilot, manual.",
+   "placement": "Nouns with Telugu suffixes (స్క్రీన్ మీద, ఫోన్ వైపు); subscribe/comment appear in the CTA as loans + చేయండి.",
+   "token_total": 75,
+   "words": [
+    {
+     "english": "video",
+     "telugu_form_stem": "వీడియో",
+     "count": 15,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 12,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కారణం 3 వ్యూస్ ఊ అంటావా అఫీషియల్ తెలుగు వీడియో కి YouTube",
+      "సెక్షువలైజ్డ్ వీడియో గేమ్స్ పై 2022 అనాలసిస్ ఎవిడెన్స్ వీక్"
+     ]
+    },
+    {
+     "english": "screen",
+     "telugu_form_stem": "స్క్రీన",
+     "count": 9,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 6,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సేమ్ షార్ట్ లిస్ట్ ఒకటి ప్రొడక్ట్ ఇంకొకరు మనిషి ఈ పాయింట్ స్క్రీన్ మీద పాటర్న్ ఏ",
+      "స్క్రీన్ మీద బయట ఆడవాళ్ళ ఇష్టాన్ని లెక్క చేయవు."
+     ]
+    },
+    {
+     "english": "phone",
+     "telugu_form_stem": "ఫోన",
+     "count": 6,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 6,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హైదరాబాద్‌లో ఉన్న ఫోన్ అయినా, Ohioలో ఉన్న ఫోన్ అయినా, ఓపెన్ చేసేది అవే వెబ్‌సైట్స్.",
+      "నువ్వు బ్రష్ ఎలా చేసుకుంటావ్, బైక్ ఎలా నడుపుతావ్, నువ్వు ఆలోచించక ముందే నీ చెయ్యి ఫోన్ వైపు ఎలా వెళ్తుంది, అన్నీ అదే."
+     ]
+    },
+    {
+     "english": "endless",
+     "telugu_form_stem": "ఎండ్‌లెస",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 2
+     },
+     "examples": [
+      "ఎండ్‌లెస్ ట్యాబ్స్.",
+      "ఎండ్‌లెస్ థంబ్‌నెయిల్స్."
+     ]
+    },
+    {
+     "english": "filter",
+     "telugu_form_stem": "ఫిల్టర",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 4,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "స్టెప్ త్రీ, ఫిల్టర్.",
+      "ఇంకా ఆ ఫిల్టర్ ఒక్కసారి ఆన్ అయ్యాక, నువ్వు ప్రేమించే వాళ్ళ కోసం మాత్రం అది ఆఫ్ అవ్వదు."
+     ]
+    },
+    {
+     "english": "site",
+     "telugu_form_stem": "సైట",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 4,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హైదరాబాద్‌లో ఉన్న ఫోన్ అయినా, Ohioలో ఉన్న ఫోన్ అయినా, ఓపెన్ చేసేది అవే వెబ్‌సైట్స్.",
+      "ఏదైనా ఎక్సైటింగ్‌గా కనిపించినప్పుడు, నీ brain dopamine రిలీజ్ చేస్తుంది."
+     ]
+    },
+    {
+     "english": "views",
+     "telugu_form_stem": "వ్యూస",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కారణం 3 వ్యూస్ ఊ అంటావా అఫీషియల్ తెలుగు వీడియో కి YouTube",
+      "లో 520 మిలియన్ వ్యూస్ పైనే స్ట్రీట పాట ఆజ్కి రాత్వ బిలియన్ పైనే ఇండియా సినిమా ఆడియన్స్ లో ఎక్కువ శాతం మగవాళ్లే అని"
+     ]
+    },
+    {
+     "english": "autopilot",
+     "telugu_form_stem": "ఆటోపైలట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నీ subconscious మైండ్ ఆటోపైలట్ లాంటిది.",
+      "రెండు, ఒక్క విల్‌పవర్‌తో పని అవ్వదు, ఎందుకంటే నువ్వు ఆటోపైలట్‌తో మాన్యువల్ బ్రేక్ పెట్టి ఫైట్ చేస్తున్నావ్."
+     ]
+    },
+    {
+     "english": "click",
+     "telugu_form_stem": "క్లిక",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఏదో క్యూరియాసిటీతో చేసిన రెండు మూడు క్లిక్స్, ఆ ఒక్క పర్ఫెక్ట్ వీడియో కోసం గంటల తరబడి వెతికే దాకా ఎలా వెళ్ళాయి?",
+      "కానీ సెక్స్ గురించి నీకు వచ్చే ఫస్ట్ లెసన్, క్లిక్స్ అమ్ముకోవాలని చూసే వాళ్ళు తయారు చేసిన ఒక స్క్రీన్ నుంచి వస్తుంది."
+     ]
+    },
+    {
+     "english": "app",
+     "telugu_form_stem": "యాప",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నాలుగు [సంగీతం] సినిమాలకి ప్రవర్తనకి లింక్ చూపించే పెద్ద రీసెర్చ్ ఇండియాలో చాలా తక్కువ ఈ గ్యాప్ నిజం [సంగీతం] ఏం",
+      "నిన్ను అక్కడికి తీసుకెళ్ళే యాప్స్ డిలీట్ చేయ్."
+     ]
+    },
+    {
+     "english": "clip",
+     "telugu_form_stem": "క్లిప",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రెండు పాట క్లిప్స్ రీల్స్ గా మారుతుంది.",
+      "వాళ్ళకి ఎక్స్‌ప్లిసిట్ క్లిప్స్ చూపించినప్పుడు, వాళ్ళ రివార్డ్ ఏరియాస్ వెలిగిపోయాయి."
+     ]
+    },
+    {
+     "english": "comment",
+     "telugu_form_stem": "కామెంట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఈ వీడియో హూ టాటస్ పార్ట్ట ఇక మీరు మర్చిపోలేని ఆ ఒక్క సీన్ ని కామెంట్ చేయండి.",
+      "కామెంట్స్‌లో నాకు హానెస్ట్‌గా చెప్పు."
+     ]
+    },
+    {
+     "english": "online",
+     "telugu_form_stem": "ఆన్‌లైన",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "13 నుంచి 17 ఏళ్ల వాళ్ళలో 73% మంది ఆన్‌లైన్‌లో పోర్న్ చూశారు.",
+      "ఆన్‌లైన్ గ్రూప్స్ మెరిసిపోయే స్కిన్, మ్యాగ్నెటిక్ చార్మ్, భారీ ఎనర్జీ అని ప్రామిస్ చేస్తాయి."
+     ]
+    },
+    {
+     "english": "tab",
+     "telugu_form_stem": "ట్యాబ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 1
+     },
+     "examples": [
+      "ఎండ్‌లెస్ ట్యాబ్స్.",
+      "ఎండ్‌లెస్ ట్యాబ్స్."
+     ]
+    },
+    {
+     "english": "thumbnail",
+     "telugu_form_stem": "థంబ్‌నెయిల",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 1
+     },
+     "examples": [
+      "ఎండ్‌లెస్ థంబ్‌నెయిల్స్.",
+      "ఎండ్‌లెస్ థంబ్‌నెయిల్స్."
+     ]
+    },
+    {
+     "english": "delete",
+     "telugu_form_stem": "డిలీట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నిన్ను అక్కడికి తీసుకెళ్ళే యాప్స్ డిలీట్ చేయ్."
+     ]
+    },
+    {
+     "english": "host",
+     "telugu_form_stem": "హోస్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డిసెంబర్ 2020లో, New York Times చేసిన ఒక ఇన్వెస్టిగేషన్ ఏం రిపోర్ట్ చేసిందంటే, ప్రపంచంలోనే అతిపెద్ద పోర్న్ సైట్స్‌లో ఒకటి, రేప్ వీడియోస్‌ని, మైనర్స్ వీడియోస్‌ని హోస్ట్ చేసింది."
+     ]
+    },
+    {
+     "english": "internet",
+     "telugu_form_stem": "ఇంటర్నెట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కానీ ఇంటర్నెట్‌కి బార్డర్ ఉండదు."
+     ]
+    },
+    {
+     "english": "manual",
+     "telugu_form_stem": "మాన్యువల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రెండు, ఒక్క విల్‌పవర్‌తో పని అవ్వదు, ఎందుకంటే నువ్వు ఆటోపైలట్‌తో మాన్యువల్ బ్రేక్ పెట్టి ఫైట్ చేస్తున్నావ్."
+     ]
+    },
+    {
+     "english": "platform",
+     "telugu_form_stem": "ప్లాట్ఫార్మ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సంపాదిస్తారు ప్రొడ్యూసర్లు మ్యూజిక్ లేబుల్స్ ప్లాట్ఫార్మ్స్ ఎవరు కడతారు సెట్ లో టాయిలెట్ లేని జూనియర్ ఆర్టిస్ట్ సేఫ్"
+     ]
+    },
+    {
+     "english": "pop up",
+     "telugu_form_stem": "పాప్ అప",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక లింక్ పాప్ అప్ అవుతుంది."
+     ]
+    },
+    {
+     "english": "reels",
+     "telugu_form_stem": "రీల్స",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రెండు పాట క్లిప్స్ రీల్స్ గా మారుతుంది."
+     ]
+    },
+    {
+     "english": "scroll",
+     "telugu_form_stem": "స్క్రోల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రాత్రిపూట ఏదో స్క్రోల్ చేస్తుంటే."
+     ]
+    },
+    {
+     "english": "session",
+     "telugu_form_stem": "సెషన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "అర్ధరాత్రి సెషన్స్ నీ నిద్రని దొంగిలిస్తాయి."
+     ]
+    },
+    {
+     "english": "subscribe",
+     "telugu_form_stem": "సబ్స్క్రైబ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పార్ట్ త్రీ కోసం సబ్స్క్రైబ్ చేయండి."
+     ]
+    },
+    {
+     "english": "website",
+     "telugu_form_stem": "వెబ్‌సైట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హైదరాబాద్‌లో ఉన్న ఫోన్ అయినా, Ohioలో ఉన్న ఫోన్ అయినా, ఓపెన్ చేసేది అవే వెబ్‌సైట్స్."
+     ]
+    }
+   ]
+  },
+  "structure_ordinals": {
+   "policy": "allowed",
+   "rule": "Structure is announced in English: chapter/step/card/stage/part + one/two/three...; first/last/next; list/short list. Cardinal numbers for actual counting stay Telugu — one/two/three appear ONLY in these ordinal slots.",
+   "placement": "Sentence-initial or right after కారణం: 'చాప్టర్ వన్.', 'స్టెప్ టూ, ...', 'కారణం వన్, మార్కెటింగ్.'",
+   "token_total": 95,
+   "words": [
+    {
+     "english": "part / partner",
+     "telugu_form_stem": "పార్ట",
+     "count": 14,
+     "per_source": {
+      "part2_male_gaze": 9,
+      "silent_habit_script": 5,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పార్ట్ వన్ ఒక ప్రశ్నతో ముగిసింది.",
+      "ఎపిసోడ్ పార్ట్ట మన మీద ప్రభావం ఒక అమ్మాయిని బాడీలా చూస్తే ఒక మనిషిగా"
+     ]
+    },
+    {
+     "english": "step",
+     "telugu_form_stem": "స్టెప",
+     "count": 12,
+     "per_source": {
+      "part2_male_gaze": 6,
+      "silent_habit_script": 6,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇప్పుడు ఈ చైన్ ని స్టెప్ బై",
+      "స్టెప్ చదవండి."
+     ]
+    },
+    {
+     "english": "stage",
+     "telugu_form_stem": "స్టేజ",
+     "count": 10,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 10,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "స్టేజెస్.",
+      "నువ్వు ఏ స్టేజ్‌లో ఉన్నావ్?"
+     ]
+    },
+    {
+     "english": "chapter",
+     "telugu_form_stem": "చాప్టర",
+     "count": 9,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 9,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "చాప్టర్ వన్.",
+      "చాప్టర్ టూ."
+     ]
+    },
+    {
+     "english": "one (ordinal slot)",
+     "telugu_form_stem": "re:(?:చాప్టర్|స్టెప్|కార్డ్|స్టేజ్|కారణం|పార్ట్)\\s*వన",
+     "count": 7,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పార్ట్ వన్ ఒక ప్రశ్నతో ముగిసింది.",
+      "స్టెప్ వన్ కెమెరా ఆమెని పార్ట్స్ గా చూపిస్తుంది."
+     ]
+    },
+    {
+     "english": "three (ordinal slot)",
+     "telugu_form_stem": "re:(?:చాప్టర్|స్టెప్|కార్డ్|స్టేజ్|కారణం|పార్ట్)\\s*త్రీ",
+     "count": 6,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 4,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కాలేజీ, బస్ స్టాప్ ఆమె వీధి కార్డ్ త్రీ ఫ్రెండ్స్ చప్పట్లు కొడతారు పాట వస్తుంది.",
+      "పార్ట్ త్రీ కోసం సబ్స్క్రైబ్ చేయండి."
+     ]
+    },
+    {
+     "english": "first",
+     "telugu_form_stem": "ఫస్ట",
+     "count": 5,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 4,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హీరోయిన్ ఫస్ట్ షాట్ కార్ యాడ్ లాగే ఎందుకు ఉంటుంది?",
+      "ఫస్ట్ టైమ్ చూసే యావరేజ్ ఏజ్ ఎంతో తెలుసా?"
+     ]
+    },
+    {
+     "english": "four (ordinal slot)",
+     "telugu_form_stem": "re:(?:చాప్టర్|స్టెప్|కార్డ్|స్టేజ్|కారణం|పార్ట్)\\s*ఫోర",
+     "count": 5,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "స్టెప్ఫోర్ చాలా స్టడీస్ లో ఈ చూపుతో పాటు ఆడవాళ్ళ మీద హింసని ఎక్కువగా సహించడం కూడా కనిపిస్తుంది.",
+      "కార్డ్ ఫోర్ ఆమె ప్రేమలో పడుతుంది."
+     ]
+    },
+    {
+     "english": "two (ordinal slot)",
+     "telugu_form_stem": "re:(?:చాప్టర్|స్టెప్|కార్డ్|స్టేజ్|కారణం|పార్ట్)\\s*టూ",
+     "count": 5,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇప్పుడే చూసిన షార్ట్ లిస్ట్ లాగా స్టెప్ టూ మన కళ్ళు",
+      "కార్డ్ టూ ఆమె నో అంటుంది."
+     ]
+    },
+    {
+     "english": "card",
+     "telugu_form_stem": "కార్డ",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "చేసే ఫార్ములా చూడండి కార్డ్ వన్ హీరో ఆమెని చూస్తాడు ఆమె తనదే అని డిసైడ్ అవుతాడు.",
+      "కార్డ్ టూ ఆమె నో అంటుంది."
+     ]
+    },
+    {
+     "english": "list",
+     "telugu_form_stem": "లిస్ట",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ప్రతి యడ్ ఒకే షార్ట్ లిస్ట్ ఫాలో అవుతుంది.",
+      "సేమ్ షార్ట్ లిస్ట్ ఒకటి ప్రొడక్ట్ ఇంకొకరు మనిషి ఈ పాయింట్ స్క్రీన్ మీద పాటర్న్ ఏ"
+     ]
+    },
+    {
+     "english": "next",
+     "telugu_form_stem": "నెక్స్ట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నెక్స్ట్ టైం కెమెరా ఆమె నడుము మీదకు దిగి థియేటర్ విజిల్స్ వేసినప్పుడు మనం ఎందుకు విజిల్స్ వేస్తున్నాం మనం వేసినప్పుడు",
+      "అది నెక్స్ట్ క్లిక్ కోసం పరిగెడుతోంది."
+     ]
+    },
+    {
+     "english": "short list",
+     "telugu_form_stem": "షార్ట్ లిస్ట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ప్రతి యడ్ ఒకే షార్ట్ లిస్ట్ ఫాలో అవుతుంది.",
+      "సేమ్ షార్ట్ లిస్ట్ ఒకటి ప్రొడక్ట్ ఇంకొకరు మనిషి ఈ పాయింట్ స్క్రీన్ మీద పాటర్న్ ఏ"
+     ]
+    },
+    {
+     "english": "five (ordinal slot)",
+     "telugu_form_stem": "re:(?:చాప్టర్|స్టెప్|కార్డ్|స్టేజ్|కారణం|పార్ట్)\\s*ఫైవ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "స్టేజ్ ఫైవ్, డ్యామేజ్.",
+      "చాప్టర్ ఫైవ్."
+     ]
+    },
+    {
+     "english": "last",
+     "telugu_form_stem": "లాస్ట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "\"ఇదే లాస్ట్ టైమ్\" అని నీకు నువ్వే చెప్పుకుంటావ్.",
+      "ఈ 21 రోజుల ఐడియా 1960లో ఒక ప్లాస్టిక్ సర్జన్, Maxwell Maltz రాసిన ఒక బుక్ నుంచి వచ్చింది."
+     ]
+    },
+    {
+     "english": "eight (ordinal slot)",
+     "telugu_form_stem": "re:(?:చాప్టర్|స్టెప్|కార్డ్|స్టేజ్|కారణం|పార్ట్)\\s*ఎయిట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "చాప్టర్ ఎయిట్."
+     ]
+    },
+    {
+     "english": "nine (ordinal slot)",
+     "telugu_form_stem": "re:(?:చాప్టర్|స్టెప్|కార్డ్|స్టేజ్|కారణం|పార్ట్)\\s*నైన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "చాప్టర్ నైన్."
+     ]
+    },
+    {
+     "english": "seven (ordinal slot)",
+     "telugu_form_stem": "re:(?:చాప్టర్|స్టెప్|కార్డ్|స్టేజ్|కారణం|పార్ట్)\\s*సెవెన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "చాప్టర్ సెవెన్."
+     ]
+    },
+    {
+     "english": "six (ordinal slot)",
+     "telugu_form_stem": "re:(?:చాప్టర్|స్టెప్|కార్డ్|స్టేజ్|కారణం|పార్ట్)\\s*సిక్స",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "చాప్టర్ సిక్స్."
+     ]
+    }
+   ]
+  },
+  "body_loans": {
+   "policy": "allowed_attested_only",
+   "rule": "Core body vocabulary stays Telugu (కళ్ళు, చెయ్యి, నడుము, చాతి, పెదవులు, కాళ్ళు). Only the attested loan layer may be English: body, face, skin, hips, body shame.",
+   "placement": "బాడీ as a general noun (ఆమె బాడీ మీద, బాడీ షేమ్); specific body parts in narration stay Telugu.",
+   "token_total": 18,
+   "words": [
+    {
+     "english": "body",
+     "telugu_form_stem": "బాడీ",
+     "count": 11,
+     "per_source": {
+      "part2_male_gaze": 7,
+      "silent_habit_script": 4,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఎపిసోడ్ పార్ట్ట మన మీద ప్రభావం ఒక అమ్మాయిని బాడీలా చూస్తే ఒక మనిషిగా",
+      "డోర్లు, కార్ సైడ్ బాడీ ఆమె నడుము హెడ్లైట్స్, బ్యానెట్ ఆమె చాతి పెదవులు"
+     ]
+    },
+    {
+     "english": "face",
+     "telugu_form_stem": "ఫేస",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఫంజిబిలిటీ ఆమె ఫేస్",
+      "ఆడవాళ్ళు ఏం ఫేస్ చేస్తున్నారు?"
+     ]
+    },
+    {
+     "english": "body shame",
+     "telugu_form_stem": "బాడీ షేమ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "స్విమ్ సూట్ లో ఉన్న అమ్మాయిలకి బాడీ షేమ్ ఎక్కువయింది."
+     ]
+    },
+    {
+     "english": "hips",
+     "telugu_form_stem": "హిప్స",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "టైర్లు ఆమె కాళ్ళు కార్ వెనక భాగం ఆమె హిప్స్"
+     ]
+    },
+    {
+     "english": "skin",
+     "telugu_form_stem": "స్కిన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆన్‌లైన్ గ్రూప్స్ మెరిసిపోయే స్కిన్, మ్యాగ్నెటిక్ చార్మ్, భారీ ఎనర్జీ అని ప్రామిస్ చేస్తాయి."
+     ]
+    }
+   ]
+  },
+  "film_media_craft": {
+   "policy": "allowed",
+   "rule": "The topic's professional/craft vocabulary stays in English (for film topics: camera, angle, close-up, slow motion, shot, scene, director, hero/heroine, industry...). Generalise: whatever field the video is about, its working terms are English; the explanation around them is Telugu.",
+   "placement": "As ordinary nouns inside Telugu sentences; in comma lists read in one breath ('కార్, వాషింగ్ మెషిన్, ఫ్రిడ్జ్, టీవీ').",
+   "token_total": 80,
+   "words": [
+    {
+     "english": "camera",
+     "telugu_form_stem": "కెమెరా",
+     "count": 11,
+     "per_source": {
+      "part2_male_gaze": 11,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "వైపులా చూడండి సేమ్ కెమెరా సేమ్ ఐదు మూవ్స్ ఒకటి లో యాంగిల్ ఈ యాంగిల్ మనిషిని",
+      "ఇప్పుడు కెమెరా ఏ"
+     ]
+    },
+    {
+     "english": "hero",
+     "telugu_form_stem": "హీరో",
+     "count": 8,
+     "per_source": {
+      "part2_male_gaze": 8,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హీరోయిన్ ఫస్ట్ షాట్ కార్ యాడ్ లాగే ఎందుకు ఉంటుంది?",
+      "ఇప్పుడు మన సినిమాలు [సంగీతం] హీరో చాలాసార్లు హీరోయిన్ వెంటబడి ఆమె ఎస్ అనే వరకు ఫాలో అయ్యి ఎందుకు గెలుస్తాడు?"
+     ]
+    },
+    {
+     "english": "scene",
+     "telugu_form_stem": "సీన",
+     "count": 7,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఈ సీన్స్ చూసి పెరిగే అమ్మాయిలకి ఏమవుతుంది?",
+      "2019 లో రీసర్చర్ ఎస్కేఆర్ మల్లం ఆరు తెలుగు సినిమాల ప్రేమ సీన్స్ స్టడీ చేశారు."
+     ]
+    },
+    {
+     "english": "heroine",
+     "telugu_form_stem": "హీరోయిన",
+     "count": 5,
+     "per_source": {
+      "part2_male_gaze": 5,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హీరోయిన్ ఫస్ట్ షాట్ కార్ యాడ్ లాగే ఎందుకు ఉంటుంది?",
+      "ఇప్పుడు మన సినిమాలు [సంగీతం] హీరో చాలాసార్లు హీరోయిన్ వెంటబడి ఆమె ఎస్ అనే వరకు ఫాలో అయ్యి ఎందుకు గెలుస్తాడు?"
+     ]
+    },
+    {
+     "english": "industry",
+     "telugu_form_stem": "ఇండస్ట్రీ",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "290 పేజీల రిపోర్ట్ ప్రకారం ఇండస్ట్రీని పవర్ఫుల్ మగవాళ్ళ మాఫియా కంట్రోల్ చేస్తోంది.",
+      "సినిమా 2018 లో యాక్టర్ శ్రీరెడ్డి ఇండస్ట్రీలో లైంగిక దోపిడీకి వ్యతిరేకంగా హైదరాబాద్ ఫిలిం చాంబర్ బయట నిరసం చేశారు."
+     ]
+    },
+    {
+     "english": "producer",
+     "telugu_form_stem": "ప్రొడ్యూసర",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డబ్బుని ఫాలో అవుతామ అన్నాం కదా మరి కథకు అవసరం లేకపోయినా ప్రొడ్యూసర్లు ఈ పాటలు ఎందుకు పెడుతూనే ఉంటారు?",
+      "వన్ మార్కెటింగ్ ఈ పాటలు చాలాసార్లు రిలీజ్ కి ముందే సినిమాని ప్రమోట్ చేసే మార్కెటింగ్ టూల్ అని కంపోజర్స్ ప్రొడ్యూసర్స్ ఇండియా టుడే కి చెప్పారు."
+     ]
+    },
+    {
+     "english": "release",
+     "telugu_form_stem": "రిలీజ",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2024 లో రిపోర్ట్ రిలీజ్ చేయమని సమంత అడిగారు.",
+      "వన్ మార్కెటింగ్ ఈ పాటలు చాలాసార్లు రిలీజ్ కి ముందే సినిమాని ప్రమోట్ చేసే మార్కెటింగ్ టూల్ అని కంపోజర్స్ ప్రొడ్యూసర్స్ ఇండియా టుడే కి చెప్పారు."
+     ]
+    },
+    {
+     "english": "audience",
+     "telugu_form_stem": "ఆడియన్స",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆడియన్స్ కి నేర్పే పాఠం [సంగీతం] వెంటపడితే వర్క్ అవుతుంది.",
+      "2025 లో ఇలాంటి మూడు పాటలు ఉన్న థమ్మా సినిమా డైరెక్టర్ ఈ పాటలు ఆడియన్స్ ని సినిమాలోకి తీసుకొచ్చే మార్కెటింగ్ ఆసెట్స్ అన్నారు."
+     ]
+    },
+    {
+     "english": "film",
+     "telugu_form_stem": "ఫిలిం",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పొడుగ్గా పవర్ఫుల్ గా చూపిస్తుందని ఫిలిం గైడ్స్ చెప్తాయి.",
+      "క్యారెక్టర్ ని రివీల్ చేసే పద్ధతి అని ఫిలిం గైడ్స్ చెప్తాయి."
+     ]
+    },
+    {
+     "english": "angle",
+     "telugu_form_stem": "యాంగిల",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "వైపులా చూడండి సేమ్ కెమెరా సేమ్ ఐదు మూవ్స్ ఒకటి లో యాంగిల్ ఈ యాంగిల్ మనిషిని"
+     ]
+    },
+    {
+     "english": "artist",
+     "telugu_form_stem": "ఆర్టిస్ట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒప్పుకోవాలి లేదా ఏళ్ల కల వదులుకుని నో చెప్పాలి చాలా సెట్స్ లో జూనియర్ ఆర్టిస్టులకి టాయిలెట్",
+      "సంపాదిస్తారు ప్రొడ్యూసర్లు మ్యూజిక్ లేబుల్స్ ప్లాట్ఫార్మ్స్ ఎవరు కడతారు సెట్ లో టాయిలెట్ లేని జూనియర్ ఆర్టిస్ట్ సేఫ్"
+     ]
+    },
+    {
+     "english": "business",
+     "telugu_form_stem": "బిజినెస",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఎంటర్టైన్మెంటఆ బిజినెస్ ఈరోజు డబ్బు ఎటు వెళ్తుందో చూద్దాం.",
+      "ఈ లెక్క ఇండస్ట్రీ వాళ్ళు చెప్పే బిజినెస్ లాజిక్ ఎగజాక్ట్ బిల్ కాదు."
+     ]
+    },
+    {
+     "english": "character",
+     "telugu_form_stem": "క్యారెక్టర",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "క్యారెక్టర్ ని రివీల్ చేసే పద్ధతి అని ఫిలిం గైడ్స్ చెప్తాయి.",
+      "సినిమాల్లో 2012 టు 16 88% ఫీమేల్ క్యారెక్టర్స్ ఆబ్జెక్టిఫై అయ్యారు."
+     ]
+    },
+    {
+     "english": "director",
+     "telugu_form_stem": "డైరెక్టర",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డైరెక్టర్ మీద ఆరోపణ కాదు.",
+      "2025 లో ఇలాంటి మూడు పాటలు ఉన్న థమ్మా సినిమా డైరెక్టర్ ఈ పాటలు ఆడియన్స్ ని సినిమాలోకి తీసుకొచ్చే మార్కెటింగ్ ఆసెట్స్ అన్నారు."
+     ]
+    },
+    {
+     "english": "guides (film guides)",
+     "telugu_form_stem": "గైడ్స",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పొడుగ్గా పవర్ఫుల్ గా చూపిస్తుందని ఫిలిం గైడ్స్ చెప్తాయి.",
+      "క్యారెక్టర్ ని రివీల్ చేసే పద్ధతి అని ఫిలిం గైడ్స్ చెప్తాయి."
+     ]
+    },
+    {
+     "english": "junior",
+     "telugu_form_stem": "జూనియర",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒప్పుకోవాలి లేదా ఏళ్ల కల వదులుకుని నో చెప్పాలి చాలా సెట్స్ లో జూనియర్ ఆర్టిస్టులకి టాయిలెట్",
+      "సంపాదిస్తారు ప్రొడ్యూసర్లు మ్యూజిక్ లేబుల్స్ ప్లాట్ఫార్మ్స్ ఎవరు కడతారు సెట్ లో టాయిలెట్ లేని జూనియర్ ఆర్టిస్ట్ సేఫ్"
+     ]
+    },
+    {
+     "english": "sets (film sets)",
+     "telugu_form_stem": "సెట్స",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒప్పుకోవాలి లేదా ఏళ్ల కల వదులుకుని నో చెప్పాలి చాలా సెట్స్ లో జూనియర్ ఆర్టిస్టులకి టాయిలెట్",
+      "2025 లో ఇలాంటి మూడు పాటలు ఉన్న థమ్మా సినిమా డైరెక్టర్ ఈ పాటలు ఆడియన్స్ ని సినిమాలోకి తీసుకొచ్చే మార్కెటింగ్ ఆసెట్స్ అన్నారు."
+     ]
+    },
+    {
+     "english": "shot",
+     "telugu_form_stem": "షాట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హీరోయిన్ ఫస్ట్ షాట్ కార్ యాడ్ లాగే ఎందుకు ఉంటుంది?",
+      "మూడు ఈ షాట్ కి ఫిట్ ఇనర్ట్నెస్ ఆమె ఏమి చేయదు."
+     ]
+    },
+    {
+     "english": "actor",
+     "telugu_form_stem": "యాక్టర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సినిమా 2018 లో యాక్టర్ శ్రీరెడ్డి ఇండస్ట్రీలో లైంగిక దోపిడీకి వ్యతిరేకంగా హైదరాబాద్ ఫిలిం చాంబర్ బయట నిరసం చేశారు."
+     ]
+    },
+    {
+     "english": "close-up",
+     "telugu_form_stem": "క్లోజఅప",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నాలుగు క్లోజఅప్స్ ఒక్కో పార్ట్"
+     ]
+    },
+    {
+     "english": "composer",
+     "telugu_form_stem": "కంపోజర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "వన్ మార్కెటింగ్ ఈ పాటలు చాలాసార్లు రిలీజ్ కి ముందే సినిమాని ప్రమోట్ చేసే మార్కెటింగ్ టూల్ అని కంపోజర్స్ ప్రొడ్యూసర్స్ ఇండియా టుడే కి చెప్పారు."
+     ]
+    },
+    {
+     "english": "dance",
+     "telugu_form_stem": "డాన్స",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇప్పుడు కెమెరా ముందు ఆడవాళ్ళు ఇలాంటి పాటలో హీరోయిన్ డాన్స్ నిజంగా ఆమె ఛాయిస్నానా ఇప్పుడు కేరళ హేమ కమిటీ"
+     ]
+    },
+    {
+     "english": "entertainment",
+     "telugu_form_stem": "ఎంటర్టైన్మెంట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఎంటర్టైన్మెంటఆ బిజినెస్ ఈరోజు డబ్బు ఎటు వెళ్తుందో చూద్దాం."
+     ]
+    },
+    {
+     "english": "episode",
+     "telugu_form_stem": "ఎపిసోడ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఎపిసోడ్ పార్ట్ట మన మీద ప్రభావం ఒక అమ్మాయిని బాడీలా చూస్తే ఒక మనిషిగా"
+     ]
+    },
+    {
+     "english": "model",
+     "telugu_form_stem": "మోడల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక కార్ మోడల్ లాగా మార్చేయొచ్చు."
+     ]
+    },
+    {
+     "english": "reveal",
+     "telugu_form_stem": "రివీల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "క్యారెక్టర్ ని రివీల్ చేసే పద్ధతి అని ఫిలిం గైడ్స్ చెప్తాయి."
+     ]
+    },
+    {
+     "english": "slow motion",
+     "telugu_form_stem": "స్లో మోషన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఐదు స్లో మోషన్ 12 ఎక్స్పెరిమెంట్స్ లో ప్రొడక్ట్స్ లగ్జరీగా కనిపించాయి."
+     ]
+    },
+    {
+     "english": "slow pan",
+     "telugu_form_stem": "స్లో పాన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రెండు వెనక నుంచి పక్కకి స్లో పాన్ మూడు కింద నుంచి పైకి టిల్ట్ ఒక"
+     ]
+    },
+    {
+     "english": "song (in item song)",
+     "telugu_form_stem": "సాంగ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నిజం చెప్పాలంటే ఒక ఐటం సాంగ్ నుంచి ఎంత వస్తుందో ఎవరు పబ్లిష్"
+     ]
+    },
+    {
+     "english": "theatre",
+     "telugu_form_stem": "థియేటర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నెక్స్ట్ టైం కెమెరా ఆమె నడుము మీదకు దిగి థియేటర్ విజిల్స్ వేసినప్పుడు మనం ఎందుకు విజిల్స్ వేస్తున్నాం మనం వేసినప్పుడు"
+     ]
+    },
+    {
+     "english": "tilt",
+     "telugu_form_stem": "టిల్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రెండు వెనక నుంచి పక్కకి స్లో పాన్ మూడు కింద నుంచి పైకి టిల్ట్ ఒక"
+     ]
+    }
+   ]
+  },
+  "everyday_loans": {
+   "policy": "allowed",
+   "rule": "Established everyday loanwords are used exactly as the channel uses them — college, fee, safety/safe, road, bus stop, travel, job, office, city, university, student, lab, test, marks, doctor, room, toilet, bed, walk, call, shower, workout, skill, time, committee, notice, ban, association, high court, judge, case, criminal, police, team, special, book, group, official, career, plastic, surgeon, patient, streak. Do NOT substitute formal Telugu equivalents for these.",
+   "placement": "Fully nativised: Telugu plurals/case attach directly (కాలేజీని, కేసులు, రూమ్స్).",
+   "token_total": 114,
+   "words": [
+    {
+     "english": "case",
+     "telugu_form_stem": "కేస",
+     "count": 10,
+     "per_source": {
+      "part2_male_gaze": 9,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "అతని మీద దాదాపు 30 పాత కేసులు హిట్లర్ బుక్ ఇన్స్పిరేషన్ కూడా ఉందని పోలీసులు చెప్పారు.",
+      "సో ఈ కేసులు ఏం చూపిస్తాయో క్లియర్ గా చెప్పుకుందాం."
+     ]
+    },
+    {
+     "english": "committee",
+     "telugu_form_stem": "కమిటీ",
+     "count": 7,
+     "per_source": {
+      "part2_male_gaze": 7,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇప్పుడు కెమెరా ముందు ఆడవాళ్ళు ఇలాంటి పాటలో హీరోయిన్ డాన్స్ నిజంగా ఆమె ఛాయిస్నానా ఇప్పుడు కేరళ హేమ కమిటీ",
+      "ఒక పెద్ద హీరోయిన్ మీద దాడి జరిగాక 2017 లో కేరళ ఈ కమిటీ పెట్టింది."
+     ]
+    },
+    {
+     "english": "safe",
+     "telugu_form_stem": "సేఫ",
+     "count": 7,
+     "per_source": {
+      "part2_male_gaze": 7,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రోడ్డు సేఫ్ గా ఉందని ఒక అమ్మాయి తక్కువ కాలేజీ ని ఎందుకు ఎంచుకుంటుంది?",
+      "సేఫ్టీ కోసం."
+     ]
+    },
+    {
+     "english": "time",
+     "telugu_form_stem": "టైమ",
+     "count": 7,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 7,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రన్‌టైమ్ సుమారు 15.",
+      "\"ఇదే లాస్ట్ టైమ్\" అని నీకు నువ్వే చెప్పుకుంటావ్."
+     ]
+    },
+    {
+     "english": "city",
+     "telugu_form_stem": "సిటీ",
+     "count": 6,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సెప్టెంబర్ 2026 ఢిల్లీ బెంగళూర్లో 4వేలకి పైగా ఆడవాళ్ళపై సర్వే ఈ చార్ట్ ని సిటీవీగా చదవండి.",
+      "బెంగళూరులో 14 రెండు సిటీల్లోనూ 10 మందిలో దాదాపు ఏడుగురు వేధింపుల భయం తమ జాబ్ నిర్ణయం మీద ప్రభావం చూపిస్తుందన్నారు."
+     ]
+    },
+    {
+     "english": "college",
+     "telugu_form_stem": "కాలేజీ",
+     "count": 6,
+     "per_source": {
+      "part2_male_gaze": 5,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రోడ్డు సేఫ్ గా ఉందని ఒక అమ్మాయి తక్కువ కాలేజీ ని ఎందుకు ఎంచుకుంటుంది?",
+      "తక్కువ కాలేజీ, ఎక్కువ ఫీజు, ఎక్కువ దూరం."
+     ]
+    },
+    {
+     "english": "judge",
+     "telugu_form_stem": "జడ్జ",
+     "count": 5,
+     "per_source": {
+      "part2_male_gaze": 5,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కానీ ప్రాడక్ట్ లా చూస్తే ఆమెపై మన జడ్జ్మెంట్ మారుతుందా?",
+      "ఆడవాళ్ళని లుక్స్ తోనే జడ్జ్ చేస్తారని [సంగీతం] ఒక అమ్మాయి మళ్ళీ మళ్ళీ చూస్తుంది."
+     ]
+    },
+    {
+     "english": "high court",
+     "telugu_form_stem": "హైకోర్ట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2016 లో మద్రాస్ హైకోర్ట్ జడ్జ్ రాశారు.",
+      "హైకోర్ట్ మాజీ"
+     ]
+    },
+    {
+     "english": "official",
+     "telugu_form_stem": "అఫీషియల",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కానీ పార్ట్ వన్ లో స్టడీ చేసిన చూపు కూడా సేమ్ అఫీషియల్ నంబర్స్ 2024 లో ఇండియాలో",
+      "కారణం 3 వ్యూస్ ఊ అంటావా అఫీషియల్ తెలుగు వీడియో కి YouTube"
+     ]
+    },
+    {
+     "english": "police",
+     "telugu_form_stem": "పోలీస",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఢిల్లీ దగ్గర ఒక అమ్మాయిని [సంగీతం] కిడ్నాప్ చేసిన వ్యక్తి దర్ సినిమాతో బాగా ఇన్స్పైర్ అయ్యాడని పోలీసులు చెప్పారు.",
+      "అతని మీద దాదాపు 30 పాత కేసులు హిట్లర్ బుక్ ఇన్స్పిరేషన్ కూడా ఉందని పోలీసులు చెప్పారు."
+     ]
+    },
+    {
+     "english": "road",
+     "telugu_form_stem": "రోడ్డ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రోడ్డు సేఫ్ గా ఉందని ఒక అమ్మాయి తక్కువ కాలేజీ ని ఎందుకు ఎంచుకుంటుంది?",
+      "రోడ్డు సేఫ్ గా ఉంటే చాలా మంది టాప్ 20% కాలేజ్ వదిలి క్వాలిటీలో కింద సగంలో ఉన్న కాలేజీని ఎంచుకుంటారు."
+     ]
+    },
+    {
+     "english": "room",
+     "telugu_form_stem": "రూమ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లేవు బట్టలు మార్చుకునే రూమ్స్ లేవు.",
+      "కంప్లైంట్ కమిటీలు ఆడవాళ్ళకి వేరే రెస్ట్ రూమ్స్ టాయిలెట్స్ పెట్టాలని రిపోర్ట్ చెప్పింది."
+     ]
+    },
+    {
+     "english": "safety",
+     "telugu_form_stem": "సేఫ్టీ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సేఫ్టీ కోసం.",
+      "కానీ ఆ ఆడవాళ్ళ సేఫ్టీ వాళ్ళ ఫ్యామిలీల సేఫ్టీ గురించి భయపడ్డామని కమిటీ రాసింది."
+     ]
+    },
+    {
+     "english": "student",
+     "telugu_form_stem": "స్టూడెంట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "స్టూడెంట్స్ స్విమ్ సూట్ కానీ స్వెటర్ గాని వేసుకున్నారు.",
+      "ఇప్పుడు మన మొదటి ప్రశ్న కాలేజీ వరల్డ్ బ్యాంక్ ఎకనామిస్ట్ ఢిల్లీ యూనివర్సిటీ స్టూడెంట్స్ ని స్టడీ చేశారు."
+     ]
+    },
+    {
+     "english": "test",
+     "telugu_form_stem": "టెస్ట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "మనిషిని చూసే వస్తువుగా చూడడం ఒక సింపుల్ టెస్ట్",
+      "తర్వాత మాథ్స్ టెస్ట్ రాశారు."
+     ]
+    },
+    {
+     "english": "toilet",
+     "telugu_form_stem": "టాయిలెట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒప్పుకోవాలి లేదా ఏళ్ల కల వదులుకుని నో చెప్పాలి చాలా సెట్స్ లో జూనియర్ ఆర్టిస్టులకి టాయిలెట్",
+      "కంప్లైంట్ కమిటీలు ఆడవాళ్ళకి వేరే రెస్ట్ రూమ్స్ టాయిలెట్స్ పెట్టాలని రిపోర్ట్ చెప్పింది."
+     ]
+    },
+    {
+     "english": "ban",
+     "telugu_form_stem": "బ్యాన",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డోర్లు, కార్ సైడ్ బాడీ ఆమె నడుము హెడ్లైట్స్, బ్యానెట్ ఆమె చాతి పెదవులు",
+      "శ్రీ రెడ్డి మీద బ్యాన్ పెట్టింది."
+     ]
+    },
+    {
+     "english": "bed",
+     "telugu_form_stem": "బెడ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒంటరిగా ఉండటం, బోర్ కొట్టడం, స్ట్రెస్, అర్ధరాత్రి, బెడ్ మీద చేతిలో ఫోన్.",
+      "రాత్రిపూట ఫోన్ బెడ్‌రూమ్ బయట పెట్టు."
+     ]
+    },
+    {
+     "english": "book",
+     "telugu_form_stem": "బుక",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "అతని మీద దాదాపు 30 పాత కేసులు హిట్లర్ బుక్ ఇన్స్పిరేషన్ కూడా ఉందని పోలీసులు చెప్పారు.",
+      "ఈ 21 రోజుల ఐడియా 1960లో ఒక ప్లాస్టిక్ సర్జన్, Maxwell Maltz రాసిన ఒక బుక్ నుంచి వచ్చింది."
+     ]
+    },
+    {
+     "english": "criminal",
+     "telugu_form_stem": "క్రిమినల",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కేసులు ఎక్కువ అంటే రిపోర్టింగ్ ఎక్కువ కావచ్చు నేరాలు కాదు పైగా జూలై 2024 లో కొత్త క్రిమినల్ చట్టాలు వచ్చాయి.",
+      "ఒకటి సినిమాలు ఒక మామూలు మనిషిని క్రిమినల్ గా మార్చవు."
+     ]
+    },
+    {
+     "english": "lab",
+     "telugu_form_stem": "ల్యాబ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నిజం చెప్పాలంటే ఈ స్టడీ ఒక చిన్న అమెరికన్ ల్యాబ్ స్టడీ.",
+      "రెండు చాలా స్టడీస్ సర్వేలు లేదా చిన్న ల్యాబ్ టెస్టులు ఎక్కువగా అమెరికన్ స్టూడెంట్స్ తో లింక్స్ మాత్రమే కారణం"
+     ]
+    },
+    {
+     "english": "maths",
+     "telugu_form_stem": "మాథ్స",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "తర్వాత మాథ్స్ టెస్ట్ రాశారు.",
+      "[సంగీతం] మాథ్స్"
+     ]
+    },
+    {
+     "english": "swimsuit",
+     "telugu_form_stem": "స్విమ్ సూట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "స్టూడెంట్స్ స్విమ్ సూట్ కానీ స్వెటర్ గాని వేసుకున్నారు.",
+      "స్విమ్ సూట్ లో ఉన్న అమ్మాయిలకి బాడీ షేమ్ ఎక్కువయింది."
+     ]
+    },
+    {
+     "english": "travel",
+     "telugu_form_stem": "ట్రావెల",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ట్రావెల్ లో వేదింపులు ఫేస్ చేశారు.",
+      "కంటే దాదాపు 18800 ఎక్కువ రోజు 40 నిమిషాలు ఎక్కువ ట్రావెల్ టాప్ ఐటం చూడండి ఇష్టం లేని గుచ్చి చూపులు"
+     ]
+    },
+    {
+     "english": "association",
+     "telugu_form_stem": "అసోసియేషన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "యక్టర్స్ అసోసియేషన్"
+     ]
+    },
+    {
+     "english": "bus",
+     "telugu_form_stem": "బస",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కాలేజీ, బస్ స్టాప్ ఆమె వీధి కార్డ్ త్రీ ఫ్రెండ్స్ చప్పట్లు కొడతారు పాట వస్తుంది."
+     ]
+    },
+    {
+     "english": "call (phone call)",
+     "telugu_form_stem": "కాల్",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక వర్కౌట్, ఒక వాక్, ఫ్రెండ్‌తో ఒక కాల్, ఒక కోల్డ్ షవర్, నువ్వు నేర్చుకుంటున్న ఒక స్కిల్."
+     ]
+    },
+    {
+     "english": "career",
+     "telugu_form_stem": "కెరియర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "మంది ఆడవాళ్ళకి హేమ రిపోర్ట్ చూపించినట్టు నో చెప్తే కెరియర్ పోవచ్చు."
+     ]
+    },
+    {
+     "english": "doctor",
+     "telugu_form_stem": "డాక్టర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కానీ నీకు ఇది జరుగుతుంటే, సీరియస్‌గా తీసుకోవడం మంచిది, ఒక డాక్టర్ హెల్ప్ చేయగలరు."
+     ]
+    },
+    {
+     "english": "fee",
+     "telugu_form_stem": "ఫీజు",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "తక్కువ కాలేజీ, ఎక్కువ ఫీజు, ఎక్కువ దూరం."
+     ]
+    },
+    {
+     "english": "group",
+     "telugu_form_stem": "గ్రూప",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆన్‌లైన్ గ్రూప్స్ మెరిసిపోయే స్కిన్, మ్యాగ్నెటిక్ చార్మ్, భారీ ఎనర్జీ అని ప్రామిస్ చేస్తాయి."
+     ]
+    },
+    {
+     "english": "job",
+     "telugu_form_stem": "జాబ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "బెంగళూరులో 14 రెండు సిటీల్లోనూ 10 మందిలో దాదాపు ఏడుగురు వేధింపుల భయం తమ జాబ్ నిర్ణయం మీద ప్రభావం చూపిస్తుందన్నారు."
+     ]
+    },
+    {
+     "english": "marks",
+     "telugu_form_stem": "మార్కుల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లో మార్కులు తగ్గాయి."
+     ]
+    },
+    {
+     "english": "notice",
+     "telugu_form_stem": "నోటీస",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2018 హ్యూమన్ రైట్స్ కమిషన్ తెలంగాణ ప్రభుత్వానికి నోటీసులు పంపింది."
+     ]
+    },
+    {
+     "english": "office",
+     "telugu_form_stem": "ఆఫీస",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రోడ్డు మీదో, కాలేజీలోనో, ఆఫీస్‌లోనో ఒక అమ్మాయిని చూసినప్పుడు, మైండ్ వెళ్ళకూడని చోటికి వెళ్తుంది."
+     ]
+    },
+    {
+     "english": "patient",
+     "telugu_form_stem": "పేషెంట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పేషెంట్స్ ఒక కొత్త ఫేస్‌కి అలవాటు పడటానికి సుమారు 21 రోజులు పడుతోందని ఆయన గమనించాడు."
+     ]
+    },
+    {
+     "english": "plastic",
+     "telugu_form_stem": "ప్లాస్టిక",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఈ 21 రోజుల ఐడియా 1960లో ఒక ప్లాస్టిక్ సర్జన్, Maxwell Maltz రాసిన ఒక బుక్ నుంచి వచ్చింది."
+     ]
+    },
+    {
+     "english": "shower",
+     "telugu_form_stem": "షవర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక వర్కౌట్, ఒక వాక్, ఫ్రెండ్‌తో ఒక కాల్, ఒక కోల్డ్ షవర్, నువ్వు నేర్చుకుంటున్న ఒక స్కిల్."
+     ]
+    },
+    {
+     "english": "skill",
+     "telugu_form_stem": "స్కిల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక వర్కౌట్, ఒక వాక్, ఫ్రెండ్‌తో ఒక కాల్, ఒక కోల్డ్ షవర్, నువ్వు నేర్చుకుంటున్న ఒక స్కిల్."
+     ]
+    },
+    {
+     "english": "special",
+     "telugu_form_stem": "స్పెషల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక స్పెషల్ పోలీస్ టీం కేసులు తీసుకుంది."
+     ]
+    },
+    {
+     "english": "stop (bus stop)",
+     "telugu_form_stem": "స్టాప",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కాలేజీ, బస్ స్టాప్ ఆమె వీధి కార్డ్ త్రీ ఫ్రెండ్స్ చప్పట్లు కొడతారు పాట వస్తుంది."
+     ]
+    },
+    {
+     "english": "streak",
+     "telugu_form_stem": "స్ట్రీక",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పర్ఫెక్ట్ స్ట్రీక్స్ కాదు, మంచి వారాలు కౌంట్ చేయ్."
+     ]
+    },
+    {
+     "english": "surgeon",
+     "telugu_form_stem": "సర్జన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఈ 21 రోజుల ఐడియా 1960లో ఒక ప్లాస్టిక్ సర్జన్, Maxwell Maltz రాసిన ఒక బుక్ నుంచి వచ్చింది."
+     ]
+    },
+    {
+     "english": "sweater",
+     "telugu_form_stem": "స్వెటర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "స్టూడెంట్స్ స్విమ్ సూట్ కానీ స్వెటర్ గాని వేసుకున్నారు."
+     ]
+    },
+    {
+     "english": "university",
+     "telugu_form_stem": "యూనివర్సిటీ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇప్పుడు మన మొదటి ప్రశ్న కాలేజీ వరల్డ్ బ్యాంక్ ఎకనామిస్ట్ ఢిల్లీ యూనివర్సిటీ స్టూడెంట్స్ ని స్టడీ చేశారు."
+     ]
+    },
+    {
+     "english": "walk",
+     "telugu_form_stem": "వాక",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక వర్కౌట్, ఒక వాక్, ఫ్రెండ్‌తో ఒక కాల్, ఒక కోల్డ్ షవర్, నువ్వు నేర్చుకుంటున్న ఒక స్కిల్."
+     ]
+    },
+    {
+     "english": "workout",
+     "telugu_form_stem": "వర్కౌట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక వర్కౌట్, ఒక వాక్, ఫ్రెండ్‌తో ఒక కాల్, ఒక కోల్డ్ షవర్, నువ్వు నేర్చుకుంటున్న ఒక స్కిల్."
+     ]
+    }
+   ]
+  },
+  "verb_stems": {
+   "policy": "allowed_with_light_verb",
+   "rule": "English verb STEMS are allowed only when carried by a Telugu light verb (చేయడం / అవ్వడం / రావడం / పడటం): follow అవుతుంది, check చేసుకుంటుంది, decide అవుతాడు, cut చేసేశాయి, list చేసింది, report చేసింది, track చేసింది, face చేశారు, surf చేయ్, replace చేయ్, build చేసుకున్నావ్, design చేశారు, plan చేసుకోలేదు, open చేద్దాం, close చేసామని, kidnap చేసిన, work అవుతుంది. English tense/auxiliaries are banned.",
+   "placement": "Stem sits mid-clause; the Telugu light verb closes the clause as usual.",
+   "token_total": 67,
+   "words": [
+    {
+     "english": "follow",
+     "telugu_form_stem": "ఫాలో",
+     "count": 8,
+     "per_source": {
+      "part2_male_gaze": 7,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ప్రతి యడ్ ఒకే షార్ట్ లిస్ట్ ఫాలో అవుతుంది.",
+      "ఫాలో అవుతాయి."
+     ]
+    },
+    {
+     "english": "open",
+     "telugu_form_stem": "ఓపెన",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రిపోర్ట్ ని సరిగ్గా ఓపెన్ చేద్దాం.",
+      "మగవాళ్ళు సెక్స్ కోసం ఓపెన్ గా డిమాండ్ చేస్తారు."
+     ]
+    },
+    {
+     "english": "use",
+     "telugu_form_stem": "యూజ",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కారణంట 2 మ్యూజిక్ రైట్స్ పుష్ప 2 మ్యూజిక్ రిజిక్ రైట్స్ కి టీ సిరీస్ 65 కోట్లు కట్టిందని బాలీవుడ్ హంగామా",
+      "వ్యూస్ తో మ్యూజిక్ రైట్స్ రేట్ పెరుగుతుంది."
+     ]
+    },
+    {
+     "english": "break",
+     "telugu_form_stem": "బ్రేక",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రెండు, ఒక్క విల్‌పవర్‌తో పని అవ్వదు, ఎందుకంటే నువ్వు ఆటోపైలట్‌తో మాన్యువల్ బ్రేక్ పెట్టి ఫైట్ చేస్తున్నావ్.",
+      "ఒక్కసారి జారిపోయాక వచ్చే ఫీలింగ్‌ని సైకాలజిస్ట్స్ abstinence violation effect అంటారు, \"ఆల్రెడీ బ్రేక్ చేసేశా, ఇంక ఏం లాభం?"
+     ]
+    },
+    {
+     "english": "decide",
+     "telugu_form_stem": "డిసైడ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "చేసే ఫార్ములా చూడండి కార్డ్ వన్ హీరో ఆమెని చూస్తాడు ఆమె తనదే అని డిసైడ్ అవుతాడు.",
+      "అది ప్లాన్ చేస్తుంది, డిసైడ్ చేస్తుంది, \"రేపటి నుంచి ఆపేస్తా\" అంటుంది."
+     ]
+    },
+    {
+     "english": "design",
+     "telugu_form_stem": "డిజైన",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పోర్న్ నీకు ఏదో నేర్పించడానికి డిజైన్ చేయలేదు.",
+      "నువ్వు చూస్తూనే ఉండాలని డిజైన్ చేశారు."
+     ]
+    },
+    {
+     "english": "fight",
+     "telugu_form_stem": "ఫైట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రెండు, ఒక్క విల్‌పవర్‌తో పని అవ్వదు, ఎందుకంటే నువ్వు ఆటోపైలట్‌తో మాన్యువల్ బ్రేక్ పెట్టి ఫైట్ చేస్తున్నావ్.",
+      "దానితో ఫైట్ చేయకు, దానికి లొంగిపోకు."
+     ]
+    },
+    {
+     "english": "plan",
+     "telugu_form_stem": "ప్లాన",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నువ్వు ఇది ప్లాన్ చేసుకోలేదు.",
+      "ఎవ్వరూ ప్లాన్ చేసుకోరు."
+     ]
+    },
+    {
+     "english": "track",
+     "telugu_form_stem": "ట్రాక",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2025 హైదరాబాద్ స్టడీ కళ్ళని ట్రాక్ చేసింది.",
+      "మ్యాటర్ అయ్యింది ఏంటంటే, మళ్ళీ ట్రాక్‌లోకి రావడం."
+     ]
+    },
+    {
+     "english": "work (function)",
+     "telugu_form_stem": "వర్క",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆడియన్స్ కి నేర్పే పాఠం [సంగీతం] వెంటపడితే వర్క్ అవుతుంది.",
+      "వర్క్ కల్చర్ అంతే అన్నారు."
+     ]
+    },
+    {
+     "english": "build",
+     "telugu_form_stem": "బిల్డ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2009లో, University College Londonలో Phillippa Lally, కొత్త habits బిల్డ్ చేసుకుంటున్న 96 మందిని ఫాలో చేసింది.",
+      "నిన్ను హుక్ చేయడానికే డిజైన్ చేసిన ఒక ప్రపంచంలో, నువ్వు ఒక habit బిల్డ్ చేసుకున్నావ్ అంతే."
+     ]
+    },
+    {
+     "english": "check",
+     "telugu_form_stem": "చెక",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కెమెరా లాగా మూడు తన బాడీని ఎప్పుడూ చెక్ చేసుకుంటుంది.",
+      "ఒక క్విక్ మిత్ చెక్."
+     ]
+    },
+    {
+     "english": "count",
+     "telugu_form_stem": "కౌంట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డే కౌంట్స్ అందరికీ పని చేయవు.",
+      "పర్ఫెక్ట్ స్ట్రీక్స్ కాదు, మంచి వారాలు కౌంట్ చేయ్."
+     ]
+    },
+    {
+     "english": "enjoy",
+     "telugu_form_stem": "ఎంజాయ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒకటి లైకింగ్, అంటే ఏదైనా ఎంజాయ్ చేయడం.",
+      "ఇంకా స్క్రీన్ మీద ఉన్న ఆ అమ్మాయిలు చాలా వరకు, వాళ్ళు అది ఎంజాయ్ చేస్తున్నట్టే రియాక్ట్ అయ్యారు."
+     ]
+    },
+    {
+     "english": "lead",
+     "telugu_form_stem": "లీడ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "జడ్జ్ లీడ్ చేశారు.",
+      "2014లో Cambridgeలో Valerie Voon లీడ్ చేసిన రీసెర్చర్స్, compulsive sexual behaviour ఉన్న మగవాళ్ళ brains స్కాన్ చేశారు."
+     ]
+    },
+    {
+     "english": "repeat",
+     "telugu_form_stem": "రిపీట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఈ సినిమాలో రిపీట్",
+      "స్టెప్ టూ, రిపీటిషన్."
+     ]
+    },
+    {
+     "english": "try",
+     "telugu_form_stem": "ట్రై",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆపాలని ట్రై చేస్తావ్, కానీ ఆపలేవ్.",
+      "ట్రై చేస్తూనే ఉండు."
+     ]
+    },
+    {
+     "english": "close",
+     "telugu_form_stem": "re:క్లోజ(?![అా])",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "జూన్ 2025 లో 34 కేసులు క్లోజ్ చేసామని కేరళ హైకోర్టు కి చెప్పింది."
+     ]
+    },
+    {
+     "english": "connect",
+     "telugu_form_stem": "కనెక్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక్క వీడియో వల్ల కాదు, ఆ లూప్ నీ దగ్గర నుంచి ఏం తీసుకెళ్తుందో దాని వల్ల: నీ టైమ్, నీ ఎనర్జీ, నీ కాన్ఫిడెన్స్, ఇంకా నువ్వు మనుషులతో కనెక్ట్ అయ్యే విధానం."
+     ]
+    },
+    {
+     "english": "copy",
+     "telugu_form_stem": "కాపీ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఐదు తర్వాత సినిమా సేమ్ ఫార్ములా కాపీ లూప్ మళ్ళీ మొదలు."
+     ]
+    },
+    {
+     "english": "cut",
+     "telugu_form_stem": "re:కట్(?=\\s|,|$)",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కొన్ని రోజుల్లోనే Visa, Mastercard దాన్ని కట్ చేసేశాయి."
+     ]
+    },
+    {
+     "english": "demand",
+     "telugu_form_stem": "డిమాండ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "మగవాళ్ళు సెక్స్ కోసం ఓపెన్ గా డిమాండ్ చేస్తారు."
+     ]
+    },
+    {
+     "english": "fire (trigger)",
+     "telugu_form_stem": "ఫైర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "మూడు, ఆ లూప్ రీవైర్ అయ్యేదాకా, అవే ట్రిగ్గర్స్ మళ్ళీ మళ్ళీ ఫైర్ అవుతూనే ఉంటాయి."
+     ]
+    },
+    {
+     "english": "inspire",
+     "telugu_form_stem": "ఇన్స్పైర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఢిల్లీ దగ్గర ఒక అమ్మాయిని [సంగీతం] కిడ్నాప్ చేసిన వ్యక్తి దర్ సినిమాతో బాగా ఇన్స్పైర్ అయ్యాడని పోలీసులు చెప్పారు."
+     ]
+    },
+    {
+     "english": "kidnap",
+     "telugu_form_stem": "కిడ్నాప",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఢిల్లీ దగ్గర ఒక అమ్మాయిని [సంగీతం] కిడ్నాప్ చేసిన వ్యక్తి దర్ సినిమాతో బాగా ఇన్స్పైర్ అయ్యాడని పోలీసులు చెప్పారు."
+     ]
+    },
+    {
+     "english": "match",
+     "telugu_form_stem": "మ్యాచ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కానీ చాలా మంది తమ ఎక్స్‌పీరియన్స్ గురించి చెప్పేదానితో ఇది మ్యాచ్ అయ్యింది."
+     ]
+    },
+    {
+     "english": "promote",
+     "telugu_form_stem": "ప్రమోట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "వన్ మార్కెటింగ్ ఈ పాటలు చాలాసార్లు రిలీజ్ కి ముందే సినిమాని ప్రమోట్ చేసే మార్కెటింగ్ టూల్ అని కంపోజర్స్ ప్రొడ్యూసర్స్ ఇండియా టుడే కి చెప్పారు."
+     ]
+    },
+    {
+     "english": "publish",
+     "telugu_form_stem": "పబ్లిష",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నిజం చెప్పాలంటే ఒక ఐటం సాంగ్ నుంచి ఎంత వస్తుందో ఎవరు పబ్లిష్"
+     ]
+    },
+    {
+     "english": "react",
+     "telugu_form_stem": "రియాక్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇంకా స్క్రీన్ మీద ఉన్న ఆ అమ్మాయిలు చాలా వరకు, వాళ్ళు అది ఎంజాయ్ చేస్తున్నట్టే రియాక్ట్ అయ్యారు."
+     ]
+    },
+    {
+     "english": "replace",
+     "telugu_form_stem": "రీప్లేస",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "జస్ట్ తీసేయడం కాదు, రీప్లేస్ చేయ్."
+     ]
+    },
+    {
+     "english": "submit",
+     "telugu_form_stem": "సబ్మిట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2019 లో సబ్మిట్ చేశారు."
+     ]
+    },
+    {
+     "english": "support",
+     "telugu_form_stem": "సపోర్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇంకా ఆ వ్యూ, అమ్మాయిల మీద వయలెన్స్‌ని సపోర్ట్ చేసే ఆటిట్యూడ్స్‌తో కలిసే కనిపించింది."
+     ]
+    },
+    {
+     "english": "surf (urge-surf)",
+     "telugu_form_stem": "సర్ఫ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "Urgeని సర్ఫ్ చేయ్."
+     ]
+    }
+   ]
+  },
+  "science_psych_concepts": {
+   "policy": "allowed",
+   "rule": "Concept labels of the topic's science stay in English (Telugu transliteration): when a concept is NAMED, use the English term and explain it in Telugu right after. Never coin a Telugu replacement for an attested concept label.",
+   "placement": "At first naming, usually in the frame 'X దీన్ని <term> అంటారు' or as the clause's object; definition follows in Telugu. Takes Telugu case suffixes (striatumలో, habit నుంచే).",
+   "token_total": 72,
+   "words": [
+    {
+     "english": "psychologist(s)",
+     "telugu_form_stem": "సైకాలజిస్ట",
+     "count": 8,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 6,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆమెని ఎలా చూస్తాం సైకాలజిస్ట్లు ఈ చూపుని ఆబ్జెక్టిఫికేషన్ అంటారు.",
+      "2060 లో సైకాలజిస్ట్ ఎల్ మోనిక్ వార్డ్ 20 ఏళ్ల 135 స్టడీస్ రివ్యూ చేశారు."
+     ]
+    },
+    {
+     "english": "system",
+     "telugu_form_stem": "సిస్టమ",
+     "count": 7,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 7,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "న్యూరోసైంటిస్ట్ Kent Berridge ఏం చూపించాడంటే, brainలో రెండు వేర్వేరు సిస్టమ్స్ ఉంటాయి.",
+      "అదే సంవత్సరం, Berlinలో 64 మంది మగవాళ్ళ మీద చేసిన ఒక స్టడీలో ఏం తేలిందంటే, వారానికి ఎక్కువ గంటలు పోర్న్ చూసేవాళ్ళలో, రివార్డ్ సిస్టమ్‌లో striatum అనే పార్ట్‌లో grey matter తక్కువగా ఉంది."
+     ]
+    },
+    {
+     "english": "cue",
+     "telugu_form_stem": "క్యూ",
+     "count": 6,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 6,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఏదో క్యూరియాసిటీతో చేసిన రెండు మూడు క్లిక్స్, ఆ ఒక్క పర్ఫెక్ట్ వీడియో కోసం గంటల తరబడి వెతికే దాకా ఎలా వెళ్ళాయి?",
+      "చాలా మందికి ఇది క్యూరియాసిటీతోనే మొదలవుతుంది."
+     ]
+    },
+    {
+     "english": "loop",
+     "telugu_form_stem": "లూప",
+     "count": 6,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 4,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఈ లూప్ ఫాలో అవ్వండి.",
+      "ఐదు తర్వాత సినిమా సేమ్ ఫార్ములా కాపీ లూప్ మళ్ళీ మొదలు."
+     ]
+    },
+    {
+     "english": "control",
+     "telugu_form_stem": "కంట్రోల",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "290 పేజీల రిపోర్ట్ ప్రకారం ఇండస్ట్రీని పవర్ఫుల్ మగవాళ్ళ మాఫియా కంట్రోల్ చేస్తోంది.",
+      "కంట్రోల్ కోల్పోవడం, ఇంకా అది నీ లైఫ్‌ని దెబ్బతీస్తున్నా కూడా కంటిన్యూ చేయడం."
+     ]
+    },
+    {
+     "english": "stress",
+     "telugu_form_stem": "స్ట్రెస",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 4,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "తర్వాత స్ట్రెస్‌లో ఉన్నప్పుడు.",
+      "బోర్ కొట్టినా, స్ట్రెస్ ఉన్నా, నిద్ర రాకపోయినా, ఇదే నీ గో-టూ అయిపోతుంది."
+     ]
+    },
+    {
+     "english": "aggression",
+     "telugu_form_stem": "అగ్రెషన",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2% సీన్స్‌లో ఫిజికల్ అగ్రెషన్ ఉంది, అంటే చెంపదెబ్బ కొట్టడం, గొంతు నొక్కడం లాంటివి.",
+      "దాదాపు సగం సీన్స్‌లో వెర్బల్ అగ్రెషన్ ఉంది."
+     ]
+    },
+    {
+     "english": "curiosity",
+     "telugu_form_stem": "క్యూరియాసిటీ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఏదో క్యూరియాసిటీతో చేసిన రెండు మూడు క్లిక్స్, ఆ ఒక్క పర్ఫెక్ట్ వీడియో కోసం గంటల తరబడి వెతికే దాకా ఎలా వెళ్ళాయి?",
+      "చాలా మందికి ఇది క్యూరియాసిటీతోనే మొదలవుతుంది."
+     ]
+    },
+    {
+     "english": "satisfy / satisfaction",
+     "telugu_form_stem": "re:సాటిస్‌?ఫ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సాటిస్ఫై అయినట్టు అనిపించదు.",
+      "ఎందుకంటే brain అసలు సాటిస్‌ఫాక్షన్ కోసం పరిగెత్తడం లేదు."
+     ]
+    },
+    {
+     "english": "trap",
+     "telugu_form_stem": "ట్రాప",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డోపమైన్ ట్రాప్.",
+      "ఇక్కడే ట్రాప్ ఉంది."
+     ]
+    },
+    {
+     "english": "trigger",
+     "telugu_form_stem": "ట్రిగ్గర",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "మూడు, ఆ లూప్ రీవైర్ అయ్యేదాకా, అవే ట్రిగ్గర్స్ మళ్ళీ మళ్ళీ ఫైర్ అవుతూనే ఉంటాయి.",
+      "ఆ సిగ్గే ఒక ట్రిగ్గర్ అయిపోతుంది."
+     ]
+    },
+    {
+     "english": "objectification / objectify",
+     "telugu_form_stem": "ఆబ్జెక్టిఫి",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆమెని ఎలా చూస్తాం సైకాలజిస్ట్లు ఈ చూపుని ఆబ్జెక్టిఫికేషన్ అంటారు.",
+      "97 లో బార్బరా ఫ్రెడరిక్సన్ టామీ ఆన్ రాబర్ట్స్ పెట్టిన పేరు ఆబ్జెక్టిఫికేషన్ థియరీ ఎడమ నుంచి కుడికి చదవండి."
+     ]
+    },
+    {
+     "english": "pattern",
+     "telugu_form_stem": "ప్యాటర్న",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డ్రగ్స్ వాడేవాళ్ళకి వాళ్ళ డ్రగ్ కనిపించినప్పుడు ఎలా వెలుగుతుందో, దాదాపు అలాంటి ప్యాటర్న్‌లోనే.",
+      "కానీ ఈ ప్యాటర్న్ గమనించదగ్గదే."
+     ]
+    },
+    {
+     "english": "reward",
+     "telugu_form_stem": "రివార్డ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "వాళ్ళకి ఎక్స్‌ప్లిసిట్ క్లిప్స్ చూపించినప్పుడు, వాళ్ళ రివార్డ్ ఏరియాస్ వెలిగిపోయాయి.",
+      "అదే సంవత్సరం, Berlinలో 64 మంది మగవాళ్ళ మీద చేసిన ఒక స్టడీలో ఏం తేలిందంటే, వారానికి ఎక్కువ గంటలు పోర్న్ చూసేవాళ్ళలో, రివార్డ్ సిస్టమ్‌లో striatum అనే పార్ట్‌లో grey matter తక్కువగా ఉంది."
+     ]
+    },
+    {
+     "english": "sign",
+     "telugu_form_stem": "సైన",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "అంటే ఆ habit చాలా లోతుకి వెళ్ళిపోయిందని సైన్.",
+      "ఇక్కడ కీ సైన్ నువ్వు ఎంత చూస్తున్నావ్ అనేది కాదు."
+     ]
+    },
+    {
+     "english": "theory",
+     "telugu_form_stem": "థియరీ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "97 లో బార్బరా ఫ్రెడరిక్సన్ టామీ ఆన్ రాబర్ట్స్ పెట్టిన పేరు ఆబ్జెక్టిఫికేషన్ థియరీ ఎడమ నుంచి కుడికి చదవండి.",
+      "థియరీ ఈ అలవాటుని సిగ్గు యంజైటీతో తర్వాత డిప్రెషన్ తిండి జబ్బులతో లింక్ చేస్తుంది."
+     ]
+    },
+    {
+     "english": "verbal",
+     "telugu_form_stem": "వెర్బల",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "దాదాపు సగం సీన్స్‌లో వెర్బల్ అగ్రెషన్ ఉంది.",
+      "7 దేశాల నుంచి 22 స్టడీస్‌ని రివ్యూ చేసిన ఒక రివ్యూలో, పోర్న్ వాడకం sexual aggressionతో లింక్ అయ్యి ఉందని తేలింది, ముఖ్యంగా వెర్బల్ అగ్రెషన్‌తో."
+     ]
+    },
+    {
+     "english": "addiction",
+     "telugu_form_stem": "అడిక్షన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హానెస్ట్ నోట్, దీన్ని అడిక్షన్ అనాలా వద్దా అని సైంటిస్ట్స్ ఇప్పటికీ ఆర్గ్యూ చేస్తూనే ఉన్నారు."
+     ]
+    },
+    {
+     "english": "anxiety",
+     "telugu_form_stem": "యంజైటీ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "థియరీ ఈ అలవాటుని సిగ్గు యంజైటీతో తర్వాత డిప్రెషన్ తిండి జబ్బులతో లింక్ చేస్తుంది."
+     ]
+    },
+    {
+     "english": "chemical",
+     "telugu_form_stem": "కెమికల్",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "చాలా మంది దీన్ని ప్లెజర్ కెమికల్ అంటారు."
+     ]
+    },
+    {
+     "english": "classification",
+     "telugu_form_stem": "క్లాసిఫికేషన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "World Health Organization ఇప్పుడు compulsive sexual behaviour disorderని తన అఫీషియల్ క్లాసిఫికేషన్ ICD-11లో లిస్ట్ చేసింది."
+     ]
+    },
+    {
+     "english": "crave",
+     "telugu_form_stem": "క్రేవ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇంకోటి వాంటింగ్, అంటే దాని కోసం తపించడం, క్రేవ్ చేయడం."
+     ]
+    },
+    {
+     "english": "depression",
+     "telugu_form_stem": "డిప్రెషన్",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "థియరీ ఈ అలవాటుని సిగ్గు యంజైటీతో తర్వాత డిప్రెషన్ తిండి జబ్బులతో లింక్ చేస్తుంది."
+     ]
+    },
+    {
+     "english": "dopamine",
+     "telugu_form_stem": "డోపమైన్",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డోపమైన్ ట్రాప్."
+     ]
+    },
+    {
+     "english": "habit",
+     "telugu_form_stem": "హ్యాబిట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇది ది సైలెంట్ హ్యాబిట్."
+     ]
+    },
+    {
+     "english": "neuroscientist",
+     "telugu_form_stem": "న్యూరోసైంటిస్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "న్యూరోసైంటిస్ట్ Kent Berridge ఏం చూపించాడంటే, brainలో రెండు వేర్వేరు సిస్టమ్స్ ఉంటాయి."
+     ]
+    },
+    {
+     "english": "physical",
+     "telugu_form_stem": "ఫిజికల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2% సీన్స్‌లో ఫిజికల్ అగ్రెషన్ ఉంది, అంటే చెంపదెబ్బ కొట్టడం, గొంతు నొక్కడం లాంటివి."
+     ]
+    }
+   ]
+  },
+  "stance_adjectives": {
+   "policy": "allowed_attested_only",
+   "rule": "Evaluative adjectives/adverbs may be English ONLY from the attested set (powerful, normal, serious, clear, exact, simple, perfect, free, weak, solid, real, practical, silent, strong, extreme, exciting, boring, choice, focus, damage, restless, energy, confidence, memory, mood, guilt, distress, values, environment, respect, crime, warning, defence, investigation, unverified, mafia, minor, adult, sex/sexual, love, progress, consistency, superpower, magnetic, charm, confidential). Do not import new evaluative adjectives; default to Telugu.",
+   "placement": "Inside Telugu adverb frames: క్లియర్ గా, పవర్ఫుల్ గా, సీరియస్‌గా, ఓపెన్ గా.",
+   "token_total": 79,
+   "words": [
+    {
+     "english": "sex / sexual",
+     "telugu_form_stem": "re:సెక్స|సెక్షువల",
+     "count": 6,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రిజల్ట్ ఈ కంటెంట్ కి ఎక్కువ సెక్సెస్ నమ్మకాలకి ఆడవాళ్ళపై లైంగిక హింసని సహించడానికి లింక్ ఉంది.",
+      "మగవాళ్ళు సెక్స్ కోసం ఓపెన్ గా డిమాండ్ చేస్తారు."
+     ]
+    },
+    {
+     "english": "focus",
+     "telugu_form_stem": "ఫోకస",
+     "count": 5,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లుక్స్ మీద ఫోకస్ చేయమన్నారు.",
+      "కెమెరా ఆమె బాడీ పై ఫోకస్ అటెన్షన్ లాగుతుంది."
+     ]
+    },
+    {
+     "english": "choice",
+     "telugu_form_stem": "ఛాయిస",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇప్పుడు కెమెరా ముందు ఆడవాళ్ళు ఇలాంటి పాటలో హీరోయిన్ డాన్స్ నిజంగా ఆమె ఛాయిస్నానా ఇప్పుడు కేరళ హేమ కమిటీ",
+      "ఛాయిస్ రెండు వైపులా"
+     ]
+    },
+    {
+     "english": "bore (in bore kottadam)",
+     "telugu_form_stem": "re:బోర్(?=\\sకొట)",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "తర్వాత బోర్ కొట్టినప్పుడు.",
+      "బోర్ కొట్టినా, స్ట్రెస్ ఉన్నా, నిద్ర రాకపోయినా, ఇదే నీ గో-టూ అయిపోతుంది."
+     ]
+    },
+    {
+     "english": "clear",
+     "telugu_form_stem": "క్లియర",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సో ఈ కేసులు ఏం చూపిస్తాయో క్లియర్ గా చెప్పుకుందాం.",
+      "ఇప్పుడు ఒక్క పాయింట్ క్లియర్‌గా అర్థం చేసుకుందాం."
+     ]
+    },
+    {
+     "english": "silent",
+     "telugu_form_stem": "సైలెంట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 3,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇది ది సైలెంట్ హ్యాబిట్.",
+      "అది సైలెంట్‌గా నేర్పిస్తుంది: అమ్మాయిలు కోరుకునేది ఇదే, సెక్స్ అంటే ఇలాగే ఉంటుంది అని."
+     ]
+    },
+    {
+     "english": "consistency",
+     "telugu_form_stem": "కన్సిస్టెన్స",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పని చేసేది కన్సిస్టెన్సీ.",
+      "కన్సిస్టెన్సీతో, ఆ habit నెమ్మదిగా తగ్గిపోతుంది."
+     ]
+    },
+    {
+     "english": "energy",
+     "telugu_form_stem": "ఎనర్జీ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక్క వీడియో వల్ల కాదు, ఆ లూప్ నీ దగ్గర నుంచి ఏం తీసుకెళ్తుందో దాని వల్ల: నీ టైమ్, నీ ఎనర్జీ, నీ కాన్ఫిడెన్స్, ఇంకా నువ్వు మనుషులతో కనెక్ట్ అయ్యే విధానం.",
+      "ఆన్‌లైన్ గ్రూప్స్ మెరిసిపోయే స్కిన్, మ్యాగ్నెటిక్ చార్మ్, భారీ ఎనర్జీ అని ప్రామిస్ చేస్తాయి."
+     ]
+    },
+    {
+     "english": "extreme",
+     "telugu_form_stem": "re:ఎక్స్‌?ట్రీమ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇంకా ఎక్స్‌ట్రీమ్‌గా.",
+      "ఇంకా ఎక్కువ సేపు, ఇంకా ఎక్స్‌ట్రీమ్ కంటెంట్ కోసం వెతుకుతావ్."
+     ]
+    },
+    {
+     "english": "minor",
+     "telugu_form_stem": "మైనర",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డిసెంబర్ 2020లో, New York Times చేసిన ఒక ఇన్వెస్టిగేషన్ ఏం రిపోర్ట్ చేసిందంటే, ప్రపంచంలోనే అతిపెద్ద పోర్న్ సైట్స్‌లో ఒకటి, రేప్ వీడియోస్‌ని, మైనర్స్ వీడియోస్‌ని హోస్ట్ చేసింది.",
+      "ఇండియాలో, మైనర్స్‌కి సంబంధించిన ఏదైనా సరే చాలా సీరియస్ క్రైమ్, ఇంకా \"నాకు తెలీదు\" అనేది డిఫెన్స్ కాదు."
+     ]
+    },
+    {
+     "english": "normal",
+     "telugu_form_stem": "నార్మల",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "చెప్పగలం ఇండస్ట్రీ ఆడవాళ్ళని బాడీలుగా వెంటపడటాన్ని ప్రేమగా చూపిస్తూనే ఉంటే మనకేం నార్మల్ అనిపిస్తుందో మారుతుంది.",
+      "ఆ నార్మల్ తో ఆడవాళ్ళు రోజు బతుకుతున్నారు."
+     ]
+    },
+    {
+     "english": "perfect",
+     "telugu_form_stem": "పర్ఫెక్ట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఏదో క్యూరియాసిటీతో చేసిన రెండు మూడు క్లిక్స్, ఆ ఒక్క పర్ఫెక్ట్ వీడియో కోసం గంటల తరబడి వెతికే దాకా ఎలా వెళ్ళాయి?",
+      "పర్ఫెక్ట్ స్ట్రీక్స్ కాదు, మంచి వారాలు కౌంట్ చేయ్."
+     ]
+    },
+    {
+     "english": "powerful",
+     "telugu_form_stem": "పవర్ఫుల",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పొడుగ్గా పవర్ఫుల్ గా చూపిస్తుందని ఫిలిం గైడ్స్ చెప్తాయి.",
+      "290 పేజీల రిపోర్ట్ ప్రకారం ఇండస్ట్రీని పవర్ఫుల్ మగవాళ్ళ మాఫియా కంట్రోల్ చేస్తోంది."
+     ]
+    },
+    {
+     "english": "serious",
+     "telugu_form_stem": "సీరియస",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కానీ నీకు ఇది జరుగుతుంటే, సీరియస్‌గా తీసుకోవడం మంచిది, ఒక డాక్టర్ హెల్ప్ చేయగలరు.",
+      "ఇండియాలో, మైనర్స్‌కి సంబంధించిన ఏదైనా సరే చాలా సీరియస్ క్రైమ్, ఇంకా \"నాకు తెలీదు\" అనేది డిఫెన్స్ కాదు."
+     ]
+    },
+    {
+     "english": "weak",
+     "telugu_form_stem": "వీక",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సెక్షువలైజ్డ్ వీడియో గేమ్స్ పై 2022 అనాలసిస్ ఎవిడెన్స్ వీక్",
+      "కానీ అది వీక్ అవుతుంది, సైలెంట్ అవుతుంది, ఇంక నిన్ను కంట్రోల్ చేయలేనంత వరకు."
+     ]
+    },
+    {
+     "english": "zero",
+     "telugu_form_stem": "జీరో",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లో 50 స్టడీస్ అనాలసిస్ నిజమే కానీ మోడరేట్ చాలా పెద్దది కాదు జీరో కాదు.",
+      "మూడు కొన్ని స్టడీస్ లో ఎఫెక్ట్ తక్కువ లేదా జీరో."
+     ]
+    },
+    {
+     "english": "adult",
+     "telugu_form_stem": "అడల్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కొన్నేళ్ల పాటు, స్క్రీన్ మీద ఉన్న ఆ మనిషి ఒప్పుకున్నారో లేదో, అసలు అడల్ట్ అవునో కాదో కూడా తెలీకుండానే జనాలు చూస్తూ వచ్చారు."
+     ]
+    },
+    {
+     "english": "boring",
+     "telugu_form_stem": "బోరింగ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పాత కంటెంట్ బోరింగ్‌గా అనిపిస్తుంది."
+     ]
+    },
+    {
+     "english": "charm",
+     "telugu_form_stem": "చార్మ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆన్‌లైన్ గ్రూప్స్ మెరిసిపోయే స్కిన్, మ్యాగ్నెటిక్ చార్మ్, భారీ ఎనర్జీ అని ప్రామిస్ చేస్తాయి."
+     ]
+    },
+    {
+     "english": "confidence",
+     "telugu_form_stem": "కాన్ఫిడెన్స",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక్క వీడియో వల్ల కాదు, ఆ లూప్ నీ దగ్గర నుంచి ఏం తీసుకెళ్తుందో దాని వల్ల: నీ టైమ్, నీ ఎనర్జీ, నీ కాన్ఫిడెన్స్, ఇంకా నువ్వు మనుషులతో కనెక్ట్ అయ్యే విధానం."
+     ]
+    },
+    {
+     "english": "confidential",
+     "telugu_form_stem": "కాన్ఫిడెన్షియల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇండియాలో, Tele-MANAS 14416 లో ఫ్రీ, ఇంకా కాన్ఫిడెన్షియల్."
+     ]
+    },
+    {
+     "english": "crime",
+     "telugu_form_stem": "క్రైమ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇండియాలో, మైనర్స్‌కి సంబంధించిన ఏదైనా సరే చాలా సీరియస్ క్రైమ్, ఇంకా \"నాకు తెలీదు\" అనేది డిఫెన్స్ కాదు."
+     ]
+    },
+    {
+     "english": "damage",
+     "telugu_form_stem": "డ్యామేజ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "స్టేజ్ ఫైవ్, డ్యామేజ్."
+     ]
+    },
+    {
+     "english": "defence",
+     "telugu_form_stem": "డిఫెన్స",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇండియాలో, మైనర్స్‌కి సంబంధించిన ఏదైనా సరే చాలా సీరియస్ క్రైమ్, ఇంకా \"నాకు తెలీదు\" అనేది డిఫెన్స్ కాదు."
+     ]
+    },
+    {
+     "english": "distress",
+     "telugu_form_stem": "డిస్ట్రెస",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సైకాలజిస్ట్ Joshua Grubbs ఏం కనిపెట్టాడంటే, తమ పోర్న్ వాడకం తమ వాల్యూస్‌కి వ్యతిరేకంగా ఉందని ఫీల్ అయ్యేవాళ్ళు, తక్కువ చూసినా కూడా, చాలా ఎక్కువ డిస్ట్రెస్ ఫీల్ అవుతారు."
+     ]
+    },
+    {
+     "english": "environment",
+     "telugu_form_stem": "ఎన్విరాన్‌మెంట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నీ ఎన్విరాన్‌మెంట్ మార్చు."
+     ]
+    },
+    {
+     "english": "exact",
+     "telugu_form_stem": "ఎగజాక్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఈ లెక్క ఇండస్ట్రీ వాళ్ళు చెప్పే బిజినెస్ లాజిక్ ఎగజాక్ట్ బిల్ కాదు."
+     ]
+    },
+    {
+     "english": "exciting",
+     "telugu_form_stem": "ఎక్సైటింగ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఏదైనా ఎక్సైటింగ్‌గా కనిపించినప్పుడు, నీ brain dopamine రిలీజ్ చేస్తుంది."
+     ]
+    },
+    {
+     "english": "free",
+     "telugu_form_stem": "ఫ్రీ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇండియాలో, Tele-MANAS 14416 లో ఫ్రీ, ఇంకా కాన్ఫిడెన్షియల్."
+     ]
+    },
+    {
+     "english": "guilt",
+     "telugu_form_stem": "గిల్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "రహస్యం దాచడం, గిల్ట్, సిగ్గు."
+     ]
+    },
+    {
+     "english": "investigation",
+     "telugu_form_stem": "ఇన్వెస్టిగేషన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డిసెంబర్ 2020లో, New York Times చేసిన ఒక ఇన్వెస్టిగేషన్ ఏం రిపోర్ట్ చేసిందంటే, ప్రపంచంలోనే అతిపెద్ద పోర్న్ సైట్స్‌లో ఒకటి, రేప్ వీడియోస్‌ని, మైనర్స్ వీడియోస్‌ని హోస్ట్ చేసింది."
+     ]
+    },
+    {
+     "english": "kick (thrill)",
+     "telugu_form_stem": "కిక",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ప్రతిసారీ, అదే వీడియో కొంచెం తక్కువ కిక్ ఇస్తుంది."
+     ]
+    },
+    {
+     "english": "love",
+     "telugu_form_stem": "re:(?<!క)లవ్",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "12 ఏళ్లకి లవ్ అంటే ఏంటో నీకు తెలీదు."
+     ]
+    },
+    {
+     "english": "mafia",
+     "telugu_form_stem": "మాఫియా",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "290 పేజీల రిపోర్ట్ ప్రకారం ఇండస్ట్రీని పవర్ఫుల్ మగవాళ్ళ మాఫియా కంట్రోల్ చేస్తోంది."
+     ]
+    },
+    {
+     "english": "magnetic",
+     "telugu_form_stem": "మ్యాగ్నెటిక",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆన్‌లైన్ గ్రూప్స్ మెరిసిపోయే స్కిన్, మ్యాగ్నెటిక్ చార్మ్, భారీ ఎనర్జీ అని ప్రామిస్ చేస్తాయి."
+     ]
+    },
+    {
+     "english": "memory",
+     "telugu_form_stem": "మెమరీ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నిద్ర తక్కువైతే, మరుసటి రోజు ఫోకస్, మూడ్, మెమరీ అన్నీ దెబ్బతింటాయి."
+     ]
+    },
+    {
+     "english": "moderate",
+     "telugu_form_stem": "మోడరేట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లో 50 స్టడీస్ అనాలసిస్ నిజమే కానీ మోడరేట్ చాలా పెద్దది కాదు జీరో కాదు."
+     ]
+    },
+    {
+     "english": "mood",
+     "telugu_form_stem": "మూడ్",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నిద్ర తక్కువైతే, మరుసటి రోజు ఫోకస్, మూడ్, మెమరీ అన్నీ దెబ్బతింటాయి."
+     ]
+    },
+    {
+     "english": "practical",
+     "telugu_form_stem": "ప్రాక్టికల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ప్రాక్టికల్, రియల్ విషయాలు."
+     ]
+    },
+    {
+     "english": "progress",
+     "telugu_form_stem": "ప్రోగ్రెస",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "పర్ఫెక్షన్ కాదు, ప్రోగ్రెస్ ట్రాక్ చేయ్."
+     ]
+    },
+    {
+     "english": "rape",
+     "telugu_form_stem": "re:రేప్(?=\\s)",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డిసెంబర్ 2020లో, New York Times చేసిన ఒక ఇన్వెస్టిగేషన్ ఏం రిపోర్ట్ చేసిందంటే, ప్రపంచంలోనే అతిపెద్ద పోర్న్ సైట్స్‌లో ఒకటి, రేప్ వీడియోస్‌ని, మైనర్స్ వీడియోస్‌ని హోస్ట్ చేసింది."
+     ]
+    },
+    {
+     "english": "real",
+     "telugu_form_stem": "రియల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ప్రాక్టికల్, రియల్ విషయాలు."
+     ]
+    },
+    {
+     "english": "respect",
+     "telugu_form_stem": "రెస్పెక్ట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒక రిలేషన్‌షిప్‌లో రెస్పెక్ట్ ఎలా ఉంటుందో తెలీదు."
+     ]
+    },
+    {
+     "english": "restless",
+     "telugu_form_stem": "రెస్ట్‌లెస",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "అది లేకపోతే రెస్ట్‌లెస్‌గా, చిరాకుగా ఉంటుంది."
+     ]
+    },
+    {
+     "english": "simple",
+     "telugu_form_stem": "సింపుల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "మనిషిని చూసే వస్తువుగా చూడడం ఒక సింపుల్ టెస్ట్"
+     ]
+    },
+    {
+     "english": "solid",
+     "telugu_form_stem": "సాలిడ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "దానికి సాలిడ్ ఎవిడెన్స్ ఏమీ లేదు."
+     ]
+    },
+    {
+     "english": "strong",
+     "telugu_form_stem": "స్ట్రాంగ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇంకా స్ట్రాంగ్‌గా."
+     ]
+    },
+    {
+     "english": "superpower",
+     "telugu_form_stem": "సూపర్‌పవర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "మిత్: మానేస్తే సూపర్‌పవర్స్ వస్తాయి."
+     ]
+    },
+    {
+     "english": "unverified",
+     "telugu_form_stem": "అన్‌వెరిఫైడ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆ తర్వాత ఆ సైట్ సుమారు 10 మిలియన్ అన్‌వెరిఫైడ్ వీడియోస్‌ని తీసేసింది."
+     ]
+    },
+    {
+     "english": "values",
+     "telugu_form_stem": "వాల్యూస",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సైకాలజిస్ట్ Joshua Grubbs ఏం కనిపెట్టాడంటే, తమ పోర్న్ వాడకం తమ వాల్యూస్‌కి వ్యతిరేకంగా ఉందని ఫీల్ అయ్యేవాళ్ళు, తక్కువ చూసినా కూడా, చాలా ఎక్కువ డిస్ట్రెస్ ఫీల్ అవుతారు."
+     ]
+    },
+    {
+     "english": "warning",
+     "telugu_form_stem": "వార్నింగ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇంకా ఇక్కడ నేను ఒక వార్నింగ్ ఇవ్వాల్సిందే."
+     ]
+    }
+   ]
+  },
+  "commerce_products": {
+   "policy": "allowed",
+   "rule": "Products, commerce and money-mechanism terms stay in English: ad, product, marketing, tool, asset, rights, label, bill, ledger, car, washing machine, fridge, TV, AC, item.",
+   "placement": "Nouns in Telugu syntax; list position common.",
+   "token_total": 41,
+   "words": [
+    {
+     "english": "car",
+     "telugu_form_stem": "re:కార్(?=[\\s,])",
+     "count": 5,
+     "per_source": {
+      "part2_male_gaze": 5,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హీరోయిన్ ఫస్ట్ షాట్ కార్ యాడ్ లాగే ఎందుకు ఉంటుంది?",
+      "కార్, వాషింగ్ మెషిన్, ఫ్రిడ్జ్, టీవీ ఎలా అమ్ముతారో ఆలోచించండి."
+     ]
+    },
+    {
+     "english": "ad",
+     "telugu_form_stem": "యాడ",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హీరోయిన్ ఫస్ట్ షాట్ కార్ యాడ్ లాగే ఎందుకు ఉంటుంది?",
+      "ఢిల్లీ దగ్గర ఒక అమ్మాయిని [సంగీతం] కిడ్నాప్ చేసిన వ్యక్తి దర్ సినిమాతో బాగా ఇన్స్పైర్ అయ్యాడని పోలీసులు చెప్పారు."
+     ]
+    },
+    {
+     "english": "rights",
+     "telugu_form_stem": "రైట్స",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2018 హ్యూమన్ రైట్స్ కమిషన్ తెలంగాణ ప్రభుత్వానికి నోటీసులు పంపింది.",
+      "కారణంట 2 మ్యూజిక్ రైట్స్ పుష్ప 2 మ్యూజిక్ రిజిక్ రైట్స్ కి టీ సిరీస్ 65 కోట్లు కట్టిందని బాలీవుడ్ హంగామా"
+     ]
+    },
+    {
+     "english": "TV",
+     "telugu_form_stem": "టీవీ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కార్, వాషింగ్ మెషిన్, ఫ్రిడ్జ్, టీవీ ఎలా అమ్ముతారో ఆలోచించండి.",
+      "సేమ్ కెమెరా సేమ్ పార్ట్స్ వాషింగ్ మెషిన్లు, ఫ్రిడ్జ్లు, టీవీలు, ఏసీలు సేమ్ ఐదు మూవ్స్"
+     ]
+    },
+    {
+     "english": "label",
+     "telugu_form_stem": "లేబుల",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లేబుల్స్ కోట్ల రూపాయలు కడతాయి.",
+      "సంపాదిస్తారు ప్రొడ్యూసర్లు మ్యూజిక్ లేబుల్స్ ప్లాట్ఫార్మ్స్ ఎవరు కడతారు సెట్ లో టాయిలెట్ లేని జూనియర్ ఆర్టిస్ట్ సేఫ్"
+     ]
+    },
+    {
+     "english": "marketing",
+     "telugu_form_stem": "మార్కెటింగ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "వన్ మార్కెటింగ్ ఈ పాటలు చాలాసార్లు రిలీజ్ కి ముందే సినిమాని ప్రమోట్ చేసే మార్కెటింగ్ టూల్ అని కంపోజర్స్ ప్రొడ్యూసర్స్ ఇండియా టుడే కి చెప్పారు.",
+      "2025 లో ఇలాంటి మూడు పాటలు ఉన్న థమ్మా సినిమా డైరెక్టర్ ఈ పాటలు ఆడియన్స్ ని సినిమాలోకి తీసుకొచ్చే మార్కెటింగ్ ఆసెట్స్ అన్నారు."
+     ]
+    },
+    {
+     "english": "fridge",
+     "telugu_form_stem": "ఫ్రిడ్జ",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కార్, వాషింగ్ మెషిన్, ఫ్రిడ్జ్, టీవీ ఎలా అమ్ముతారో ఆలోచించండి.",
+      "సేమ్ కెమెరా సేమ్ పార్ట్స్ వాషింగ్ మెషిన్లు, ఫ్రిడ్జ్లు, టీవీలు, ఏసీలు సేమ్ ఐదు మూవ్స్"
+     ]
+    },
+    {
+     "english": "item",
+     "telugu_form_stem": "ఐటం",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కంటే దాదాపు 18800 ఎక్కువ రోజు 40 నిమిషాలు ఎక్కువ ట్రావెల్ టాప్ ఐటం చూడండి ఇష్టం లేని గుచ్చి చూపులు",
+      "నిజం చెప్పాలంటే ఒక ఐటం సాంగ్ నుంచి ఎంత వస్తుందో ఎవరు పబ్లిష్"
+     ]
+    },
+    {
+     "english": "product",
+     "telugu_form_stem": "ప్రొడక్ట",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఐదు స్లో మోషన్ 12 ఎక్స్పెరిమెంట్స్ లో ప్రొడక్ట్స్ లగ్జరీగా కనిపించాయి.",
+      "సేమ్ షార్ట్ లిస్ట్ ఒకటి ప్రొడక్ట్ ఇంకొకరు మనిషి ఈ పాయింట్ స్క్రీన్ మీద పాటర్న్ ఏ"
+     ]
+    },
+    {
+     "english": "washing machine",
+     "telugu_form_stem": "వాషింగ్ మెషిన",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కార్, వాషింగ్ మెషిన్, ఫ్రిడ్జ్, టీవీ ఎలా అమ్ముతారో ఆలోచించండి.",
+      "సేమ్ కెమెరా సేమ్ పార్ట్స్ వాషింగ్ మెషిన్లు, ఫ్రిడ్జ్లు, టీవీలు, ఏసీలు సేమ్ ఐదు మూవ్స్"
+     ]
+    },
+    {
+     "english": "AC",
+     "telugu_form_stem": "ఏసీ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సేమ్ కెమెరా సేమ్ పార్ట్స్ వాషింగ్ మెషిన్లు, ఫ్రిడ్జ్లు, టీవీలు, ఏసీలు సేమ్ ఐదు మూవ్స్"
+     ]
+    },
+    {
+     "english": "asset",
+     "telugu_form_stem": "ఆసెట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2025 లో ఇలాంటి మూడు పాటలు ఉన్న థమ్మా సినిమా డైరెక్టర్ ఈ పాటలు ఆడియన్స్ ని సినిమాలోకి తీసుకొచ్చే మార్కెటింగ్ ఆసెట్స్ అన్నారు."
+     ]
+    },
+    {
+     "english": "bill",
+     "telugu_form_stem": "బిల్ల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కానీ ప్రతి బిల్లుకి రెండు వైపులు ఉంటాయి."
+     ]
+    },
+    {
+     "english": "bonnet",
+     "telugu_form_stem": "బ్యానెట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డోర్లు, కార్ సైడ్ బాడీ ఆమె నడుము హెడ్లైట్స్, బ్యానెట్ ఆమె చాతి పెదవులు"
+     ]
+    },
+    {
+     "english": "door",
+     "telugu_form_stem": "డోర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డోర్లు, కార్ సైడ్ బాడీ ఆమె నడుము హెడ్లైట్స్, బ్యానెట్ ఆమె చాతి పెదవులు"
+     ]
+    },
+    {
+     "english": "headlight",
+     "telugu_form_stem": "హెడ్లైట",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డోర్లు, కార్ సైడ్ బాడీ ఆమె నడుము హెడ్లైట్స్, బ్యానెట్ ఆమె చాతి పెదవులు"
+     ]
+    },
+    {
+     "english": "ledger",
+     "telugu_form_stem": "లెడ్జర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సో లెడ్జర్ రెండు వైపులా చూద్దాం."
+     ]
+    },
+    {
+     "english": "logic",
+     "telugu_form_stem": "లాజిక",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఈ లెక్క ఇండస్ట్రీ వాళ్ళు చెప్పే బిజినెస్ లాజిక్ ఎగజాక్ట్ బిల్ కాదు."
+     ]
+    },
+    {
+     "english": "luxury",
+     "telugu_form_stem": "లగ్జరీ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఐదు స్లో మోషన్ 12 ఎక్స్పెరిమెంట్స్ లో ప్రొడక్ట్స్ లగ్జరీగా కనిపించాయి."
+     ]
+    },
+    {
+     "english": "tool",
+     "telugu_form_stem": "టూల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "వన్ మార్కెటింగ్ ఈ పాటలు చాలాసార్లు రిలీజ్ కి ముందే సినిమాని ప్రమోట్ చేసే మార్కెటింగ్ టూల్ అని కంపోజర్స్ ప్రొడ్యూసర్స్ ఇండియా టుడే కి చెప్పారు."
+     ]
+    },
+    {
+     "english": "tyre",
+     "telugu_form_stem": "టైర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "టైర్లు ఆమె కాళ్ళు కార్ వెనక భాగం ఆమె హిప్స్"
+     ]
+    }
+   ]
+  },
+  "discourse_markers": {
+   "policy": "allowed_closed_set",
+   "rule": "CLOSED set — only these: sentence-initial సో (so), the segment marker హానెస్ట్ నోట్ (honest note) before a caveat, స్టెప్ బై స్టెప్ (step by step), రూల్ (rule), గ్యాప్ (gap). No other English connectives: but/and/then/because stay Telugu (కానీ, అందుకే, తర్వాత).",
+   "placement": "సో and హానెస్ట్ నోట్ are sentence/segment-initial; honest note is always followed by a comma and the caveat.",
+   "token_total": 12,
+   "words": [
+    {
+     "english": "honest note (segment marker)",
+     "telugu_form_stem": "హానెస్ట్ నోట",
+     "count": 5,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 5,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "హానెస్ట్ నోట్, అది US సర్వే.",
+      "హానెస్ట్ నోట్, ఇది చిన్న స్టడీ, 19 మంది మగవాళ్ళే."
+     ]
+    },
+    {
+     "english": "so (sentence opener)",
+     "telugu_form_stem": "సో ",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సో ఈ కేసులు ఏం చూపిస్తాయో క్లియర్ గా చెప్పుకుందాం.",
+      "సో లెడ్జర్ రెండు వైపులా చూద్దాం."
+     ]
+    },
+    {
+     "english": "rule",
+     "telugu_form_stem": "రూల",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఎక్కడో దారిలో, అది ప్రతి habitకీ ఒక రూల్ అయిపోయింది.",
+      "కానీ అది రూల్ కాదు."
+     ]
+    },
+    {
+     "english": "gap",
+     "telugu_form_stem": "గ్యాప",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "నాలుగు [సంగీతం] సినిమాలకి ప్రవర్తనకి లింక్ చూపించే పెద్ద రీసెర్చ్ ఇండియాలో చాలా తక్కువ ఈ గ్యాప్ నిజం [సంగీతం] ఏం"
+     ]
+    },
+    {
+     "english": "step by step",
+     "telugu_form_stem": "స్టెప్ బై స్టెప",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇప్పుడు ఈ చెయిన్‌ని స్టెప్ బై స్టెప్ చూడు."
+     ]
+    }
+   ]
+  },
+  "proper_nouns": {
+   "policy": "allowed",
+   "rule": "Proper nouns keep their English identity — people (researchers, public figures), organisations, brands, platforms, international places. Never translated or replaced.",
+   "placement": "As nouns in Telugu syntax. In official scripts they are written in LATIN script (Kent Berridge, World Health Organization, New York Times, Visa, Mastercard); in speech they are pronounced in her Indian-English at the same pace.",
+   "token_total": 17,
+   "words": [
+    {
+     "english": "America(n)",
+     "telugu_form_stem": "అమెరిక",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2009 అమెరికన్ స్టడీలో అమ్మాయి",
+      "నిజం చెప్పాలంటే ఈ స్టడీ ఒక చిన్న అమెరికన్ ల్యాబ్ స్టడీ."
+     ]
+    },
+    {
+     "english": "Samantha",
+     "telugu_form_stem": "సమంత",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2024 లో రిపోర్ట్ రిలీజ్ చేయమని సమంత అడిగారు.",
+      "ఊ అంటావా చేయొద్దని ఫ్రెండ్స్ కూడా చెప్పారని సమంత చెప్పారు."
+     ]
+    },
+    {
+     "english": "BBC",
+     "telugu_form_stem": "బిబిసి",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "బిబిసి రాసింది."
+     ]
+    },
+    {
+     "english": "Barbara Fredrickson",
+     "telugu_form_stem": "బార్బరా ఫ్రెడరిక్సన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "97 లో బార్బరా ఫ్రెడరిక్సన్ టామీ ఆన్ రాబర్ట్స్ పెట్టిన పేరు ఆబ్జెక్టిఫికేషన్ థియరీ ఎడమ నుంచి కుడికి చదవండి."
+     ]
+    },
+    {
+     "english": "Bollywood",
+     "telugu_form_stem": "బాలీవుడ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కారణంట 2 మ్యూజిక్ రైట్స్ పుష్ప 2 మ్యూజిక్ రిజిక్ రైట్స్ కి టీ సిరీస్ 65 కోట్లు కట్టిందని బాలీవుడ్ హంగామా"
+     ]
+    },
+    {
+     "english": "Hitler",
+     "telugu_form_stem": "హిట్లర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "అతని మీద దాదాపు 30 పాత కేసులు హిట్లర్ బుక్ ఇన్స్పిరేషన్ కూడా ఉందని పోలీసులు చెప్పారు."
+     ]
+    },
+    {
+     "english": "L. Monique Ward",
+     "telugu_form_stem": "మోనిక్ వార్డ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2060 లో సైకాలజిస్ట్ ఎల్ మోనిక్ వార్డ్ 20 ఏళ్ల 135 స్టడీస్ రివ్యూ చేశారు."
+     ]
+    },
+    {
+     "english": "Martha Nussbaum",
+     "telugu_form_stem": "మార్తా నస్బాం",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "1995 లో ఫిలాసఫర్ మార్తా నస్బాం మనిషిని వస్తువులా"
+     ]
+    },
+    {
+     "english": "Oxfam",
+     "telugu_form_stem": "ఆక్స్ఫామ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఆక్స్ఫామ్ ఇండియా ఐదు రాష్ట్రాల యువతని అడిగింది."
+     ]
+    },
+    {
+     "english": "T-Series",
+     "telugu_form_stem": "టీ సిరీస",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కారణంట 2 మ్యూజిక్ రైట్స్ పుష్ప 2 మ్యూజిక్ రిజిక్ రైట్స్ కి టీ సిరీస్ 65 కోట్లు కట్టిందని బాలీవుడ్ హంగామా"
+     ]
+    },
+    {
+     "english": "World Bank",
+     "telugu_form_stem": "వరల్డ్ బ్యాంక",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఇప్పుడు మన మొదటి ప్రశ్న కాలేజీ వరల్డ్ బ్యాంక్ ఎకనామిస్ట్ ఢిల్లీ యూనివర్సిటీ స్టూడెంట్స్ ని స్టడీ చేశారు."
+     ]
+    },
+    {
+     "english": "human rights (commission)",
+     "telugu_form_stem": "హ్యూమన్ రైట్స",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "2018 హ్యూమన్ రైట్స్ కమిషన్ తెలంగాణ ప్రభుత్వానికి నోటీసులు పంపింది."
+     ]
+    }
+   ]
+  },
+  "calendar": {
+   "policy": "allowed",
+   "rule": "English month names are used (June, July, September, December) with Telugu case suffixes; years are digits.",
+   "placement": "Time expressions: 'జూన్ 2025 లో', 'సెప్టెంబర్ 2026'.",
+   "token_total": 7,
+   "words": [
+    {
+     "english": "June",
+     "telugu_form_stem": "జూన",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 4,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఒప్పుకోవాలి లేదా ఏళ్ల కల వదులుకుని నో చెప్పాలి చాలా సెట్స్ లో జూనియర్ ఆర్టిస్టులకి టాయిలెట్",
+      "జూన్ 2025 లో 34 కేసులు క్లోజ్ చేసామని కేరళ హైకోర్టు కి చెప్పింది."
+     ]
+    },
+    {
+     "english": "December",
+     "telugu_form_stem": "డిసెంబర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "డిసెంబర్ 2020లో, New York Times చేసిన ఒక ఇన్వెస్టిగేషన్ ఏం రిపోర్ట్ చేసిందంటే, ప్రపంచంలోనే అతిపెద్ద పోర్న్ సైట్స్‌లో ఒకటి, రేప్ వీడియోస్‌ని, మైనర్స్ వీడియోస్‌ని హోస్ట్ చేసింది."
+     ]
+    },
+    {
+     "english": "July",
+     "telugu_form_stem": "జూలై",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కేసులు ఎక్కువ అంటే రిపోర్టింగ్ ఎక్కువ కావచ్చు నేరాలు కాదు పైగా జూలై 2024 లో కొత్త క్రిమినల్ చట్టాలు వచ్చాయి."
+     ]
+    },
+    {
+     "english": "September",
+     "telugu_form_stem": "సెప్టెంబర",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సెప్టెంబర్ 2026 ఢిల్లీ బెంగళూర్లో 4వేలకి పైగా ఆడవాళ్ళపై సర్వే ఈ చార్ట్ ని సిటీవీగా చదవండి."
+     ]
+    }
+   ]
+  },
+  "quantity_units": {
+   "policy": "allowed",
+   "rule": "Scale words million/billion stay English; number, point, rate, double, top, average are English. BUT cardinal counts are Telugu words (ఐదు, వంద, లక్ష, కోట్లు), percentages are the % symbol after Telugu number words (73% మంది) — the word 'percent' is NEVER spelled out (0 attestations). Years are digits.",
+   "placement": "Scale word follows the digit/Telugu number: '520 మిలియన్ వ్యూస్', 'టాప్ 20% కాలేజ్'.",
+   "token_total": 18,
+   "words": [
+    {
+     "english": "point",
+     "telugu_form_stem": "పాయింట",
+     "count": 4,
+     "per_source": {
+      "part2_male_gaze": 2,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "సేమ్ షార్ట్ లిస్ట్ ఒకటి ప్రొడక్ట్ ఇంకొకరు మనిషి ఈ పాయింట్ స్క్రీన్ మీద పాటర్న్ ఏ",
+      "ఆమె నిర్ణయం అసలు పాయింట్ ఇక్కడే నో చెప్పడం సేఫ్ అయినప్పుడే ఛాయిస్ నిజమైన ఛాయిస్."
+     ]
+    },
+    {
+     "english": "number",
+     "telugu_form_stem": "నంబర",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 2,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కానీ పార్ట్ వన్ లో స్టడీ చేసిన చూపు కూడా సేమ్ అఫీషియల్ నంబర్స్ 2024 లో ఇండియాలో",
+      "ఈ వీడియోలో ప్రతి నంబర్ ఒక పబ్లిక్ సోర్స్ నుంచి వచ్చిందే."
+     ]
+    },
+    {
+     "english": "rate",
+     "telugu_form_stem": "రేట",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లో 50 స్టడీస్ అనాలసిస్ నిజమే కానీ మోడరేట్ చాలా పెద్దది కాదు జీరో కాదు.",
+      "ఆడవాళ్ళపై నేరాలు 441534 కేసులు రోజుకి దాదాపు 1210 తెలంగాణ రేట్"
+     ]
+    },
+    {
+     "english": "top",
+     "telugu_form_stem": "టాప",
+     "count": 3,
+     "per_source": {
+      "part2_male_gaze": 3,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "కాలేజీ, బస్ స్టాప్ ఆమె వీధి కార్డ్ త్రీ ఫ్రెండ్స్ చప్పట్లు కొడతారు పాట వస్తుంది.",
+      "రోడ్డు సేఫ్ గా ఉంటే చాలా మంది టాప్ 20% కాలేజ్ వదిలి క్వాలిటీలో కింద సగంలో ఉన్న కాలేజీని ఎంచుకుంటారు."
+     ]
+    },
+    {
+     "english": "million",
+     "telugu_form_stem": "మిలియన",
+     "count": 2,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లో 520 మిలియన్ వ్యూస్ పైనే స్ట్రీట పాట ఆజ్కి రాత్వ బిలియన్ పైనే ఇండియా సినిమా ఆడియన్స్ లో ఎక్కువ శాతం మగవాళ్లే అని",
+      "ఆ తర్వాత ఆ సైట్ సుమారు 10 మిలియన్ అన్‌వెరిఫైడ్ వీడియోస్‌ని తీసేసింది."
+     ]
+    },
+    {
+     "english": "average",
+     "telugu_form_stem": "యావరేజ",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 0,
+      "silent_habit_script": 1,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "ఫస్ట్ టైమ్ చూసే యావరేజ్ ఏజ్ ఎంతో తెలుసా?"
+     ]
+    },
+    {
+     "english": "billion",
+     "telugu_form_stem": "బిలియన",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "లో 520 మిలియన్ వ్యూస్ పైనే స్ట్రీట పాట ఆజ్కి రాత్వ బిలియన్ పైనే ఇండియా సినిమా ఆడియన్స్ లో ఎక్కువ శాతం మగవాళ్లే అని"
+     ]
+    },
+    {
+     "english": "double",
+     "telugu_form_stem": "డబుల",
+     "count": 1,
+     "per_source": {
+      "part2_male_gaze": 1,
+      "silent_habit_script": 0,
+      "ref_excerpt": 0
+     },
+     "examples": [
+      "6 6 కి దాదాపు డబుల్ కానీ జాగ్రత్త ఈ నెంబర్స్ రిపోర్ట్ అయిన కేసులే"
+     ]
+    }
+   ]
+  }
+ },
+ "banned": [
+  {
+   "type": "english_function_words",
+   "items": [
+    "the",
+    "a",
+    "an",
+    "of",
+    "in",
+    "on",
+    "to",
+    "for",
+    "with",
+    "by"
+   ],
+   "evidence": "0 attestations in 3,639 corpus words; Telugu case suffixes do this job (brainలో, స్క్రీన్ మీద)."
+  },
+  {
+   "type": "english_connectives",
+   "items": [
+    "but",
+    "and",
+    "then",
+    "because",
+    "however",
+    "so (beyond the closed discourse set)"
+   ],
+   "evidence": "0 attestations as connectives; కానీ / అందుకే / తర్వాత / మరి carry all connective work. సో appears only 3 times, sentence-initial."
+  },
+  {
+   "type": "english_pronouns_auxiliaries_tense",
+   "items": [
+    "I",
+    "you",
+    "we",
+    "is",
+    "are",
+    "was",
+    "were",
+    "will",
+    "have"
+   ],
+   "evidence": "0 attestations in narration (Latin tokens in the official script are content words + proper names only)."
+  },
+  {
+   "type": "whole_english_clauses",
+   "items": [
+    "full English sentences inside Telugu narration"
+   ],
+   "evidence": "Absent from both videos; English appears only as words/short fixed phrases inside Telugu sentences (titles/headers excepted)."
+  },
+  {
+   "type": "spelled_out_percent_and_english_cardinals",
+   "items": [
+    "percent (word)",
+    "one/two/three as counting numbers"
+   ],
+   "evidence": "'percent' 0 attestations (% symbol used); cardinals are Telugu (ఐదు, వంద, లక్ష, కోట్లు); one/two/three occur only in chapter/step/card/stage ordinal slots."
+  },
+  {
+   "type": "invented_telugu_replacements_for_attested_labels",
+   "items": [
+    "coined Telugu translations of objectification/theory/system etc."
+   ],
+   "evidence": "The channel never replaces an attested English concept label with a coined Telugu equivalent; it explains the English label in Telugu instead."
+  },
+  {
+   "type": "unattested_evaluative_adjectives",
+   "items": [
+    "any English adjective outside the attested stance set"
+   ],
+   "evidence": "Evaluative English is a closed attested set in the corpus; everything else evaluative is Telugu."
+  },
+  {
+   "type": "other_languages_mid_flow",
+   "items": [
+    "any non-English foreign language words"
+   ],
+   "evidence": "Standing house rule (Ajju 2026-11-15): English code-mixing fine, any OTHER language mid-flow banned."
+  }
+ ]
+}

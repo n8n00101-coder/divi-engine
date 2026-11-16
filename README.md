@@ -48,6 +48,7 @@ One female Indian narration voice, measured and locked on 2026-11-14:
   UNVERIFIED against the channel until one is supplied.
 
 Full measurements: [`PRONUNCIATION-PROFILE.md`](PRONUNCIATION-PROFILE.md).
+English-mixing rules for Telugu scripts (which word types stay English, where, and how to write them): [`docs/ENGLISH_MIX_POLICY.md`](docs/ENGLISH_MIX_POLICY.md) + [`voice/english_mix_classes.json`](voice/english_mix_classes.json).
 References and locked values: [`voice/`](voice/) (`settings.json` is the
 single source of truth — the gates read their thresholds from it).
 
