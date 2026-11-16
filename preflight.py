@@ -31,8 +31,10 @@ Correction classes:
                 never against a small corpus lexicon, which would
                 'correct' real words; two or more neighbours = the
                 fix is ambiguous -> flagged, never guessed. Indic
-                words use the channel corpus lexicon under stricter
-                rules (long words, distance 1, unique candidate).
+                words are FLAG-ONLY: the channel corpus lexicon is
+                too small to rewrite against safely (measured: it
+                'corrected' the legitimate లేస్తుంది to చేస్తుంది),
+                so a possible Indic typo is flagged, never touched.
   english_mix   (Telugu scripts) the english-mix policy
                 (voice/english_mix_classes.json): banned English
                 connectives are replaced by their standard Telugu
@@ -457,28 +459,27 @@ def _token_pass(sentence, lang, lex, where, corr, flags):
                                             "corrections — ambiguous, "
                                             "left as-is"})
             return tok
-        # Indic scripts: the repo corpora are the lexicon; stay
-        # strict — long words only, distance exactly 1, one single
-        # candidate, or nothing happens.
+        # Indic scripts: FLAG-ONLY. The channel corpus lexicon is
+        # far too small to correct against safely — measured on real
+        # Telugu narration, a unique-neighbour rule 'corrected' the
+        # legitimate లేస్తుంది to చేస్తుంది. Until a full Indic
+        # dictionary exists on the machine, an unknown long word
+        # with several near neighbours is flagged as a possible
+        # typo and NEVER rewritten.
         lexset = {"telugu": lex["te"],
                   "devanagari": lex["hi"]}.get(script)
         if lexset and len(tok) >= 7 and tok not in lexset:
             cands = [w for w in lexset
                      if w and abs(len(w) - len(tok)) <= 1
                      and _dl(tok, w, 1) <= 1]
-            if len(cands) == 1:
-                corr.append({"original": tok, "corrected": cands[0],
-                             "class": "typo", "where": where,
-                             "reason": "not in the channel corpus "
-                                       "lexicon; exactly one lexicon "
-                                       "neighbour at edit distance 1"})
-                return cands[0]
             if len(cands) >= 2:
                 flags.append({"word": tok, "class": "typo",
                               "where": where,
-                              "reason": f"{len(cands)} plausible "
-                                        "lexicon corrections — "
-                                        "ambiguous, left as-is"})
+                              "reason": f"possible typo: {len(cands)} "
+                                        "near lexicon neighbours — "
+                                        "Indic correction is flag-only "
+                                        "(corpus lexicon too small to "
+                                        "rewrite safely), left as-is"})
         return tok
 
     out = _WORD_RE.sub(
@@ -597,9 +598,11 @@ def _clean(text, corr):
         new = re.sub(r"(\*\*|__|\*|_|`{1,3})", "", new)     # md emphasis
         new = re.sub(r"^\s{0,3}#{1,6}\s*", "", new)          # md headings
         new = re.sub(r"^\s*>\s?", "", new)                   # md quotes
+        # Strip emoji/control/format junk — but NEVER ZWNJ/ZWJ:
+        # in Indic scripts they are orthography (కోచ్‌లో), not junk.
         new = "".join(ch for ch in new
                       if unicodedata.category(ch) not in ("So", "Cs")
-                      and ch not in "​‌‍﻿")
+                      and ch not in "​﻿")
         new = re.sub(r"[ \t]{2,}", " ", new).strip()
         if new != ln.strip() and ln.strip():
             corr.append({"original": ln.strip(), "corrected": new,

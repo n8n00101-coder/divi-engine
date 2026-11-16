@@ -163,11 +163,20 @@ def verify_file(path, sentences, lang, settings=None,
                 f"ASR failed on a sentence window: {str(e)[-120:]}")
         toks_per_slice.append(toks)
 
+    en_simple = gates_mod.LANG_SIMPLE["en"]
+
     def slice_match(toks, script_text):
+        # Whisper's forced-language output script wobbles on this
+        # material — Telugu speech can come back ROMANIZED
+        # ('Laksha' for లక్ష), whose te phonetic form is empty.
+        # Compare in phonetic space whichever script the ASR chose:
+        # a token's phon is its script form, falling back to the
+        # Latin phonetic form of the raw token.
+        phons = [t["phon"] or en_simple(t["tok"]) for t in toks]
         words = [w for w in script_text.strip().split() if w]
         wphon = [simple(w) for w in words]
         assign, _junk = gates_mod.align(
-            wphon, [{"phon": t["phon"]} for t in toks])
+            wphon, [{"phon": p} for p in phons])
         missing, sims = [], []
         for wi, w in enumerate(words):
             a = assign[wi] if wi < len(assign) else None
@@ -175,7 +184,7 @@ def verify_file(path, sentences, lang, settings=None,
                 missing.append(w)
                 sims.append(0.0)
             else:
-                cat = "".join(toks[t]["phon"] for t in a["toks"])
+                cat = "".join(phons[t] for t in a["toks"])
                 sims.append(gates_mod.sim(wphon[wi], cat))
         return missing, (float(np.mean(sims)) if sims else 0.0)
 

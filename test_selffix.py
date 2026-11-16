@@ -44,15 +44,49 @@ def _write(y, name):
     return path
 
 
+def _slice_fixture():
+    """(sentence, audio): the first 26 words of the reference
+    transcript (decimals flattened) and the matching audio prefix
+    cut at the natural pause nearest the proportional point. The
+    full reference is a span CUT from longer narration — its own
+    ending is abrupt, so it cannot be the PASS fixture; this slice
+    ends at a real pause and passes gate 7 (validated)."""
+    words = [w.replace("128.6", "128").replace("64.6", "64")
+             for w in REF_TEXT.split()[:26]]
+    sent = " ".join(words) + "."
+    y, sr = sf.read(REF_WAV, dtype="float32")
+    fr = int(0.02 * sr)
+    n = len(y) // fr
+    rms = np.array([np.sqrt(np.mean(y[i * fr:(i + 1) * fr] ** 2))
+                    for i in range(n)])
+    thr = 0.15 * np.median(rms[rms > 0])
+    target = 26 / 32 * len(y) / sr
+    gaps, i = [], 0
+    while i < n:
+        if rms[i] <= thr:
+            j = i
+            while j < n and rms[j] <= thr:
+                j += 1
+            if (j - i) * 0.02 >= 0.25:
+                gaps.append((i + j) / 2 * 0.02)
+            i = j
+        else:
+            i += 1
+    cut = min(gaps, key=lambda g: abs(g - target))
+    return sent, y[:int(cut * sr)]
+
+
 def run():
     y, _ = sf.read(REF_WAV, dtype="float32")
     dur = len(y) / SR
 
-    # PASS: the genuine take, its own transcript, honest spans
-    p = _write(y, "good.wav")
-    rep = verify.verify_file(p, [REF_TEXT], "te", SETTINGS,
-                             sentence_spans=[[0.0, round(dur, 3)]],
-                             expected_duration_s=round(dur, 2))
+    # PASS: a genuine take with a whole ending, its own transcript,
+    # honest spans
+    sent, ys = _slice_fixture()
+    p = _write(ys, "good.wav")
+    rep = verify.verify_file(p, [sent], "te", SETTINGS,
+                             sentence_spans=[[0.0, round(len(ys) / SR, 3)]],
+                             expected_duration_s=round(len(ys) / SR, 2))
     check("genuine assembled file PASSES verification",
           rep["pass"] is True,
           str({k: v for k, v in rep["checks"].items()
