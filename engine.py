@@ -970,6 +970,12 @@ def main():
                     help="add the quiet piano bed under the voice")
     ap.add_argument("--keep-takes", action="store_true",
                     help="keep the per-roll take wavs next to the output")
+    ap.add_argument("--turbo", metavar="SCRIPT_TXT",
+                    help="turbo mode (the DEFAULT for long te/hi "
+                         "scripts): ONE command — the tool splits the "
+                         "script across many parallel Actions runners, "
+                         "each generating + gating its chunk, then "
+                         "merges to one mp3 (see turbo.py)")
     ap.add_argument("--batch", metavar="LINES_TXT",
                     help="batch mode: voice a whole lines file (one line "
                          "per row) with the model loaded once per worker")
@@ -996,6 +1002,11 @@ def main():
 
     if args.batch_gen:
         return batch_gen_worker(args.batch_gen[0], args.batch_gen[1])
+
+    if args.turbo:
+        import turbo as turbo_cli
+        return turbo_cli.run_cli(args.turbo, lang=args.lang or "te",
+                                 out=args.out or "voiceover.mp3")
 
     if args.batch:
         if not args.lang or not args.outdir:

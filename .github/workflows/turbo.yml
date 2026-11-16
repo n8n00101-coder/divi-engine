@@ -78,7 +78,7 @@ env:
   LANG: ${{ inputs.lang || 'te' }}
   REF_NAME: ${{ inputs.ref_name || 'natspan2' }}
   SPEED: ${{ inputs.speed }}
-  NFE_STEP: ${{ inputs.nfe_step || '16' }}
+  NFE_STEP: ${{ inputs.nfe_step || '8' }}
   MAX_TAKES1: ${{ inputs.max_takes1 || '2' }}
   MAX_TAKES2: ${{ inputs.max_takes2 || '5' }}
   WAVE2: ${{ inputs.wave2 || 'true' }}
