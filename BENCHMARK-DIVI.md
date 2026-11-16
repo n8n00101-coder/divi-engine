@@ -101,7 +101,27 @@ run.
 
 ### Addendum — Hindi, local serial route (full path)
 
-_pending the local run_
+A 6-sentence Hindi job (`jobs/bench-hi-small.txt`) was run through
+the local full path (divi.py → pre-flight → batch waves →
+indicf5-space → gates → assembly → verification), serial pacing,
+2026-11-16 night. Measured per-call behaviour of the IndicF5 Space
+that night:
+
+- failed call: **~94 s** burned in retries, ending "space error
+  event" — 4 of the first 5 wave-1 candidates
+- successful call: **11.4 s** (sentence 6, first candidate)
+- serial success rate that night: ~1 in 5 calls
+
+So the Space is unreliable at ANY pacing right now — parallel
+load makes it worse (86% errors), but even a single polite client
+mostly gets queue errors. The Hindi engine path itself (recipe
+tempo via the speed policy, gates, ladder, assembly, verification)
+is exercised green by `test_speedlock.py` (Hindi recipe 1.20
+LOCKED, QC speed block) and `test_batch.py`; what cannot be
+demonstrated tonight is a *healthy Space*, which is an
+infrastructure fact, not an engine defect. Hindi per-sentence
+cost, when the Space answers: ~11 s generation + ~40–120 s of
+local gate ASR on this VM (≈12 s on a 4-core runner).
 
 ## Method notes
 
