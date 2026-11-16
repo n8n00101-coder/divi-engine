@@ -29,6 +29,11 @@ on:
         required: false
         type: string
         default: "1.0"
+      lang:
+        description: "Gate language: te (default) or hi (Hindi lines, cross-lingual from the Telugu refs)"
+        required: false
+        type: string
+        default: "te"
 jobs:
   gen:
     runs-on: ubuntu-latest
@@ -82,6 +87,7 @@ jobs:
           LINES_PATH: ${{ inputs.lines_path }}
           REF_ORDER: ${{ inputs.ref_order }}
           SPEED: ${{ inputs.speed }}
+          LANG: ${{ inputs.lang }}
           OMP_NUM_THREADS: "4"
           MKL_NUM_THREADS: "4"
         run: python3 indicf5_gen.py

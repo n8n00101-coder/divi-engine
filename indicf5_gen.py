@@ -12,14 +12,23 @@ span1/span2/span3/te3), and gates EVERY take with the full suite:
   - pace: script words / effective speech span, pass 1.9-2.5 words/s
     (her channel band is ~2.2 wps)
 
-A take is a FULL PASS only if every gate passes on that same take.
+A take is a FULL PASS only if it meets the ear-approved ship bar on that
+same take (Ajju, 2026-11-16, fixed13 — the same bar engine.py's
+ship_decision implements): gate 1 (no-hint language) + gate 2 (ghost
+scan) pass, identity >= 0.85, pace within 1.9-2.5 wps. Gates 3/4/5 are
+still computed and recorded per take (rec["gate_pass"] keeps the
+all-five result) but are advisory: the fixed6 calibration proved the
+suite fails her own genuine narration, and the ear-approved fixed13
+takes do not pass all of g3/g4/g5 either.
 All takes + per-take gate JSON are written to OUTDIR for harvest; nothing
 is assembled here.
 
 Env: RUNNER_INDEX (0..9), ROLLS (per sentence, default 6), OUTDIR (out),
 LINES_PATH (optional lines file in this repo — one sentence per line;
 written by engine.py's dispatch_mass_rolls for arbitrary te/hi scripts.
-Default: the built-in demo pair.)
+Default: the built-in demo pair.), LANG (gate language, "te" default;
+"hi" for Hindi lines — cross-lingual from the same Telugu refs, the
+no-hint threshold then reads hi >= 0.90 from the engine settings.)
 """
 import json
 import os
@@ -45,6 +54,9 @@ ROLLS = int(os.environ.get("ROLLS", "6"))
 # * gen_text_len / speed). speed<1 = slower/longer. Default 1.0 = the
 # behaviour of every previous wave.
 SPEED = float(os.environ.get("SPEED", "1.0"))
+LANG = os.environ.get("LANG", "te").strip().lower()
+if LANG not in ("te", "hi"):
+    raise SystemExit(f"indicf5_gen: LANG must be te or hi, got {LANG!r}")
 
 DEMO_SENTS = {
     1: "మీరు నిద్రలోకి జారుకున్న క్షణం నుంచి, మీ మెదడు పని ఆపదు. నిజానికి, దాని అసలు పని అప్పుడే మొదలవుతుంది.",
@@ -140,7 +152,8 @@ def main():
     model.config.speed = SPEED  # forward() reads config at call time
     print(f"IndicF5 loaded, config.speed={model.config.speed}", flush=True)
 
-    summary = {"runner": IDX, "ref": ref_name, "rolls": ROLLS, "takes": []}
+    summary = {"runner": IDX, "ref": ref_name, "rolls": ROLLS,
+               "lang": LANG, "takes": []}
     for si, text in SENTS.items():
         words = text.replace(",", " ").replace(".", " ").split()
         for k in range(1, ROLLS + 1):
@@ -156,7 +169,7 @@ def main():
                 audio = np.array(audio, dtype=np.float32)
                 sf.write(wp, audio, 24000)
                 rec["duration_s"] = round(len(audio) / 24000.0, 2)
-                rep = gates.run_all_gates(wp, "te", text)
+                rep = gates.run_all_gates(wp, LANG, text)
                 ident = identity(wp)
                 wps, span = pace_of(rep, len(words))
                 rec["gate_pass"] = bool(rep["pass"])
@@ -166,8 +179,13 @@ def main():
                 rec["asr_span"] = span
                 rec["pace_pass"] = bool(wps is not None
                                         and WPS_MIN <= wps <= WPS_MAX)
-                rec["full_pass"] = bool(rep["pass"] and rec["identity_pass"]
-                                        and rec["pace_pass"])
+                # Ear-approved ship bar (fixed13): gate1 + gate2 +
+                # identity + pace on this whole take. rep["pass"]
+                # (all five gates) stays recorded as rec["gate_pass"].
+                rec["full_pass"] = bool(
+                    rep["gate1_nohint_language"]["pass"]
+                    and rep["gate2_ghost_words"]["pass"]
+                    and rec["identity_pass"] and rec["pace_pass"])
                 rec["gates"] = rep
             except Exception as e:  # keep rolling; harvest sees the error
                 rec["error"] = f"{type(e).__name__}: {e}"
