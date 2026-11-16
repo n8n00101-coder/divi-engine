@@ -1,0 +1,56 @@
+name: fetch-te-subs
+# ONE-OFF corpus fetch (2026-11-16): list @who_taught_us-telugu videos and
+# download Telugu auto-captions as text, from a clean GitHub runner network
+# (the local VM cannot reach YouTube directly).
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Install yt-dlp
+        run: |
+          python3 -m pip install --quiet --upgrade yt-dlp
+          yt-dlp --version
+
+      - name: List channel videos + fetch Telugu auto-subs
+        run: |
+          set -x
+          mkdir -p subs
+          yt-dlp --flat-playlist --playlist-end 12 \
+            --print '%(id)s %(title)s' \
+            "https://www.youtube.com/@who_taught_us-telugu/videos" \
+            > subs/video_list.txt 2> subs/list_err.log || true
+          cat subs/video_list.txt || true
+          while read -r vid _title; do
+            [ -z "$vid" ] && continue
+            echo "=== $vid ==="
+            yt-dlp --skip-download --no-warnings \
+              --write-auto-subs --write-subs \
+              --sub-langs 'te.*,en.*' --sub-format 'vtt/best' \
+              -o "subs/%(id)s.%(ext)s" \
+              "https://www.youtube.com/watch?v=$vid" \
+            || yt-dlp --skip-download --no-warnings \
+              --write-auto-subs --write-subs \
+              --sub-langs 'te.*,en.*' --sub-format 'vtt/best' \
+              --extractor-args "youtube:player_client=android,web" \
+              -o "subs/%(id)s.%(ext)s" \
+              "https://www.youtube.com/watch?v=$vid" \
+            || yt-dlp --skip-download --no-warnings \
+              --write-auto-subs --write-subs \
+              --sub-langs 'te.*,en.*' --sub-format 'vtt/best' \
+              --extractor-args "youtube:player_client=ios,tv" \
+              -o "subs/%(id)s.%(ext)s" \
+              "https://www.youtube.com/watch?v=$vid" \
+            || echo "FAILED $vid"
+          done < subs/video_list.txt
+          ls -la subs/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: te-subs
+          path: subs/
+          retention-days: 7
