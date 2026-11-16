@@ -358,6 +358,21 @@ def _mms_take(text, lang, out_wav, settings, info):
 
     import soundfile as sf
     import torch
+    # Pace control (fixed11, 2026-11-16): MMS's native pace is slow
+    # (~80 wpm vs the channel's ~130). transformers 4.49's VitsModel
+    # takes NO length_scale forward kwarg; its inference computes
+    # length_scale = 1.0 / self.speaking_rate (modeling_vits.py),
+    # the attribute copied from config at load. Env MMS_LENGTH_SCALE
+    # (default 1.0) is the phoneme-duration multiplier: <1 = faster.
+    # Measured on S2 (19 words): 1.0 -> 13.87s, 0.80 -> 11.36s,
+    # 0.70 -> 10.22s, 0.62 -> 9.15s (in the 7.6-10.0s band). The right
+    # scale is per-sentence (S1 needed 0.80 for its 6.0-7.9s band) --
+    # same per-sentence calibration rule as fixed10's IndicF5 speed.
+    length_scale = float(os.environ.get("MMS_LENGTH_SCALE", "1.0"))
+    if length_scale <= 0:
+        raise RuntimeError(
+            f"[mms] MMS_LENGTH_SCALE must be > 0, got {length_scale}")
+    model.speaking_rate = 1.0 / length_scale
     inputs = tok(text, return_tensors="pt")
     with torch.no_grad():
         waveform = model(**inputs).waveform
@@ -366,6 +381,7 @@ def _mms_take(text, lang, out_wav, settings, info):
     sf.write(buf, audio, model.config.sampling_rate, format="WAV")
     info["mms_model"] = MMS_MODEL_ID
     info["mms_native_sr"] = model.config.sampling_rate
+    info["mms_length_scale"] = length_scale
     _bytes_to_take(buf.getvalue(), lang, out_wav, settings, info)
 
 
