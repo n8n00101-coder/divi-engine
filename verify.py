@@ -208,13 +208,32 @@ def verify_file(path, sentences, lang, settings=None,
                       and best_j == i)
             entry["completeness_pass"] = bool(own_ok)
             completeness_ok = completeness_ok and own_ok
-        hg = acoustic_gates.head_grunt_detect(sp)
-        entry["head_grunt_present"] = bool(hg["present"])
-        cw = acoustic_gates.cut_word_gate(sp)
-        entry["cut_word_pass"] = bool(cw["pass"])
-        if not cw["pass"]:
-            entry["cut_word_fails"] = cw["fails"]
+        # An empty or unreadable window (span beyond the file's
+        # end — e.g. a dropped sentence) is a verification FAILURE,
+        # never a crash of the verifier itself.
+        try:
+            hg = acoustic_gates.head_grunt_detect(sp)
+            entry["head_grunt_present"] = bool(hg["present"])
+        except Exception as e:
+            entry["head_grunt_present"] = True
+            entry["head_grunt_error"] = str(e)[-120:]
+        try:
+            cw = acoustic_gates.cut_word_gate(sp)
+            entry["cut_word_pass"] = bool(cw["pass"])
+            if not cw["pass"]:
+                entry["cut_word_fails"] = cw["fails"]
+        except Exception as e:
+            entry["cut_word_pass"] = False
+            entry["cut_word_error"] = str(e)[-120:]
         seg_y, _ = sf.read(sp, dtype="float32", always_2d=False)
+        if len(seg_y) == 0:
+            # empty window: silence where a sentence should be
+            entry["interior_silence_max_s"] = None
+            entry["interior_silence_pass"] = False
+            entry["rms_db"] = -120.0
+            levels.append(entry["rms_db"])
+            rep["sentences"].append(entry)
+            continue
         # interior silence: longest sub-threshold run inside the window
         import acoustic_gates as _ag
         db, dt = _ag._frame_db(seg_y.astype(np.float64))
