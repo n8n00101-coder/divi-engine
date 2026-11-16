@@ -1,0 +1,453 @@
+{
+ "sentence": "పోలీసులు క్రిమినల్ కేసులో థియరీని రివ్యూ చేశారు.",
+ "take": "s1_r8_t1.wav",
+ "gate_report_flag_OFF": {
+  "pass": false,
+  "gate1_nohint_language": {
+   "pass": true,
+   "detected": "te",
+   "prob": 0.91,
+   "required": 0.8,
+   "unhinted_text": "کوتھa criminal chattalu polisulu criminal case lo theory ni review chaisaru"
+  },
+  "gate2_ghost_words": {
+   "pass": false,
+   "ghosts": [
+    "case :: phon 'case' matches no script word (best sim 0.40)",
+    "review :: phon 'reuiew' matches no script word (best sim 0.36)"
+   ],
+   "loanword_aware": false
+  },
+  "gate3_pronunciation": {
+   "pass": false,
+   "min_prob": 0.14,
+   "fails": [
+    "పోలీసులు: merged into one ASR token with loss (sim 0.00)",
+    "పోలీసులు: smeared (sim 0.00)",
+    "పోలీసులు: prob 0.14 < 0.50",
+    "క్రిమినల్: merged into one ASR token with loss (sim 0.00)",
+    "క్రిమినల్: smeared (sim 0.00)",
+    "క్రిమినల్: prob 0.14 < 0.50",
+    "కేసులో: smeared (sim 0.00)",
+    "కేసులో: prob 0.49 < 0.50",
+    "థియరీని: smeared (sim 0.00)",
+    "థియరీని: prob 0.24 < 0.50",
+    "రివ్యూ: merged into one ASR token with loss (sim 0.00)",
+    "రివ్యూ: smeared (sim 0.00)",
+    "చేశారు.: merged into one ASR token with loss (sim 0.00)",
+    "చేశారు.: smeared (sim 0.00)",
+    "junk tokens: ['کوتھa']"
+   ],
+   "rows": [
+    {
+     "word": "పోలీసులు",
+     "prob": 0.14,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "criminal"
+     ],
+     "start": 0.56,
+     "end": 0.72,
+     "phys": [
+      "duration 0.26s speech < 60% of min syllable-expected 1.12s (7 syll)",
+      "duration: 0.074s/syll < 60% of take pace 0.151s/syll (word 0.52s, 7 syll)"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "క్రిమినల్",
+     "prob": 0.14,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "criminal"
+     ],
+     "start": 0.56,
+     "end": 0.72,
+     "phys": [
+      "duration 0.26s speech < 60% of min syllable-expected 1.12s (7 syll)",
+      "duration: 0.074s/syll < 60% of take pace 0.151s/syll (word 0.52s, 7 syll)"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "కేసులో",
+     "prob": 0.491,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "chattalu",
+      "polisulu",
+      "criminal",
+      "case"
+     ],
+     "start": 0.72,
+     "end": 2.08,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "థియరీని",
+     "prob": 0.241,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "lo",
+      "theory",
+      "ni",
+      "review"
+     ],
+     "start": 2.08,
+     "end": 2.8,
+     "phys": [
+      "abrupt cut: island-final-30ms -20 dB vs peak -14 dB, post -37 dB"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "రివ్యూ",
+     "prob": 0.5,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "chaisaru"
+     ],
+     "start": 2.8,
+     "end": 3.3,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "చేశారు.",
+     "prob": 0.5,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "chaisaru"
+     ],
+     "start": 2.8,
+     "end": 3.3,
+     "phys": [],
+     "phys_notes": []
+    }
+   ],
+   "junk": [
+    {
+     "tok": "کوتھa",
+     "prob": 0.391,
+     "start": 0.0
+    }
+   ]
+  },
+  "gate4_phys_swallowed": {
+   "pass": false,
+   "fails": [
+    "పోలీసులు: PHYS duration 0.26s speech < 60% of min syllable-expected 1.12s (7 syll)",
+    "పోలీసులు: PHYS duration: 0.074s/syll < 60% of take pace 0.151s/syll (word 0.52s, 7 syll)",
+    "క్రిమినల్: PHYS duration 0.26s speech < 60% of min syllable-expected 1.12s (7 syll)",
+    "క్రిమినల్: PHYS duration: 0.074s/syll < 60% of take pace 0.151s/syll (word 0.52s, 7 syll)",
+    "థియరీని: PHYS abrupt cut: island-final-30ms -20 dB vs peak -14 dB, post -37 dB"
+   ],
+   "fail_words": [
+    "పోలీసులు",
+    "క్రిమినల్",
+    "థియరీని"
+   ]
+  },
+  "gate5_pitch": {
+   "pass": true,
+   "f0_med": 186.9,
+   "band": [
+    185,
+    220
+   ],
+   "rms_db": -19.25,
+   "dur": 2.87
+  },
+  "gate6_head_grunt": {
+   "pass": true,
+   "present": false,
+   "detection": {
+    "present": false,
+    "islands": 3,
+    "span_s": [
+     0.25,
+     0.35
+    ],
+    "dur_s": 0.1,
+    "gap_after_s": 0.09,
+    "rms_db": -17.0,
+    "body_rms_db": -20.5,
+    "f0_hz": 238.0,
+    "f0_iqr_hz": 7.0,
+    "body_f0_hz": 182.0,
+    "checks": {
+     "starts_at_head": false,
+     "short": true,
+     "isolated_by_silence": false,
+     "quiet_vs_body": false,
+     "low_flat_f0": false
+    }
+   }
+  },
+  "gate7_cut_word": {
+   "pass": true,
+   "fails": [],
+   "islands": 4,
+   "duration_s": 3.33,
+   "last_island_s": [
+    1.24,
+    3.27
+   ],
+   "last_island_dur_s": 2.03,
+   "last_rms_db": -20.5,
+   "body_rms_db": -20.5,
+   "last_f0_hz": 180.0,
+   "body_f0_hz": 180.0,
+   "final_peak_db": -13.7
+  }
+ },
+ "gate_report_flag_ON": {
+  "pass": false,
+  "gate1_nohint_language": {
+   "pass": true,
+   "detected": "te",
+   "prob": 0.91,
+   "required": 0.8,
+   "unhinted_text": "کوتھa criminal chattalu polisulu criminal case lo theory ni review chaisaru"
+  },
+  "gate2_ghost_words": {
+   "pass": true,
+   "ghosts": [],
+   "loanword_aware": true
+  },
+  "gate3_pronunciation": {
+   "pass": false,
+   "min_prob": 0.14,
+   "fails": [
+    "పోలీసులు: merged into one ASR token with loss (sim 0.00)",
+    "పోలీసులు: smeared (sim 0.00)",
+    "పోలీసులు: prob 0.14 < 0.50",
+    "క్రిమినల్: merged into one ASR token with loss (sim 0.00)",
+    "క్రిమినల్: smeared (sim 0.00)",
+    "క్రిమినల్: prob 0.14 < 0.50",
+    "కేసులో: smeared (sim 0.00)",
+    "కేసులో: prob 0.49 < 0.50",
+    "థియరీని: smeared (sim 0.00)",
+    "థియరీని: prob 0.24 < 0.50",
+    "రివ్యూ: merged into one ASR token with loss (sim 0.00)",
+    "రివ్యూ: smeared (sim 0.00)",
+    "చేశారు.: merged into one ASR token with loss (sim 0.00)",
+    "చేశారు.: smeared (sim 0.00)",
+    "junk tokens: ['کوتھa']"
+   ],
+   "rows": [
+    {
+     "word": "పోలీసులు",
+     "prob": 0.14,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "criminal"
+     ],
+     "start": 0.56,
+     "end": 0.72,
+     "phys": [
+      "duration 0.26s speech < 60% of min syllable-expected 1.12s (7 syll)",
+      "duration: 0.074s/syll < 60% of take pace 0.151s/syll (word 0.52s, 7 syll)"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "క్రిమినల్",
+     "prob": 0.14,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "criminal"
+     ],
+     "start": 0.56,
+     "end": 0.72,
+     "phys": [
+      "duration 0.26s speech < 60% of min syllable-expected 1.12s (7 syll)",
+      "duration: 0.074s/syll < 60% of take pace 0.151s/syll (word 0.52s, 7 syll)"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "కేసులో",
+     "prob": 0.491,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "chattalu",
+      "polisulu",
+      "criminal",
+      "case"
+     ],
+     "start": 0.72,
+     "end": 2.08,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "థియరీని",
+     "prob": 0.241,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "lo",
+      "theory",
+      "ni",
+      "review"
+     ],
+     "start": 2.08,
+     "end": 2.8,
+     "phys": [
+      "abrupt cut: island-final-30ms -20 dB vs peak -14 dB, post -37 dB"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "రివ్యూ",
+     "prob": 0.5,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "chaisaru"
+     ],
+     "start": 2.8,
+     "end": 3.3,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "చేశారు.",
+     "prob": 0.5,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "chaisaru"
+     ],
+     "start": 2.8,
+     "end": 3.3,
+     "phys": [],
+     "phys_notes": []
+    }
+   ],
+   "junk": [
+    {
+     "tok": "کوتھa",
+     "prob": 0.391,
+     "start": 0.0
+    }
+   ]
+  },
+  "gate4_phys_swallowed": {
+   "pass": false,
+   "fails": [
+    "పోలీసులు: PHYS duration 0.26s speech < 60% of min syllable-expected 1.12s (7 syll)",
+    "పోలీసులు: PHYS duration: 0.074s/syll < 60% of take pace 0.151s/syll (word 0.52s, 7 syll)",
+    "క్రిమినల్: PHYS duration 0.26s speech < 60% of min syllable-expected 1.12s (7 syll)",
+    "క్రిమినల్: PHYS duration: 0.074s/syll < 60% of take pace 0.151s/syll (word 0.52s, 7 syll)",
+    "థియరీని: PHYS abrupt cut: island-final-30ms -20 dB vs peak -14 dB, post -37 dB"
+   ],
+   "fail_words": [
+    "పోలీసులు",
+    "క్రిమినల్",
+    "థియరీని"
+   ]
+  },
+  "gate5_pitch": {
+   "pass": true,
+   "f0_med": 186.9,
+   "band": [
+    185,
+    220
+   ],
+   "rms_db": -19.25,
+   "dur": 2.87
+  },
+  "gate6_head_grunt": {
+   "pass": true,
+   "present": false,
+   "detection": {
+    "present": false,
+    "islands": 3,
+    "span_s": [
+     0.25,
+     0.35
+    ],
+    "dur_s": 0.1,
+    "gap_after_s": 0.09,
+    "rms_db": -17.0,
+    "body_rms_db": -20.5,
+    "f0_hz": 238.0,
+    "f0_iqr_hz": 7.0,
+    "body_f0_hz": 182.0,
+    "checks": {
+     "starts_at_head": false,
+     "short": true,
+     "isolated_by_silence": false,
+     "quiet_vs_body": false,
+     "low_flat_f0": false
+    }
+   }
+  },
+  "gate7_cut_word": {
+   "pass": true,
+   "fails": [],
+   "islands": 4,
+   "duration_s": 3.33,
+   "last_island_s": [
+    1.24,
+    3.27
+   ],
+   "last_island_dur_s": 2.03,
+   "last_rms_db": -20.5,
+   "body_rms_db": -20.5,
+   "last_f0_hz": 180.0,
+   "body_f0_hz": 180.0,
+   "final_peak_db": -13.7
+  }
+ },
+ "ship_extra_flag_ON": {
+  "ship_rule": "whole-take ear-approved bar: gate1 + gate2 + identity + pace + gate7 cut-word (gates 3/4/5 advisory)",
+  "gate1_pass": true,
+  "gate2_pass": true,
+  "gate7_pass": true,
+  "advisory": {
+   "gate3_pass": false,
+   "gate4_pass": false,
+   "gate5_pass": true
+  },
+  "identity": 0.861,
+  "identity_min": 0.85,
+  "identity_pass": true,
+  "pace_wps": 1.705,
+  "pace_band": [
+   1.9,
+   2.5
+  ],
+  "pace_pass": false
+ },
+ "summary": {
+  "sentence": "పోలీసులు క్రిమినల్ కేసులో థియరీని రివ్యూ చేశారు.",
+  "take": "s1_r8_t1.wav",
+  "gate2_flip": true,
+  "ghosts_off": [
+   "case :: phon 'case' matches no script word (best sim 0.40)",
+   "review :: phon 'reuiew' matches no script word (best sim 0.36)"
+  ],
+  "ghosts_on": [],
+  "ship_off": false,
+  "ship_on": false,
+  "identity": 0.861,
+  "pace_wps": 1.705,
+  "blocked_by": null,
+  "gate1_pass_on": true,
+  "gate7_pass_on": true,
+  "unhinted": "کوتھa criminal chattalu polisulu criminal case lo theory ni review chaisaru"
+ }
+}
