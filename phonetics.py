@@ -220,7 +220,7 @@ def hi_syllables(word):
     for i, c in enumerate(s):
         if c in _H_INDEP:
             cnt += 1
-        elif c in H_CONSSET:
+        elif c in _H_CONSSET:
             j = i + 1
             while j < n and s[j] == H_NUKTA:
                 j += 1
