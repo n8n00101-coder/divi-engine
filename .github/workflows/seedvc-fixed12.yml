@@ -1,0 +1,22 @@
+name: seedvc-fixed12
+on:
+  workflow_dispatch:
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run Seed-VC v2 conversions (gold + english refs)
+        run: bash jobs/fixed12/run_seedvc.sh
+      - name: Upload converted audio
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixed12-seedvc-out
+          path: |
+            jobs/fixed12/out_gold/**
+            jobs/fixed12/out_eng/**
+          if-no-files-found: error
