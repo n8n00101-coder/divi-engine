@@ -1,0 +1,617 @@
+{
+ "sample-1-criminal-theory-review": {
+  "text": "క్రిమినల్ కేసులో పోలీసులు థియరీని మళ్ళీ రివ్యూ చేశారు, కానీ ఎవిడెన్స్ మాత్రం దొరకలేదు.",
+  "rolls": [
+   {
+    "roll": 1,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "Gajulalsulokotachatlai :: phon 'gaculalsulokotacatle' matches no script word (best sim 0.31)",
+     "case :: phon 'case' matches no script word (best sim 0.40)"
+    ],
+    "ghosts_on": [
+     "Gajulalsulokotachatlai :: phon 'gaculalsulokotacatle' matches no script word (best sim 0.31)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "Gajulalsulokotachatlai criminal case lo polisulu thiyeri ni mulli review chesaru, kani evidensmaatram dorakal edu."
+   },
+   {
+    "roll": 2,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 3,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "جولہ :: phon 'culh' matches no script word (best sim 0.40)"
+    ],
+    "ghosts_on": [
+     "جولہ :: phon 'culh' matches no script word (best sim 0.40)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "جولہ ایوائی نیسلوں کوتھا کریمینلچکیسلوں پولیسلو تیرینی ملی ریوچے سارو کانی ایویڈنس ماترم دورکہ لے دو"
+   },
+   {
+    "roll": 4,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "vachai, :: phon 'uace' matches no script word (best sim 0.40)",
+     "case :: phon 'case' matches no script word (best sim 0.40)"
+    ],
+    "ghosts_on": [
+     "vachai, :: phon 'uace' matches no script word (best sim 0.40)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Joolai criminal chatta vachai, criminal case lo polisudhiri ni malli review chesaru, kani evidance madram dorakal edu."
+   },
+   {
+    "roll": 5,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "Joola :: phon 'cola' matches no script word (best sim 0.40)",
+     "case :: phon 'case' matches no script word (best sim 0.40)"
+    ],
+    "ghosts_on": [
+     "Joola :: phon 'cola' matches no script word (best sim 0.40)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "Joola Inal Chattavu chaik criminal case lo polis lo diya ni malli review chaisaru kani yavdens maatram dorakal edu"
+   },
+   {
+    "roll": 6,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "Zoola :: phon 'cola' matches no script word (best sim 0.40)",
+     "Theory :: phon 'teory' matches no script word (best sim 0.40)"
+    ],
+    "ghosts_on": [
+     "Zoola :: phon 'cola' matches no script word (best sim 0.40)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Zoola e-missieslo, Kothakrimil caselo, Polislo, Theory ni Mally review chesaru Kani evidance maatram dwarakale dwarakale dwarakale dwaraka"
+   },
+   {
+    "roll": 7,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Joolai Astrid Solo کوتھ கریمینل кیسلوں پولیسلوں தیریینی ملی ریویچے سیروں, کانی ایوژن سماتھ رم دورکلے دو"
+   },
+   {
+    "roll": 8,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "چیسے :: phon 'cise' matches no script word (best sim 0.40)",
+     "دورکہ :: phon 'durk' matches no script word (best sim 0.29)"
+    ],
+    "ghosts_on": [
+     "دورکہ :: phon 'durk' matches no script word (best sim 0.29)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "جو لائر انمیسلوں کوتھکرنل چٹڑھا لینل کیسلوں پولیسلوں دیرینی ملی ریview چیسے رکھا نی ایویڈن سماتھ رم دورکہ لید"
+   },
+   {
+    "roll": 9,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "கொத்த கிரیمنல் چட்டாஸ்லைக் கிரிமில் கேசில் போலிஷிலுத்திரின் மல்லி விவித்தேச் சரு கானி ஏவிடன் சமாற்றம் துரகலே எது"
+   },
+   {
+    "roll": 10,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 11,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": 0.874,
+    "pace_wps": 1.78,
+    "gate1_pass": true,
+    "unhinted": "Joola ilz reisil, Kothakri, Minal, Kaisil & Poli case, lo tiye rinit, Malli review, SHARE. Kana ka mada sマthra ambh dhurakalaідu."
+   },
+   {
+    "roll": 12,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "پولیسو :: phon 'pulisu' ~ ghost 'pels' (ratio 0.60)",
+     "دورکہ :: phon 'durk' matches no script word (best sim 0.29)"
+    ],
+    "ghosts_on": [
+     "پولیسو :: phon 'pulisu' ~ ghost 'pels' (ratio 0.60)",
+     "دورکہ :: phon 'durk' matches no script word (best sim 0.29)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "جو لیس لو کتھ கریمینل چتال چای, கریمینل کس لو پولیسو دیرنی ملی ریوچے سیارو کنی ایوڑنس ماترم دورکہ لیدو"
+   },
+   {
+    "roll": 13,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 14,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   }
+  ],
+  "picked_roll": null
+ },
+ "sample-2-college-fees-safety": {
+  "text": "కాలేజీ ఫీజు పెరగడంతో స్టూడెంట్స్ సేఫ్టీ గురించి కమిటీ ఒక రిపోర్ట్ విడుదల చేసింది.",
+  "rolls": [
+   {
+    "roll": 1,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 2,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "Kothakriminal :: phon 'kotakriminal' matches no script word (best sim 0.44)",
+     "College :: phon 'colege' matches no script word (best sim 0.33)",
+     "Safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+    ],
+    "ghosts_on": [
+     "Kothakriminal :: phon 'kotakriminal' matches no script word (best sim 0.44)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "Zoola Aesula Kothakriminal Chai College Fisupuradanthos Student Safety Gurinchi Committee Oka Report Vidaalachaisinni"
+   },
+   {
+    "roll": 3,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "جوزلو :: phon 'cuclu' matches no script word (best sim 0.44)",
+     "گڑھنھتا :: phon 'grhnhta' matches no script word (best sim 0.31)"
+    ],
+    "ghosts_on": [
+     "جوزلو :: phon 'cuclu' matches no script word (best sim 0.44)",
+     "گڑھنھتا :: phon 'grhnhta' matches no script word (best sim 0.31)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "جوزلو کتھ கریمینل چٹھائی کالگی فیز پیز پیر گڑھنھتا و سٹوڑن سیفٹی گورنچی کمیٹی ایک ریپورٹ وڑڑڑڑا چیسندی"
+   },
+   {
+    "roll": 4,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "fees",
+     "chatta :: phon 'cata' matches no script word (best sim 0.40)",
+     "lochai, :: phon 'loce' matches no script word (best sim 0.40)",
+     "college :: phon 'colege' matches no script word (best sim 0.33)",
+     "fees :: phon 'pes' ~ ghost 'pes' (ratio 1.00)",
+     "safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+    ],
+    "ghosts_on": [
+     "chatta :: phon 'cata' matches no script word (best sim 0.40)",
+     "lochai, :: phon 'loce' matches no script word (best sim 0.40)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Juulokok criminal chatta lochai, college fees peragdantha, students, safety gurinchi, committee och report vididdhala chaisindi."
+   },
+   {
+    "roll": 5,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+    ],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Juulay lokal lo criminal chattalji fizu peragadamto, student safety gurunji committee o karripport viddhal chaisindi."
+   },
+   {
+    "roll": 6,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "لیمکرینل :: phon 'limkrinl' matches no script word (best sim 0.40)",
+     "چتلاک :: phon 'ctlak' matches no script word (best sim 0.31)"
+    ],
+    "ghosts_on": [
+     "لیمکرینل :: phon 'limkrinl' matches no script word (best sim 0.40)",
+     "چتلاک :: phon 'ctlak' matches no script word (best sim 0.31)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "جو لیمکرینل چتلاک کالگی فیز براگدانتون, студینс سیفٹی گرنچی, کمیٹی اوک رپوٹ وڑدل چیسندی."
+   },
+   {
+    "roll": 7,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "Fees",
+     "-Chattalka, :: phon 'catalka' matches no script word (best sim 0.40)",
+     "Ecology :: phon 'ecology' matches no script word (best sim 0.31)",
+     "Fees, :: phon 'pes' ~ ghost 'pes' (ratio 1.00)",
+     "Safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+    ],
+    "ghosts_on": [
+     "-Chattalka, :: phon 'catalka' matches no script word (best sim 0.40)",
+     "Ecology :: phon 'ecology' matches no script word (best sim 0.31)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "Joola Remislo-Kotal-Chattalka, Ecology Fees, Perekadantha, Students, Safety Gurinchi, Commitio-Karipot, Vida-Lachesindi."
+   },
+   {
+    "roll": 8,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 9,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 10,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 11,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+    ],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "Jula izula kotha krimu na ngkeleji fizu perag dhantho student safety gurinchi committee och report viddala chaisin di."
+   },
+   {
+    "roll": 12,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "chatta :: phon 'cata' matches no script word (best sim 0.40)",
+     "hochai, :: phon 'hoce' matches no script word (best sim 0.36)",
+     "college :: phon 'colege' matches no script word (best sim 0.33)",
+     "feesu :: phon 'pesu' ~ ghost 'pes' (ratio 0.86)",
+     "safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+    ],
+    "ghosts_on": [
+     "chatta :: phon 'cata' matches no script word (best sim 0.40)",
+     "hochai, :: phon 'hoce' matches no script word (best sim 0.36)",
+     "feesu :: phon 'pesu' ~ ghost 'pes' (ratio 0.86)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Joolay looka sreamnal chatta hochai, college feesu peragadhantho student safety gurinchi, committee och report vit dhala chaisindi."
+   },
+   {
+    "roll": 13,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+    ],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "Juulai Vesu lo Kuthak criminal chutkale Feezu peragadamto student safety gurinchi committee oka report vedudala chaisin"
+   },
+   {
+    "roll": 14,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "fees",
+     "Chattal :: phon 'catal' matches no script word (best sim 0.36)",
+     "vachai :: phon 'uace' matches no script word (best sim 0.40)",
+     "college :: phon 'colege' matches no script word (best sim 0.33)",
+     "safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+    ],
+    "ghosts_on": [
+     "Chattal :: phon 'catal' matches no script word (best sim 0.36)",
+     "vachai :: phon 'uace' matches no script word (best sim 0.40)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Kotha Kriminal Chattal vachai college fees perag dhantho student safety gurinchi komithi ocha report vididdhala chaisindhi."
+   }
+  ],
+  "picked_roll": null
+ },
+ "sample-3-review-theory-committee": {
+  "text": "రివ్యూలో ఈ థియరీ తప్పని తేలింది, కానీ కమిటీ మాత్రం రిపోర్ట్‌ని రిలీజ్ చేయలేదు.",
+  "rolls": [
+   {
+    "roll": 1,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 2,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "கொத்த கிரிமினில் சட்டால் வைத்தாய் Rivilo இத்திரி தவந்தேலும் தெளிந்து காணிக்கம் தி மாத்திரம் ஞிப்போட்டு நிறிஷயல் எல்லவே இல்லையது"
+   },
+   {
+    "roll": 3,
+    "ship_off": true,
+    "ship_on": true,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": 0.87,
+    "pace_wps": 1.933,
+    "gate1_pass": true,
+    "unhinted": "கொத்தக்கிருமில் சட்டால் வைத்தாயிற்வீர்கள் இத்தேரி தப்பன் தெளிந்திக் காணிக்கம் திமாத்ரம்"
+   },
+   {
+    "roll": 4,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "Reenisur, :: phon 'renisur' matches no script word (best sim 0.43)",
+     "Lohkotha :: phon 'lohkota' matches no script word (best sim 0.36)",
+     "Kremula, :: phon 'kremula' matches no script word (best sim 0.43)"
+    ],
+    "ghosts_on": [
+     "Reenisur, :: phon 'renisur' matches no script word (best sim 0.43)",
+     "Lohkotha :: phon 'lohkota' matches no script word (best sim 0.36)",
+     "Kremula, :: phon 'kremula' matches no script word (best sim 0.43)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Juli Reenisur, Lohkotha Kremula, i Diary Tappan Thelindu, kani komitimatram reportne released sheyall edu."
+   },
+   {
+    "roll": 5,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "கொத்த கிரிமினால் சட்டாலைத்துவில் இதிரி தப்பனித் தெளிந்து கானிக்கம் முடிய மாத்ரம் ரப்போட்டு நிரிலிச்சையில்லைத்து"
+   },
+   {
+    "roll": 6,
+    "ship_off": true,
+    "ship_on": true,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": 0.861,
+    "pace_wps": 1.971,
+    "gate1_pass": true,
+    "unhinted": "جلکوத்த கримினல் چட்டால் வைத்தாய், رிவில் இதிரி தவன் தேலிந்து, கணி கண்டி மாற்றம் рிப்போட்டு நிரிலிச் செய்யலேது."
+   },
+   {
+    "roll": 7,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "کوத்த கறیணல் چத்தலும்urtைக்கார்களுளோ இதைக்கரி தவ்பனு தேல்ந்து காணிக்கம், தமாது மாற்றும் மிகவும் திருளாதوں நிலைத்துவிடம்"
+   },
+   {
+    "roll": 8,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 9,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": 0.849,
+    "pace_wps": 1.94,
+    "gate1_pass": true,
+    "unhinted": "கொத்தக் கிரிமினால் சட்டால் வைத்தாய், رவில்லை இத்திரி தப்பந் தெளில்லில்லும் காணிக்கம் மிட்டி மாற்றம் рிப்போட்டு நிரிலிச் செய்யில்லைத்து"
+   },
+   {
+    "roll": 10,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "Zoola :: phon 'cola' matches no script word (best sim 0.33)",
+     "Kothakriminal, :: phon 'kotakriminal' matches no script word (best sim 0.44)"
+    ],
+    "ghosts_on": [
+     "Zoola :: phon 'cola' matches no script word (best sim 0.33)",
+     "Kothakriminal, :: phon 'kotakriminal' matches no script word (best sim 0.44)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Zoola iverys, Kothakriminal, Chatriyul, Idyeri, Tappani, Thelindi. Kani Committee, Mahatrabhu, Reportni, Released."
+   },
+   {
+    "roll": 11,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 12,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 13,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "جنلسولہ :: phon 'cnlsulh' matches no script word (best sim 0.40)"
+    ],
+    "ghosts_on": [
+     "جنلسولہ :: phon 'cnlsulh' matches no script word (best sim 0.40)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "جنلسولہ کوتھا کرنالچائے ریویلو ایدیاری تپنی تھیلیں گی کانی کمیٹی ماتھرم ریپوٹنی ریلیس چیے لے دو"
+   },
+   {
+    "roll": 14,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "Kimmel :: phon 'kimel' matches no script word (best sim 0.44)",
+     "Kuryi :: phon 'kuryi' matches no script word (best sim 0.44)"
+    ],
+    "ghosts_on": [
+     "Kimmel :: phon 'kimel' matches no script word (best sim 0.44)",
+     "Kuryi :: phon 'kuryi' matches no script word (best sim 0.44)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "Juulai Kimmel Chattu Lula Kuryi Dheri Tappani Thelindi, Kani Commitimatram Ripportnei Released Chaya Laitu."
+   }
+  ],
+  "picked_roll": null
+ },
+ "sample-4-police-criminal-case": {
+  "text": "పోలీసులు క్రిమినల్ కేసులో థియరీని మళ్ళీ రివ్యూ చేశారు, కానీ ఎవిడెన్స్ మాత్రం దొరకలేదు.",
+  "rolls": [
+   {
+    "roll": 1,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "جو لائنی سندلو کتھ کرینل چٹل پولیسلو کریمنل کیسلو تیارینی ملی ریوچے ساروکانی ایوڑن سمترم دورکلے دو"
+   },
+   {
+    "roll": 2,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "లంట్ :: phon 'lamt' matches no script word (best sim 0.40)"
+    ],
+    "ghosts_on": [
+     "లంట్ :: phon 'lamt' matches no script word (best sim 0.40)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "చవ్బఠఇఋ ప్ా రా మామో అర్ అరు రా బ్ ర్ ర్ ర్ రీ లంట్ రే ఆ ర్ రు ర్ ర౉ ర్ రే రా నా న్ దు ద్ర్ నీ రు రూ యౌ ఍ు టం ట్ర్ ర్ గు ను కే ట్ న"
+   },
+   {
+    "roll": 3,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "கொத்த கிரிமின்னல் சட்டால வைத்தாய் போலிச் சொல் கிரிமின்னல் கேசிலும் தேரினி மல்லிரிவித்தே சேரு காணி எவ்விடுந்து மாற்றும் துரக்கலைத்து"
+   },
+   {
+    "roll": 4,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "چتالکہ :: phon 'ctalk' matches no script word (best sim 0.44)",
+     "چیسے :: phon 'cise' matches no script word (best sim 0.40)",
+     "دورکہ :: phon 'durk' matches no script word (best sim 0.29)"
+    ],
+    "ghosts_on": [
+     "چتالکہ :: phon 'ctalk' matches no script word (best sim 0.44)",
+     "دورکہ :: phon 'durk' matches no script word (best sim 0.29)"
+    ],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": false,
+    "unhinted": "جو لرینی نیسولل چتالکہ کتھا پولیسولی کریمینل کیسلو تھیرینی ملی ریview چیسے رو کانی ایویڈنس ماترم دورکہ لیدو"
+   },
+   {
+    "roll": 5,
+    "ship_off": false,
+    "ship_on": false,
+    "ghosts_off": [
+     "case :: phon 'case' matches no script word (best sim 0.40)"
+    ],
+    "ghosts_on": [],
+    "identity": null,
+    "pace_wps": null,
+    "gate1_pass": true,
+    "unhinted": "Jula Yamisavallo, Kothakriminal Chattrai, poil case lo theory ni Malli review chesaru, kani evidence maatram dorakal edu."
+   },
+   {
+    "roll": 6,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 7,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 8,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 9,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 10,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   },
+   {
+    "roll": 11,
+    "gen_error": "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/julie-voice-gatefix/engine.py\", line 150, in _indicf5_synthesize\n    raise RuntimeError(f\"[indicf5-space] IndicF5 failed after retries: {last}\")\nRuntimeError: [indicf5-space] IndicF5 failed after retries: space error event\n"
+   }
+  ],
+  "picked_roll": null
+ }
+}

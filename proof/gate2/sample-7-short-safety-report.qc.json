@@ -1,0 +1,430 @@
+{
+ "sentence": "స్టూడెంట్స్ సేఫ్టీ గురించి కమిటీ రిపోర్ట్ విడుదల చేశారు.",
+ "take": "s3_r4_t2.wav",
+ "gate_report_flag_OFF": {
+  "pass": false,
+  "gate1_nohint_language": {
+   "pass": false,
+   "detected": "te",
+   "prob": 0.771,
+   "required": 0.8,
+   "unhinted_text": "கொத்தக் கிரிமில் சலோ, வைத்தாயி, Students Safety Guru Rinjhi Committee Report, விடுதல் செய்தாரு."
+  },
+  "gate2_ghost_words": {
+   "pass": false,
+   "ghosts": [
+    "Safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+   ],
+   "loanword_aware": false
+  },
+  "gate3_pronunciation": {
+   "pass": false,
+   "min_prob": 0.054,
+   "fails": [
+    "స్టూడెంట్స్: smeared (sim 0.00)",
+    "స్టూడెంట్స్: prob 0.47 < 0.50",
+    "సేఫ్టీ: merged into one ASR token with loss (sim 0.00)",
+    "సేఫ్టీ: smeared (sim 0.00)",
+    "గురించి: merged into one ASR token with loss (sim 0.00)",
+    "గురించి: smeared (sim 0.00)",
+    "కమిటీ: merged into one ASR token with loss (sim 0.00)",
+    "కమిటీ: smeared (sim 0.00)",
+    "రిపోర్ట్: merged into one ASR token with loss (sim 0.00)",
+    "రిపోర్ట్: smeared (sim 0.00)",
+    "విడుదల: smeared (sim 0.00)",
+    "విడుదల: prob 0.05 < 0.50",
+    "చేశారు.: smeared (sim 0.00)",
+    "చేశారు.: prob 0.25 < 0.50"
+   ],
+   "rows": [
+    {
+     "word": "స్టూడెంట్స్",
+     "prob": 0.468,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "கொத்தக்",
+      "கிரிமில்"
+     ],
+     "start": 0.0,
+     "end": 0.7,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "సేఫ్టీ",
+     "prob": 0.716,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "சலோ,"
+     ],
+     "start": 0.7,
+     "end": 0.92,
+     "phys": [
+      "duration 0.32s speech < 60% of min syllable-expected 0.80s (5 syll)"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "గురించి",
+     "prob": 0.716,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "சலோ,"
+     ],
+     "start": 0.7,
+     "end": 0.92,
+     "phys": [
+      "duration 0.32s speech < 60% of min syllable-expected 0.80s (5 syll)"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "కమిటీ",
+     "prob": 0.592,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "வைத்தாயி,"
+     ],
+     "start": 0.98,
+     "end": 1.44,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "రిపోర్ట్",
+     "prob": 0.592,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "வைத்தாயி,"
+     ],
+     "start": 0.98,
+     "end": 1.44,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "విడుదల",
+     "prob": 0.054,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "Students",
+      "Safety",
+      "Guru",
+      "Rinjhi"
+     ],
+     "start": 1.52,
+     "end": 2.56,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "చేశారు.",
+     "prob": 0.246,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "Committee",
+      "Report,",
+      "விடுதல்",
+      "செய்தாரு."
+     ],
+     "start": 2.56,
+     "end": 3.86,
+     "phys": [],
+     "phys_notes": []
+    }
+   ],
+   "junk": []
+  },
+  "gate4_phys_swallowed": {
+   "pass": false,
+   "fails": [
+    "సేఫ్టీ: PHYS duration 0.32s speech < 60% of min syllable-expected 0.80s (5 syll)",
+    "గురించి: PHYS duration 0.32s speech < 60% of min syllable-expected 0.80s (5 syll)"
+   ],
+   "fail_words": [
+    "సేఫ్టీ",
+    "గురించి"
+   ]
+  },
+  "gate5_pitch": {
+   "pass": true,
+   "f0_med": 204.4,
+   "band": [
+    185,
+    220
+   ],
+   "rms_db": -19.47,
+   "dur": 3.89
+  },
+  "gate6_head_grunt": {
+   "pass": true,
+   "present": false,
+   "detection": {
+    "present": false,
+    "islands": 5,
+    "span_s": [
+     0.11,
+     0.19
+    ],
+    "dur_s": 0.08,
+    "gap_after_s": 0.08,
+    "rms_db": -17.6,
+    "body_rms_db": -18.5,
+    "f0_hz": 222.0,
+    "f0_iqr_hz": 2.0,
+    "body_f0_hz": 290.0,
+    "checks": {
+     "starts_at_head": true,
+     "short": true,
+     "isolated_by_silence": false,
+     "quiet_vs_body": false,
+     "low_flat_f0": false
+    }
+   }
+  },
+  "gate7_cut_word": {
+   "pass": true,
+   "fails": [],
+   "islands": 9,
+   "duration_s": 3.89,
+   "last_island_s": [
+    3.19,
+    3.86
+   ],
+   "last_island_dur_s": 0.67,
+   "last_rms_db": -21.3,
+   "body_rms_db": -21.3,
+   "last_f0_hz": 174.0,
+   "body_f0_hz": 174.0,
+   "final_peak_db": -14.0
+  }
+ },
+ "gate_report_flag_ON": {
+  "pass": false,
+  "gate1_nohint_language": {
+   "pass": false,
+   "detected": "te",
+   "prob": 0.771,
+   "required": 0.8,
+   "unhinted_text": "கொத்தக் கிரிமில் சலோ, வைத்தாயி, Students Safety Guru Rinjhi Committee Report, விடுதல் செய்தாரு."
+  },
+  "gate2_ghost_words": {
+   "pass": true,
+   "ghosts": [],
+   "loanword_aware": true
+  },
+  "gate3_pronunciation": {
+   "pass": false,
+   "min_prob": 0.054,
+   "fails": [
+    "స్టూడెంట్స్: smeared (sim 0.00)",
+    "స్టూడెంట్స్: prob 0.47 < 0.50",
+    "సేఫ్టీ: merged into one ASR token with loss (sim 0.00)",
+    "సేఫ్టీ: smeared (sim 0.00)",
+    "గురించి: merged into one ASR token with loss (sim 0.00)",
+    "గురించి: smeared (sim 0.00)",
+    "కమిటీ: merged into one ASR token with loss (sim 0.00)",
+    "కమిటీ: smeared (sim 0.00)",
+    "రిపోర్ట్: merged into one ASR token with loss (sim 0.00)",
+    "రిపోర్ట్: smeared (sim 0.00)",
+    "విడుదల: smeared (sim 0.00)",
+    "విడుదల: prob 0.05 < 0.50",
+    "చేశారు.: smeared (sim 0.00)",
+    "చేశారు.: prob 0.25 < 0.50"
+   ],
+   "rows": [
+    {
+     "word": "స్టూడెంట్స్",
+     "prob": 0.468,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "கொத்தக்",
+      "கிரிமில்"
+     ],
+     "start": 0.0,
+     "end": 0.7,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "సేఫ్టీ",
+     "prob": 0.716,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "சலோ,"
+     ],
+     "start": 0.7,
+     "end": 0.92,
+     "phys": [
+      "duration 0.32s speech < 60% of min syllable-expected 0.80s (5 syll)"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "గురించి",
+     "prob": 0.716,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "சலோ,"
+     ],
+     "start": 0.7,
+     "end": 0.92,
+     "phys": [
+      "duration 0.32s speech < 60% of min syllable-expected 0.80s (5 syll)"
+     ],
+     "phys_notes": []
+    },
+    {
+     "word": "కమిటీ",
+     "prob": 0.592,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "வைத்தாயி,"
+     ],
+     "start": 0.98,
+     "end": 1.44,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "రిపోర్ట్",
+     "prob": 0.592,
+     "sim": 0.0,
+     "status": "SMEARED",
+     "toks": [
+      "வைத்தாயி,"
+     ],
+     "start": 0.98,
+     "end": 1.44,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "విడుదల",
+     "prob": 0.054,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "Students",
+      "Safety",
+      "Guru",
+      "Rinjhi"
+     ],
+     "start": 1.52,
+     "end": 2.56,
+     "phys": [],
+     "phys_notes": []
+    },
+    {
+     "word": "చేశారు.",
+     "prob": 0.246,
+     "sim": 0.0,
+     "status": "SMEARED+LOWPROB",
+     "toks": [
+      "Committee",
+      "Report,",
+      "விடுதல்",
+      "செய்தாரு."
+     ],
+     "start": 2.56,
+     "end": 3.86,
+     "phys": [],
+     "phys_notes": []
+    }
+   ],
+   "junk": []
+  },
+  "gate4_phys_swallowed": {
+   "pass": false,
+   "fails": [
+    "సేఫ్టీ: PHYS duration 0.32s speech < 60% of min syllable-expected 0.80s (5 syll)",
+    "గురించి: PHYS duration 0.32s speech < 60% of min syllable-expected 0.80s (5 syll)"
+   ],
+   "fail_words": [
+    "సేఫ్టీ",
+    "గురించి"
+   ]
+  },
+  "gate5_pitch": {
+   "pass": true,
+   "f0_med": 204.4,
+   "band": [
+    185,
+    220
+   ],
+   "rms_db": -19.47,
+   "dur": 3.89
+  },
+  "gate6_head_grunt": {
+   "pass": true,
+   "present": false,
+   "detection": {
+    "present": false,
+    "islands": 5,
+    "span_s": [
+     0.11,
+     0.19
+    ],
+    "dur_s": 0.08,
+    "gap_after_s": 0.08,
+    "rms_db": -17.6,
+    "body_rms_db": -18.5,
+    "f0_hz": 222.0,
+    "f0_iqr_hz": 2.0,
+    "body_f0_hz": 290.0,
+    "checks": {
+     "starts_at_head": true,
+     "short": true,
+     "isolated_by_silence": false,
+     "quiet_vs_body": false,
+     "low_flat_f0": false
+    }
+   }
+  },
+  "gate7_cut_word": {
+   "pass": true,
+   "fails": [],
+   "islands": 9,
+   "duration_s": 3.89,
+   "last_island_s": [
+    3.19,
+    3.86
+   ],
+   "last_island_dur_s": 0.67,
+   "last_rms_db": -21.3,
+   "body_rms_db": -21.3,
+   "last_f0_hz": 174.0,
+   "body_f0_hz": 174.0,
+   "final_peak_db": -14.0
+  }
+ },
+ "ship_extra_flag_ON": {},
+ "summary": {
+  "sentence": "స్టూడెంట్స్ సేఫ్టీ గురించి కమిటీ రిపోర్ట్ విడుదల చేశారు.",
+  "take": "s3_r4_t2.wav",
+  "gate2_flip": true,
+  "ghosts_off": [
+   "Safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+  ],
+  "ghosts_on": [],
+  "ship_off": false,
+  "ship_on": false,
+  "identity": null,
+  "pace_wps": null,
+  "blocked_by": null,
+  "gate1_pass_on": false,
+  "gate7_pass_on": true,
+  "unhinted": "கொத்தக் கிரிமில் சலோ, வைத்தாயி, Students Safety Guru Rinjhi Committee Report, விடுதல் செய்தாரு."
+ }
+}

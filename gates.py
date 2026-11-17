@@ -73,7 +73,8 @@ import librosa
 from faster_whisper import WhisperModel
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from phonetics import LANG_SIMPLE, LANG_SYLLABLES, any_simple, en_simple, simplify  # noqa: E402
+from phonetics import (LANG_SIMPLE, LANG_SYLLABLES, any_simple, en_simple,  # noqa: E402
+                       simplify, te_phon, te_simple)
 
 # Whisper model: env override, else the local cache used in production,
 # else the hub name "base" (downloaded once by faster-whisper).
@@ -469,7 +470,165 @@ def _skel(p):
     return re.sub(r"[aeiou]", "", p)
 
 
-def ghost_scan(unhinted_res, lang, script_words):
+# ------------------------------------------- gate 2 loanword awareness -----
+# Recalibration (2026-11-16, owner's GPU+gate-fix decision, after turbo
+# proof run 43881089750): gate 2 failed 522 of 865 gated takes in that run,
+# and the dominant false-positive class was the channel's OWN English
+# loanwords. The script writes them in Telugu script (క్రిమినల్, థియరీ,
+# సేఫ్); unhinted whisper renders them in Latin or Arabic script, and the
+# cross-script phonetic distance (e.g. థియరీ 'tiyari' vs "theory" 'teory',
+# sim ~0.40) made correct takes read as foreign bleed. These borrowings
+# are not bleed — the channel's narration code-mixes exactly these word
+# types (docs/ENGLISH_MIX_POLICY.md; 304 attested lexemes in
+# voice/english_mix_classes.json).
+#
+# Behind the settings flag gates.gate2_loanword_aware (default False —
+# the locked bar, byte for byte, until the owner's ear approves the
+# samples built under the new gate). When ON, the scan stays STRICTLY
+# SUBTRACTIVE: the alignment and the candidate set are unchanged, and a
+# candidate is cleared only when it can be attributed to a loanword that
+# is actually present in THIS sentence's script, through one of:
+#   (i)   exact English form — the token IS the attested lexeme (or its
+#         regular -s/-es plural) of a script loanword. Exact only, on
+#         purpose: the comparative 'safer' must not be excused by the
+#         script's సేఫ్ (safe), or the 2026-11-14 'feel safer' bleed
+#         would be whitewashed by the fix that cites it.
+#   (ii)  dual-form phonetic match — the token's phon reaches
+#         EN_MATCH_BAR (0.62) against the ENGLISH phonetic form of a
+#         script loanword. The English bar is higher than the 0.45
+#         Telugu-form bar: mid-range similarity between two different
+#         English words is common ('money' vs 'model' = 0.60), and a
+#         bled word that merely resembles a legit loanword must not
+#         clear. (Short English forms <= 3 phon chars are held to the
+#         same 0.62 inside _en_match.)
+#   (iii) consonant-skeleton match against an English loanword form
+#         (skeleton sim >= 0.80, both skeletons >= 3/4 chars) — whisper's
+#         Arabic-script renderings drop short vowels, so a loanword can
+#         arrive as a bare consonant frame ('krimnl' for criminal).
+# Telugu only: the lexicon is the Telugu channel's attested mix. Hindi
+# keeps its romanized-Hindi handling; English its script-match rule.
+
+_MIX_CLASSES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 "voice", "english_mix_classes.json")
+_loan_lexicon_cache = None
+
+
+def _loan_lexicon():
+    """Attested English-mix lexicon entries: {english, en_phon, stem,
+    stem_phon, stem_rx}. Stems are Telugu-script forms as attested in the
+    channel corpus; a few are stored as 're:<regex>' for boundary-
+    sensitive forms (their literal head is used for the phon form)."""
+    global _loan_lexicon_cache
+    if _loan_lexicon_cache is not None:
+        return _loan_lexicon_cache
+    entries = []
+    try:
+        with open(_MIX_CLASSES_PATH, encoding="utf-8") as fh:
+            mix = json.load(fh)
+        for cls in mix.get("classes", {}).values():
+            for w in cls.get("words", []):
+                eng = (w.get("english") or "").strip().lower()
+                stem = (w.get("telugu_form_stem") or "").strip()
+                if not eng or not stem:
+                    continue
+                rx = None
+                if stem.startswith("re:"):
+                    pat = stem[3:]
+                    try:
+                        rx = re.compile(pat)
+                    except re.error:
+                        rx = None
+                    stem = pat.split("(?")[0].split("(")[0]
+                entries.append({"english": eng, "en_phon": en_simple(eng),
+                                "stem": stem, "stem_phon": te_simple(stem),
+                                "stem_tephon": te_phon(stem),
+                                "stem_rx": rx})
+    except Exception:
+        entries = []
+    _loan_lexicon_cache = entries
+    return entries
+
+
+def _sentence_loans(script_words, lang):
+    """script-word index -> lexicon entries the word carries. Telugu
+    agglutinates case/plural suffixes onto the END of the stem
+    (కాలేజీని from కాలేజీ, కేసులు from కేస), so the stem is a PREFIX of
+    the word. Three prefix channels, in order:
+    - the lexicon's own boundary regex, where one is stored;
+    - raw-script prefix (exact, suffixation-proof);
+    - phonetic prefix on the LENGTH-PRESERVING te_phon forms, for
+      spelling variants.
+    The collapsed te_simple forms are NOT used for attribution at any
+    length: simplify() erases vowel length, so the 'model' stem మోడల
+    ('modala' simple) falsely matched the native word మొదలవుతుంది
+    (begins) in the proof-pool audit (2026-11-16). Mid-word containment
+    and short prefixes likewise falsely attributed native words (కథ
+    'kata' -> 'cut' via 'kat', మూడు 'mudu' -> 'mood' via 'mud',
+    కారణం -> 'car' via 'kar', యూనివర్సిటీ -> 'city' via a mid-word
+    సిటీ) and are not used."""
+    loans = {}
+    if lang != "te":
+        return loans
+    for idx, w in enumerate(script_words):
+        wpf = te_phon(w)
+        for e in _loan_lexicon():
+            hit = False
+            if e["stem_rx"] is not None and e["stem_rx"].search(w):
+                hit = True
+            if not hit and e["stem"] and w.startswith(e["stem"]):
+                hit = True
+            if not hit and len(e["stem_tephon"]) >= 3 \
+                    and wpf.startswith(e["stem_tephon"]):
+                hit = True
+            if hit:
+                loans.setdefault(idx, []).append(e)
+    return loans
+
+
+def _lexeme_hit(tok_text, loans):
+    """True when a Latin-script token IS an attested loanword of this
+    sentence's script in its English form (or regular -s/-es plural).
+    Exact-form only — see the design note above."""
+    t = re.sub(r"[^a-z]", "", tok_text.lower())
+    if len(t) < 3:
+        return False
+    for es in loans.values():
+        for e in es:
+            eng = e["english"]
+            if " " in eng:
+                continue
+            if t == eng or t == eng + "s" or t == eng + "es":
+                return True
+    return False
+
+
+# A token clears against a loanword's ENGLISH form only at this bar —
+# higher than the 0.45 Telugu-form bar, because mid-range similarity
+# between two DIFFERENT English words is common ('money' vs 'model'
+# scores 0.60) and a bled wrong word that merely resembles a legit
+# loanword must not clear. The skeleton channel (0.80) is separate:
+# whisper's Arabic-script renderings drop short vowels systematically.
+EN_MATCH_BAR = 0.62
+
+
+def _en_match(p, en_targets):
+    """Best effective match of a token phon against the ENGLISH phonetic
+    forms of the sentence's loanwords (channels ii + iii above)."""
+    best = 0.0
+    sk = _skel(p)
+    for ep in en_targets:
+        s = sim(p, ep)
+        if len(ep) <= 3 and s < 0.62:
+            s = 0.0  # short forms need the stronger bar (channel ii)
+        if s > best:
+            best = s
+        if len(sk) >= 3 and len(_skel(ep)) >= 4:
+            if sim(sk, _skel(ep)) >= 0.80 and best < 0.80:
+                best = 0.80  # vowel-unreliable rendering (channel iii)
+    return best
+
+
+def ghost_scan(unhinted_res, lang, script_words, settings=None):
     """Foreign ghost words in the UNHINTED transcript.
 
     (a) Latin tokens that are blacklisted English or (for hi) not plausible
@@ -478,9 +637,20 @@ def ghost_scan(unhinted_res, lang, script_words):
     the script; junk tokens and tokens under weakly-matched words are checked
     against the English blacklist in phonetic space, and substantial tokens
     matching NO script word at all are ghosts too (this is the check that
-    catches Urdu-script renderings of 'fees safer')."""
+    catches Urdu-script renderings of 'fees safer').
+
+    Loanword awareness (settings flag gates.gate2_loanword_aware, default
+    off): with the flag on, tokens attributable to an attested English
+    loanword of THIS sentence's script are not ghosts — see the design
+    note at _loan_lexicon. With the flag off, loans == {} and every new
+    branch below is inert: the locked behaviour, byte for byte."""
     text = unhinted_res["text"]
     ghosts = []
+    if settings is None:
+        settings = load_settings()
+    aware = bool(settings.get("gates", {}).get("gate2_loanword_aware", False))
+    loans = _sentence_loans(script_words, lang) if aware else {}
+    en_targets = [e["en_phon"] for es in loans.values() for e in es]
     lat = re.findall(r"[A-Za-z]+", text)
     script_lat = {re.sub(r"[^a-z]", '', w.lower()) for w in script_words}
     for t in lat:
@@ -497,6 +667,13 @@ def ghost_scan(unhinted_res, lang, script_words):
         # non-Latin here, so a Latin blacklist token is still foreign
         # unless the script itself contains it (code-mixed lines).
         if tl in GHOST_BLACK and tl not in script_lat:
+            # Loanword exemption (flag-gated): a blacklisted form that IS
+            # this sentence's own attested loanword in its English form
+            # ("safe" for సేఫ్, "fees" for ఫీజు) is a script word, not
+            # bleed — the same principle as the script-match exemption
+            # below. Exact form only: 'safer' is not excused by సేఫ్.
+            if loans and _lexeme_hit(t, loans):
+                continue
             ghosts.append(t)
         elif lang == "hi" and tl not in ROMAN_HI_OK:
             ghosts.append(t)
@@ -522,6 +699,13 @@ def ghost_scan(unhinted_res, lang, script_words):
         p = toks[t]["phon"]
         if not p:
             continue
+        # Loanword exemption (flag-gated): the token is this sentence's
+        # own attested loanword in its English form (e.g. whisper wrote
+        # "Safe" where the script says సేఫ్) — a rendering, not bleed.
+        # Exact form only, so 'safer'/'fees' without the corresponding
+        # loanword in the script still fail below.
+        if loans and _lexeme_hit(toks[t]["tok"], loans):
+            continue
         why = None
         if len(p) >= 3:
             for gp in GHOST_PHONS:
@@ -531,6 +715,12 @@ def ghost_scan(unhinted_res, lang, script_words):
                     break
         if why is None and len(p) >= 4 and toks[t]["prob"] >= 0.30:
             best = max((sim(p, wp) for wp in wphon), default=0.0)
+            if best < 0.45 and loans:
+                # Dual-form match: the token may render a script loanword
+                # in its English form rather than its Telugu form. The
+                # English form has its own, higher bar (EN_MATCH_BAR).
+                if _en_match(p, en_targets) >= EN_MATCH_BAR:
+                    best = EN_MATCH_BAR
             if best < 0.45:
                 why = f"phon '{p}' matches no script word (best sim {best:.2f})"
         if why:
@@ -907,7 +1097,7 @@ def run_all_gates(path, lang, text, settings=None):
     det = nohint_detect(path)
     need = g["nohint_prob_min"].get(lang, g["nohint_prob_min"]["default"])
     lang_pass = bool(det["lang"] == lang and det["prob"] >= need)
-    ghosts = ghost_scan(det, lang, script_words)
+    ghosts = ghost_scan(det, lang, script_words, settings)
     fc = forced_check(path, lang, script_words, settings)
     lo, hi = g["pitch_band_hz"]
     pitch_pass = bool(lo <= fc["f0_med"] <= hi)
@@ -928,7 +1118,9 @@ def run_all_gates(path, lang, text, settings=None):
         "gate1_nohint_language": {"pass": lang_pass, "detected": det["lang"],
                                   "prob": det["prob"], "required": need,
                                   "unhinted_text": det["text"]},
-        "gate2_ghost_words": {"pass": len(ghosts) == 0, "ghosts": ghosts},
+        "gate2_ghost_words": {"pass": len(ghosts) == 0, "ghosts": ghosts,
+                              "loanword_aware": bool(
+                                  g.get("gate2_loanword_aware", False))},
         "gate3_pronunciation": {"pass": fc["pron_pass"], "min_prob": fc["min_prob"],
                                 "fails": fc["pron_fails"], "rows": fc["rows"],
                                 "junk": fc["junk"]},

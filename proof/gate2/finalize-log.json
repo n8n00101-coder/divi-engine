@@ -1,0 +1,93 @@
+{
+ "sample-5-short-criminal-case": {
+  "sentence": "పోలీసులు క్రిమినల్ కేసులో థియరీని రివ్యూ చేశారు.",
+  "take": "s1_r8_t1.wav",
+  "gate2_flip": true,
+  "ghosts_off": [
+   "case :: phon 'case' matches no script word (best sim 0.40)",
+   "review :: phon 'reuiew' matches no script word (best sim 0.36)"
+  ],
+  "ghosts_on": [],
+  "ship_off": false,
+  "ship_on": false,
+  "identity": 0.861,
+  "pace_wps": 1.705,
+  "blocked_by": null,
+  "gate1_pass_on": true,
+  "gate7_pass_on": true,
+  "unhinted": "کوتھa criminal chattalu polisulu criminal case lo theory ni review chaisaru"
+ },
+ "sample-5b-short-criminal-case": {
+  "sentence": "పోలీసులు క్రిమినల్ కేసులో థియరీని రివ్యూ చేశారు.",
+  "take": "s1_r8_t2.wav",
+  "gate2_flip": false,
+  "ghosts_off": [],
+  "ghosts_on": [],
+  "ship_off": false,
+  "ship_on": false,
+  "identity": 0.85,
+  "pace_wps": 1.676,
+  "blocked_by": null,
+  "gate1_pass_on": true,
+  "gate7_pass_on": true,
+  "unhinted": "கொط்க கிரிமினில் چட்டுளிச் சில் கிரிமில் கேசில் தیரினிரிவிச் செய்தாரு"
+ },
+ "sample-7-short-safety-report": {
+  "sentence": "స్టూడెంట్స్ సేఫ్టీ గురించి కమిటీ రిపోర్ట్ విడుదల చేశారు.",
+  "take": "s3_r4_t2.wav",
+  "gate2_flip": true,
+  "ghosts_off": [
+   "Safety :: phon 'sapety' ~ ghost 'sape' (ratio 0.80)"
+  ],
+  "ghosts_on": [],
+  "ship_off": false,
+  "ship_on": false,
+  "identity": null,
+  "pace_wps": null,
+  "blocked_by": null,
+  "gate1_pass_on": false,
+  "gate7_pass_on": true,
+  "unhinted": "கொத்தக் கிரிமில் சலோ, வைத்தாயி, Students Safety Guru Rinjhi Committee Report, விடுதல் செய்தாரு."
+ },
+ "sample-7b-short-safety-report": {
+  "sentence": "స్టూడెంట్స్ సేఫ్టీ గురించి కమిటీ రిపోర్ట్ విడుదల చేశారు.",
+  "take": "s3_r9_t1.wav",
+  "gate2_flip": false,
+  "ghosts_off": [
+   "سیستوڑن :: phon 'sisturn' matches no script word (best sim 0.40)",
+   "چیسے :: phon 'cise' matches no script word (best sim 0.44)"
+  ],
+  "ghosts_on": [
+   "سیستوڑن :: phon 'sisturn' matches no script word (best sim 0.40)",
+   "چیسے :: phon 'cise' matches no script word (best sim 0.44)"
+  ],
+  "ship_off": false,
+  "ship_on": false,
+  "identity": null,
+  "pace_wps": null,
+  "blocked_by": null,
+  "gate1_pass_on": true,
+  "gate7_pass_on": true,
+  "unhinted": "کوتھ கریمینل چاٹھالوز سیستوڑن سیفٹی گریکمٹی ریپوٹ ویڈدلہ چیسے رو"
+ },
+ "sample-4-police-criminal-case": {
+  "sentence": "పోలీసులు క్రిమినల్ కేసులో థియరీని మళ్ళీ రివ్యూ చేశారు, కానీ ఎవిడెన్స్ మాత్రం దొరకలేదు.",
+  "take": "s4_r8_t3.wav",
+  "gate2_flip": false,
+  "ghosts_off": [
+   "polis :: phon 'polis' ~ ghost 'pels' (ratio 0.67)",
+   "case :: phon 'case' matches no script word (best sim 0.40)"
+  ],
+  "ghosts_on": [
+   "polis :: phon 'polis' ~ ghost 'pels' (ratio 0.67)"
+  ],
+  "ship_off": false,
+  "ship_on": false,
+  "identity": null,
+  "pace_wps": null,
+  "blocked_by": null,
+  "gate1_pass_on": false,
+  "gate7_pass_on": true,
+  "unhinted": "Joolies lo gotta kiminal chatta lo polis krimel case lo theory ni malli review chesaru kani evidance maatram dorakal edu"
+ }
+}
