@@ -1,11 +1,11 @@
-name: julie-indicf5-batch
+name: divi-indicf5-batch
 # Brute-force whole-sentence Telugu takes on free runners: 10 runners in
 # parallel, each loads IndicF5 once and generates ROLLS whole takes of both
 # demo sentences with ONE rotating reference (span1/span2/span3/te3), then
 # runs the FULL gate suite (gates.py + Resemblyzer identity + pace) on
 # every take. All takes + per-take gate JSON land in the merged artifact
-# "indicf5-batch-all"; selection/assembly happens at harvest time.
-#   gh run download <run-id> -n indicf5-batch-all
+# "divi-indicf5-batch-all"; selection/assembly happens at harvest time.
+#   gh run download <run-id> -n divi-indicf5-batch-all
 on:
   workflow_dispatch:
     inputs:
@@ -70,6 +70,12 @@ jobs:
           # fork; the PyPI f5-tts package is a different codebase.
           pip install -q --no-deps git+https://github.com/AI4Bharat/IndicF5.git 2>&1 | tail -2
           python3 -c "import inspect; from f5_tts.infer.utils_infer import load_model; assert 'ckpt_path' not in inspect.signature(load_model).parameters or inspect.signature(load_model).parameters['ckpt_path'].default is not inspect.Parameter.empty, 'wrong f5_tts fork'; print('f5_tts fork ok')"
+          # Re-pin the proven torch pair LAST (fixed16, 2026-11-17): the
+          # requirements install now drags in torchaudio >= 2.8, whose
+          # torchaudio.load requires torchcodec and broke every take in
+          # run 43998467840. The proven stack is torch/torchaudio 2.5.1.
+          pip install -q torch==2.5.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
+          python3 -c "import torch, torchaudio; assert torch.__version__.startswith('2.5.1') and torchaudio.__version__.startswith('2.5.1'), (torch.__version__, torchaudio.__version__); print('torch pair pinned:', torch.__version__, torchaudio.__version__)"
       - name: Install Resemblyzer (identity gate)
         run: |
           if ! pip install -q resemblyzer==0.1.4 2>resemb_err.log; then
@@ -108,5 +114,5 @@ jobs:
           merge-multiple: true
       - uses: actions/upload-artifact@v4
         with:
-          name: indicf5-batch-all
+          name: divi-indicf5-batch-all
           path: merged/

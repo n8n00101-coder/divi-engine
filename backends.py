@@ -1,4 +1,4 @@
-"""Pluggable TTS generation backends for the Julie AI Voice Engine.
+"""Pluggable TTS generation backends for Divi Engine.
 
 The built-in routes are free but slow: Telugu/Hindi ride the public
 IndicF5 Hugging Face Space (long free queue, outage streaks) and English
@@ -158,5 +158,5 @@ def synthesize(backend, text, lang, settings):
             "repo, then dispatch .github/workflows/voice-batch.yml "
             "(gh workflow run voice-batch.yml -f lines_path=lines.txt "
             "-f lang=en -f chunks=10) and download the "
-            "julie-voice-batch-all artifact. See README, 'Fast batch mode'.")
+            "divi-voice-batch-all artifact. See README, 'Fast batch mode'.")
     raise RuntimeError(f"[backends] {backend!r} is not a service backend")
