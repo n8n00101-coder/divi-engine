@@ -1085,12 +1085,60 @@ def head_bleed_gate(path, lang, text, settings=None):
     return rep
 
 
+# ------------------------------------------------- gate 9 (tail grunt) ---
+TAIL_GRUNT_LANGS = ("te", "hi")
+_TAIL_WINDOW_S = 2.4        # tail decode window ending at the file end
+
+
+def tail_grunt_gate(path, lang, text, settings=None):
+    """Gate 9: tail grunt — voiced phonation past the script's last
+    word (the mirror of gate 8's head bleed, at the tail; owner's ear,
+    2026-11-17, on the turbo TE/HI samples). Decodes the take's TAIL
+    (the last _TAIL_WINDOW_S seconds, thresholds disabled like gate 8)
+    for the aligner's last-word end, then runs the acoustic residual
+    check (acoustic_gates.tail_grunt_detect). Active only when
+    settings.gates.tail_grunt_gate is on AND the language is te/hi —
+    the grunt is an OmniVoice-route artefact proven on those clones.
+    The engine path never cuts: a convicted take FAILS and re-rolls
+    (the turbo finishing path may cut a cleanly separable grunt at
+    the last-word end instead; same detection, different remedy).
+    If the tail window decodes to no words, the acoustic-only
+    dip-split signature decides (documented heuristic)."""
+    active = bool(settings and (settings.get("gates") or {}).get(
+        "tail_grunt_gate")) and lang in TAIL_GRUNT_LANGS
+    rep = {"pass": True, "active": active}
+    if not active:
+        return rep
+    try:
+        import acoustic_gates
+        y, sr = librosa.load(path, sr=16000, mono=True)
+        dur = len(y) / sr
+        a = max(0.0, dur - _TAIL_WINDOW_S)
+        seg = y[int(a * sr):]
+        segs, _info = get_model().transcribe(
+            seg.astype(np.float32), language=lang, beam_size=5,
+            word_timestamps=True, condition_on_previous_text=False,
+            log_prob_threshold=None, no_speech_threshold=None)
+        words = [w for s in segs for w in (s.words or [])]
+        lwe = (a + float(words[-1].end)) if words else None
+        det = acoustic_gates.tail_grunt_detect(path, lwe)
+        rep.update(det)
+        rep["pass"] = not det["present"]
+        rep["window_s"] = [round(a, 2), round(dur, 2)]
+        if det["present"]:
+            rep["fails"] = ["tail grunt: %s" % det.get("reason", "")]
+    except Exception as exc:  # a gate must never crash the pipeline
+        rep["pass"] = False
+        rep["fails"] = ["tail-grunt gate error: %s" % exc]
+    return rep
+
+
 
 # ------------------------------------------------------------- all gates ---
 def run_all_gates(path, lang, text, settings=None):
     """Run every gate on one take. Returns a report dict; report['pass'] is
     True only if ALL gates pass (the original five plus gates 6/7, and
-    gate 8 wherever it is active)."""
+    gates 8/9 wherever they are active)."""
     settings = settings or load_settings()
     g = settings["gates"]
     script_words = [w for w in re.split(r"\s+", text.strip()) if w]
@@ -1110,11 +1158,13 @@ def run_all_gates(path, lang, text, settings=None):
     hg = acoustic_gates.head_grunt_gate(path)
     cw = acoustic_gates.cut_word_gate(path)
     hb = head_bleed_gate(path, lang, text, settings)
+    tg = tail_grunt_gate(path, lang, text, settings)
     report = {
         "pass": bool(lang_pass and not ghosts and fc["pron_pass"]
                      and fc["phys_pass"] and pitch_pass
                      and hg["pass"] and cw["pass"]
-                     and (hb["pass"] if hb["active"] else True)),
+                     and (hb["pass"] if hb["active"] else True)
+                     and (tg["pass"] if tg["active"] else True)),
         "gate1_nohint_language": {"pass": lang_pass, "detected": det["lang"],
                                   "prob": det["prob"], "required": need,
                                   "unhinted_text": det["text"]},
@@ -1131,6 +1181,7 @@ def run_all_gates(path, lang, text, settings=None):
         "gate6_head_grunt": hg,
         "gate7_cut_word": cw,
         "gate8_head_bleed": hb,
+        "gate9_tail_grunt": tg,
     }
     return report
 

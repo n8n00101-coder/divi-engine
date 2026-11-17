@@ -36,6 +36,15 @@ is what gates 1–3 are for. It fails a take when:
       (< 0.10 s) against the take's own island profile.
 Natural sentence endings — energy and pitch decaying together into
 the final word — pass all four checks.
+
+GATE 9 — TAIL GRUNT. The mirror of gate 6 at the END of the take:
+voiced phonation continuing past the script's last word (owner's ear,
+2026-11-17, on the turbo TE/HI samples: "rey / eyh" sounds at sentence
+ends). It is glued to the last word — no silence gap — so tail trims
+and island checks missed it. Detection lives in tail_grunt_detect:
+with an aligner's last-word end it convicts voiced phonation more
+than 60 ms past that end; without one it falls back to a
+conservative dip-split signature on the final island.
 """
 import numpy as np
 
@@ -335,3 +344,178 @@ def cut_word_gate(path):
             f"island {med:.2f}s")
     rep["pass"] = not rep["fails"]
     return rep
+
+
+# ------------------------------------------------------------ gate 9 -----
+# Natural release allowance: calibrated on the shipped samples
+# (2026-11-17) — clean sentence finals measure residual <= 0.03 s
+# (acoustic phonation end vs the aligner's last-word end); the
+# convicted grunt measures 0.08 s. 60 ms sits between the classes
+# with ~2x margin on the clean side.
+TAIL_GRUNT_ALLOWANCE_S = 0.060
+TAIL_GRUNT_LANGS = ("te", "hi")
+
+
+def _voiced_frac(y, sr, a, b, win=0.040):
+    """Fraction of 40 ms sub-windows in [a, b] carrying a real
+    periodicity peak (normalised autocorrelation >= 0.3 at a
+    60–400 Hz lag) — the voicing test that separates a grunt (voiced
+    phonation) from a breath / noise tail (no stable period)."""
+    seg = y[int(a * sr):int(b * sr)].astype(np.float64)
+    w = int(win * sr)
+    if len(seg) < w:
+        return None
+    lo, hi = int(sr / 400), int(sr / 60)
+    hits, total = 0, 0
+    for i in range(0, len(seg) - w + 1, max(1, w // 2)):
+        s = seg[i:i + w]
+        s = s - s.mean()
+        if np.sqrt(np.mean(s ** 2)) < 1e-4:
+            continue
+        ac = np.correlate(s, s, "full")[len(s) - 1:]
+        ac = ac / (ac[0] + 1e-12)
+        total += 1
+        if len(ac) > lo and float(np.max(ac[lo:hi])) >= 0.3:
+            hits += 1
+    return (hits / total) if total else None
+
+
+def tail_grunt_detect(path, last_word_end=None):
+    """Detect the TAIL GRUNT: voiced phonation that continues past the
+    script's last word (the mirror of gate 6's head grunt — the same
+    stray "rey / eyh" the owner caught at sentence HEADS on 2026-11-16,
+    caught at sentence ENDS on 2026-11-17 in the turbo TE/HI samples).
+
+    Measurement on the shipped samples (2026-11-17): the grunt is
+    GLUED to the last word — no silence gap separates it (sub-threshold
+    dips < 40 ms), so island-based tail trims missed it, and Whisper
+    folds it into the last word or just past it. One shipped Telugu
+    sentence carries phonation 80 ms past the aligner's last-word end
+    at a dead-flat 140 Hz (IQR 5) — the head grunt's own signature
+    (139–168 Hz, flat, ~8–10 dB under the body) at the tail.
+
+    Two modes:
+      ASR mode (last_word_end given): residual = acoustic phonation
+      end (last island end, floor + 8 dB, 30 ms bridge) minus the
+      aligner's last-word end. residual <= 0.060 s is the natural
+      release allowance (calibration above). Beyond it, the residual
+      segment is convicted when it is VOICED (periodicity-tested over
+      its body, past the word's own release edge) — breath/noise
+      tails are recorded, not convicted.
+      Acoustic-only mode (no aligner): a conservative dip-split
+      signature on the final island — a shallow dip (phonation never
+      reaches the floor: a glued grunt keeps voicing through it,
+      unlike a stop closure) followed by a short, flat, low segment.
+      Heuristic; the ASR mode is the convicting instrument wherever
+      an aligner is available.
+    Returns the evidence either way; 'present' is the verdict."""
+    y, sr, db, dt, floor, isl = _profile(path, bridge=0.030)
+    dur = len(y) / sr
+    ev = {"present": False, "mode": "asr" if last_word_end is not None
+          else "acoustic", "duration_s": round(dur, 2),
+          "islands": len(isl)}
+    if not isl:
+        ev["reason"] = "no speech islands found"
+        return ev
+    body_rms, body_f0 = _body_stats(y, sr, isl)
+    phon_end = isl[-1][1]
+    ev.update({"phon_end_s": round(phon_end, 2),
+               "body_rms_db": round(body_rms, 1),
+               "body_f0_hz": round(body_f0, 0) if body_f0 else None})
+    if last_word_end is not None:
+        residual = phon_end - float(last_word_end)
+        ev.update({"last_word_end_s": round(float(last_word_end), 2),
+                   "residual_s": round(residual, 3)})
+        if residual <= TAIL_GRUNT_ALLOWANCE_S:
+            ev["reason"] = ("phonation ends within the %.0f ms release "
+                            "allowance" % (TAIL_GRUNT_ALLOWANCE_S * 1000))
+            return ev
+        # Judge the grunt BODY, skipping the word's own release edge
+        # (the first <= 60 ms past the aligner end is partly the last
+        # word decaying — voiced by definition, proves nothing).
+        zb = float(last_word_end) + min(0.06, residual * 0.25)
+        seg_rms = _seg_rms_db(y, sr, float(last_word_end), phon_end)
+        f0, iqr = _seg_f0(y, sr, zb, phon_end)
+        vf = _voiced_frac(y, sr, zb, phon_end)
+        ev.update({"segment_s": [round(float(last_word_end), 2),
+                                 round(phon_end, 2)],
+                   "segment_rms_db": round(seg_rms, 1),
+                   "segment_f0_hz": round(f0, 0) if f0 else None,
+                   "segment_f0_iqr_hz": round(iqr, 0) if iqr is not None
+                   else None,
+                   "segment_voiced_frac": (round(vf, 2) if vf is not None
+                                           else None)})
+        voiced = vf is not None and vf >= 0.5
+        audible = seg_rms >= body_rms - 40.0
+        ev["checks"] = {"residual_beyond_allowance": True,
+                        "voiced": bool(voiced), "audible": bool(audible)}
+        ev["present"] = bool(voiced and audible)
+        if ev["present"]:
+            ev["reason"] = ("voiced phonation %.2f s past the last word "
+                            "(F0 %s Hz) — tail grunt"
+                            % (residual, ev["segment_f0_hz"]))
+        else:
+            ev["reason"] = "post-word tail is not voiced phonation"
+        return ev
+    # ---- acoustic-only fallback: dip-split signature on the final island
+    a, b = isl[-1]
+    ev["last_island_s"] = [round(a, 2), round(b, 2)]
+    if b - a < 0.25:
+        ev["reason"] = "final island too short to split acoustically"
+        return ev
+    i0 = max(int(a / dt), int((b - 0.60) / dt))
+    i1 = int(b / dt)
+    seg_db = db[i0:i1]
+    if len(seg_db) < 10:
+        ev["reason"] = "final island tail too short to scan"
+        return ev
+    # last local minimum at least 8 dB under both neighbours' maxima,
+    # with >= 0.08 s of segment after it
+    dip_at, dip_val = None, None
+    for k in range(3, len(seg_db) - 3):
+        t_k = i0 * dt + k * dt
+        if b - t_k < 0.08:
+            break
+        pre = float(np.max(seg_db[max(0, k - 20):k])) if k else -120.0
+        post = float(np.max(seg_db[k + 1:]))
+        v = float(seg_db[k])
+        if v <= pre - 8.0 and v <= post - 8.0:
+            dip_at, dip_val = t_k, v   # keep scanning: the LAST such dip
+    if dip_at is None:
+        ev["reason"] = "no dip-split signature in the final island"
+        return ev
+    seg_dur = b - dip_at
+    seg_rms = _seg_rms_db(y, sr, dip_at, b)
+    f0, iqr = _seg_f0(y, sr, dip_at, b)
+    ev.update({"dip_s": round(dip_at, 2), "dip_db": round(dip_val, 1),
+               "floor_db": round(floor, 1),
+               "segment_s": [round(dip_at, 2), round(b, 2)],
+               "segment_rms_db": round(seg_rms, 1),
+               "segment_f0_hz": round(f0, 0) if f0 else None,
+               "segment_f0_iqr_hz": round(iqr, 0) if iqr is not None
+               else None})
+    checks = {
+        "shallow_dip": dip_val >= floor + 14.0,
+        "short_segment": 0.08 <= seg_dur <= 0.40,
+        "flat_low_f0": (f0 is not None and 100.0 <= f0 <= 175.0
+                        and body_f0 is not None and f0 <= body_f0 - 30.0
+                        and (iqr is None or iqr <= 45.0)),
+        "under_body": seg_rms <= body_rms - 4.0,
+    }
+    ev["checks"] = checks
+    ev["present"] = all(checks.values())
+    if ev["present"]:
+        ev["reason"] = ("dip-split flat low segment %.2f s at the tail "
+                        "(F0 %s Hz) — tail grunt (acoustic mode)"
+                        % (seg_dur, ev["segment_f0_hz"]))
+    return ev
+
+
+def tail_grunt_gate(path, last_word_end=None):
+    """Gate 9 report (verification only — this module never edits a
+    take for gate 9; the turbo finishing path may CUT a cleanly
+    separable grunt at the last-word end, and the engine path simply
+    fails the take for a re-roll)."""
+    det = tail_grunt_detect(path, last_word_end)
+    return {"pass": not det["present"], "present": det["present"],
+            "detection": det}

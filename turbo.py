@@ -19,7 +19,10 @@ What makes it fast
 * Cheap checks run on every take (duration vs. text length catches
   dropped / repeated / swallowed words; head-grunt mute + cut-word gate
   from acoustic_gates.py). The Whisper word check runs on GPU by
-  default and is optional on CPU (--asr / --no-asr).
+  default and is optional on CPU (--asr / --no-asr). Gate 9 (tail
+  grunt) rides the word check: voiced phonation more than 60 ms past
+  the last recognised word is cut at the word end (45 ms fade, CER
+  re-verified) when cleanly separable, and fails the take when not.
 
 What stays the same (owner's law)
 ---------------------------------
@@ -286,6 +289,88 @@ def asr_check(y, text, lang, device):
             "last_word_end": last_end}
 
 
+def tail_grunt_check(y, full, txt):
+    """Gate 9 (tail grunt) for the turbo finishing path: voiced
+    phonation past Whisper's last-word end — the mirror of the head
+    grunt, glued to the last word with no silence gap, which is why
+    the island tail-trim and the old fused-tail cut (0.25 s of FILE
+    tail, pad included) missed it. Returns (info, y_cut):
+      action "none" — no grunt, or unmeasurable (no ASR end): pass.
+      action "cut"  — grunt cleanly separable: y_cut is the take cut
+                      at the last-word end with the locked 45 ms tail
+                      fade. The caller MUST CER-verify the cut before
+                      shipping; a reverted cut makes the take FAIL.
+      action "fail" — grunt present but not safely separable (the
+                      aligner's own last word is not the script's
+                      last word, so cutting at its end could amputate
+                      real speech — gate 7 law): the take re-rolls."""
+    info = {"present": False, "action": "none", "cut_s": 0.0}
+    if not full or not full.get("last_word_end"):
+        info["reason"] = "no ASR last-word end; unmeasurable"
+        return info, None
+    lwe = float(full["last_word_end"])
+    r = _islands(y)
+    if not r:
+        info["reason"] = "no energy islands"
+        return info, None
+    isl, peak = r
+    phon_end = isl[-1][1] / SR
+    residual = phon_end - lwe
+    info.update({"last_word_end_s": round(lwe, 3),
+                 "phon_end_s": round(phon_end, 3),
+                 "residual_s": round(residual, 3)})
+    if residual <= 0.060:   # natural release allowance (calibrated:
+        # clean shipped finals <= 0.03 s; the convicted grunt 0.08 s)
+        return info, None
+    # Judge the grunt BODY, skipping the word's own release edge.
+    zb = lwe + min(0.06, residual * 0.25)
+    try:
+        import acoustic_gates as ag
+        f0, iqr = ag._seg_f0(y.astype(np.float64), SR, zb, phon_end)
+        vf = ag._voiced_frac(y.astype(np.float64), SR, zb, phon_end)
+    except Exception:
+        f0, iqr, vf = None, None, None
+    seg = y[int(lwe * SR):int(phon_end * SR)]
+    seg_rms = (float(20 * np.log10(np.sqrt(np.mean(seg ** 2)) + 1e-9))
+               if len(seg) else -120.0)
+    info.update({"segment_f0_hz": round(f0, 0) if f0 else None,
+                 "segment_f0_iqr_hz": round(iqr, 0) if iqr is not None
+                 else None,
+                 "segment_voiced_frac": (round(vf, 2) if vf is not None
+                                         else None),
+                 "segment_rms_db": round(seg_rms, 1)})
+    voiced = vf is not None and vf >= 0.5
+    if not voiced or seg_rms < peak - 40.0:
+        info["reason"] = "post-word tail is not voiced phonation"
+        return info, None
+    info["present"] = True
+    # Separability: the aligner's own last word must be the script's
+    # last word — then everything past its end is non-script by the
+    # aligner's own account, and the caller's CER re-check proves the
+    # cut removed no speech.
+    hyp_last = (full.get("hyp") or "").split()
+    txt_last = (txt or "").split()
+    match = False
+    if hyp_last and txt_last:
+        a, b = _norm_chars(hyp_last[-1]), _norm_chars(txt_last[-1])
+        match = bool(a and b and (a == b or a in b or b in a
+                                  or _cer(a, b) <= 0.34))
+    info["last_word_match"] = match
+    if not match:
+        info["action"] = "fail"
+        info["reason"] = ("voiced tail past a last word the aligner "
+                          "did not match to the script's last word — "
+                          "cannot cut safely; re-roll")
+        return info, None
+    cut = y[:int(lwe * SR)].copy()
+    f = min(len(cut) // 4, int(0.045 * SR))
+    if f > 0:
+        cut[-f:] *= np.linspace(1, 0, f, dtype=np.float32)
+    info["action"] = "cut"
+    info["cut_s"] = round(residual, 3)
+    return info, cut
+
+
 def _cer_fair(text, hyp, lang):
     """Whisper writes numbers as digits and English loanwords in Latin script
     (step by step, trick). Those are not mistakes in the audio: digits are
@@ -352,20 +437,34 @@ def worker(device, jobs, args, q=None):
                     y = trim(y)
                     y_cut, dropped = drop_tail_blob(y)
                     full = asr_check(y, txt, lg, device) if use_asr else None
-                    if use_asr and not dropped and full.get("last_word_end"):
-                        # fused tail: sound continuing well past the last
-                        # recognised word ("...ఆలోచించారా-ay")
-                        extra = len(y) / SR - full["last_word_end"]
-                        if extra > 0.25:
-                            cut_at = int((full["last_word_end"] + 0.12) * SR)
-                            y_cut, dropped = y[:cut_at].copy(), round(extra - 0.12, 3)
+                    tg = {"present": False, "action": "none", "cut_s": 0.0}
+                    if use_asr and not dropped:
+                        # Gate 9 (tail grunt): voiced phonation past the
+                        # last recognised word, glued to it — cut at the
+                        # word end when cleanly separable, fail the take
+                        # when not. Supersedes the old fused-tail cut
+                        # (0.25 s of file tail, trim pad included): the
+                        # gate measures PHONATION past the word end
+                        # against a 60 ms release allowance.
+                        tg, tg_cut = tail_grunt_check(y, full, txt)
+                        if tg["action"] == "cut":
+                            y_cut, dropped = tg_cut, tg["cut_s"]
                     if dropped and use_asr:
                         cut = asr_check(y_cut, txt, lg, device)
                         if cut["cer"] > full["cer"] + 0.03:
                             y_cut, dropped = y, 0.0  # the "blob" was a real syllable
+                            if tg["action"] == "cut":
+                                # The CER re-check says the cut removed
+                                # speech: the grunt is fused into the
+                                # word itself — the take FAILS; it never
+                                # ships with a cut last word (gate 7 law).
+                                tg["action"] = "fail"
+                                tg["reason"] = ("tail cut reverted by the "
+                                                 "CER re-check")
                     y = trim(y_cut) if dropped else y
                     y, ac = acoustic_checks(y)
                     ac["tail_blob_dropped_s"] = dropped
+                    ac["gate9_tail_grunt"] = tg
                     rec = {"round": rnd + 1, "seed": seed + b, "device": device,
                            "dur_s": round(len(y) / SR, 2),
                            "spc": len(y) / SR / max(1, len(txt)),
@@ -381,6 +480,8 @@ def worker(device, jobs, args, q=None):
             rec["fails"] = []
             if not rec["acoustic"].get("gate7_cut_word", {}).get("pass", True):
                 rec["fails"].append("cut_word")
+            if rec["acoustic"].get("gate9_tail_grunt", {}).get("action") == "fail":
+                rec["fails"].append("tail_grunt")
             if "asr" in rec and rec["asr"]["cer"] > args.max_cer[lg]:
                 rec["fails"].append(f"words (CER {rec['asr']['cer']})")
             entry = prev or {"takes": []}

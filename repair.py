@@ -11,6 +11,10 @@ QC report. Three rules govern everything here:
      is used only where it fits. The playbook per defect class:
        head grunt        -> deterministic mute at generation time
                             (acoustic_gates gate 6; NO re-roll spent)
+       tail grunt        -> turbo finishing cuts a cleanly separable
+                            grunt at the last-word end (CER-verified,
+                            gate 9); fused cases re-roll, then route
+                            escalation like head bleed
        level jumps       -> deterministic gain match at assembly
                             (plain gain to the median; locked recipe)
        cut/detached end  -> seed re-rolls scored by final-word
@@ -43,6 +47,7 @@ import math
 
 # Defect classes (strings used verbatim in QC repair logs).
 GRUNT = "head_grunt"
+TAIL_GRUNT = "tail_grunt"
 CUT = "cut_word"
 HEAD_BLEED = "head_bleed"
 LANGUAGE = "language"
@@ -96,6 +101,9 @@ def defect_classes(rep, ship_extra=None, gen_error=None):
     _hb = rep.get("gate8_head_bleed", {})
     if _hb.get("active") and not _hb.get("pass"):
         out.append(HEAD_BLEED)
+    _tg = rep.get("gate9_tail_grunt", {})
+    if _tg.get("active") and not _tg.get("pass"):
+        out.append(TAIL_GRUNT)
     if ship_extra:
         if ship_extra.get("identity_pass") is False:
             out.append(IDENTITY)
@@ -142,6 +150,9 @@ def take_score(rep, ship_extra=None):
     _hb = rep.get("gate8_head_bleed", {})
     if _hb.get("active") and not _hb.get("pass", True):
         score -= 20.0
+    _tg = rep.get("gate9_tail_grunt", {})
+    if _tg.get("active") and not _tg.get("pass", True):
+        score -= 20.0
     return round(score, 2)
 
 
@@ -187,7 +198,8 @@ def candidate_plan(lang, primary_backend, wave, defects, n,
                 None))
         return specs
     escalate_route = any(d in defects for d in (LANGUAGE, GHOST,
-                                                HEAD_BLEED, GENERATION))
+                                                HEAD_BLEED, TAIL_GRUNT,
+                                                GENERATION))
     if wave == 2:
         if escalate_route and len(routes) > 1:
             alt = next(r for r in routes if r != primary_backend)
