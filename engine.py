@@ -1218,6 +1218,13 @@ def ship_decision(take_path, lang, text, settings, rep):
     sentence 6 shipped a truncated ending) is NOT advisory: it is a
     hard condition here, because a truncated final word is exactly
     the class of defect the ear caught and the bar exists to kill.
+    GATE 8 (head bleed, added 2026-11-17 after the strict audit found
+    shipped takes opening with ~1–1.5 s of reference-passage garble
+    no gate measured) is likewise a hard condition WHEN ENABLED by
+    gates.head_bleed_gate in settings.json: non-script speech before
+    the first script word is the same class of shipped defect. With
+    the flag off the gate is still measured and recorded on every
+    take but does not block.
     A check that cannot be measured fails closed (ship=False): an
     unmeasurable take is not a passing take.
     Returns (ship, extra); extra is merged into the QC roll entry.
@@ -1231,9 +1238,11 @@ def ship_decision(take_path, lang, text, settings, rep):
     g = settings["gates"]
     extra = {"ship_rule": "whole-take ear-approved bar: gate1 + gate2 "
                           "+ identity + pace + gate7 cut-word "
+                          "+ gate8 head-bleed (when enabled) "
                           "(gates 3/4/5 advisory)",
              "gate1_pass": True, "gate2_pass": True,
              "gate7_pass": rep.get("gate7_cut_word", {}).get("pass"),
+             "gate8_pass": rep.get("gate8_head_bleed", {}).get("pass"),
              "advisory": {
                  "gate3_pass": rep.get("gate3_pronunciation", {})
                  .get("pass"),
@@ -1244,6 +1253,12 @@ def ship_decision(take_path, lang, text, settings, rep):
         # Hard block (owner's order, 2026-11-16): a truncated ending
         # never ships; an unmeasured ending fails closed like the rest.
         extra["blocked_by"] = "gate7_cut_word"
+        return False, extra
+    if g.get("head_bleed_gate", False) and extra["gate8_pass"] is not True:
+        # Hard block when enabled (2026-11-17): a take that opens with
+        # non-script reference bleed never ships; an unmeasured head
+        # fails closed like the rest.
+        extra["blocked_by"] = "gate8_head_bleed"
         return False, extra
     try:
         ident = _take_identity(take_path)

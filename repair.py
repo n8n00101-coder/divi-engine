@@ -44,6 +44,7 @@ import math
 # Defect classes (strings used verbatim in QC repair logs).
 GRUNT = "head_grunt"
 CUT = "cut_word"
+HEAD_BLEED = "head_bleed"
 LANGUAGE = "language"
 GHOST = "ghost_words"
 PRON = "pronunciation"
@@ -92,6 +93,9 @@ def defect_classes(rep, ship_extra=None, gen_error=None):
         out.append(GRUNT)
     if not rep.get("gate7_cut_word", {}).get("pass"):
         out.append(CUT)
+    _hb = rep.get("gate8_head_bleed", {})
+    if _hb.get("active") and not _hb.get("pass"):
+        out.append(HEAD_BLEED)
     if ship_extra:
         if ship_extra.get("identity_pass") is False:
             out.append(IDENTITY)
@@ -134,6 +138,9 @@ def take_score(rep, ship_extra=None):
     if not rep.get("gate7_cut_word", {}).get("pass", True):
         score -= 15.0
     if not rep.get("gate6_head_grunt", {}).get("pass", True):
+        score -= 20.0
+    _hb = rep.get("gate8_head_bleed", {})
+    if _hb.get("active") and not _hb.get("pass", True):
         score -= 20.0
     return round(score, 2)
 
@@ -180,7 +187,7 @@ def candidate_plan(lang, primary_backend, wave, defects, n,
                 None))
         return specs
     escalate_route = any(d in defects for d in (LANGUAGE, GHOST,
-                                                GENERATION))
+                                                HEAD_BLEED, GENERATION))
     if wave == 2:
         if escalate_route and len(routes) > 1:
             alt = next(r for r in routes if r != primary_backend)
