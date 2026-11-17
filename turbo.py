@@ -55,7 +55,9 @@ import textnorm  # noqa: E402
 
 SR = 24000
 LANG_NAME = {"te": "Telugu", "hi": "Hindi", "en": "English"}
-GAP_S = {"te": 0.6, "hi": 0.6, "en": 0.66}
+# Sentence gaps measured on the channel narration (natspan1/2/3 pauses 0.32-0.40 s);
+# owner asked 2026-11-17 for tighter gaps "same as the YouTube channels".
+GAP_S = {"te": 0.35, "hi": 0.35, "en": 0.4}
 REF_DEFAULT = {
     "te": ("voice/refs/natspan2.wav", "voice/telugu-reference-text.txt"),
     "hi": ("voice/refs/natspan2.wav", "voice/telugu-reference-text.txt"),
@@ -140,14 +142,58 @@ def _speech_bounds(y, thr_db=-45.0):
     return max(0, act[0] * hop - 1200), min(len(y), (act[-1] + 1) * hop + 2400)
 
 
-def trim(y):
+def _islands(y, hop=240, rel_db=-32.0, min_gap_s=0.06):
+    n = len(y) // hop
+    if n == 0:
+        return []
+    db = 20 * np.log10(np.sqrt((y[: n * hop].reshape(n, hop) ** 2).mean(1)) + 1e-9)
+    on = db > db.max() + rel_db
+    isl, s, gap = [], None, 0
+    for i, a in enumerate(on):
+        if a:
+            if s is None:
+                s = i
+            gap = 0
+        elif s is not None:
+            gap += 1
+            if gap * hop / SR >= min_gap_s:
+                isl.append([s, i - gap + 1, float(db[s:i - gap + 1].max())])
+                s, gap = None, 0
+    if s is not None:
+        isl.append([s, n - gap, float(db[s:n - gap].max())])
+    return [(a * hop, b * hop, p) for a, b, p in isl], float(db.max())
+
+
+def drop_tail_blob(y):
+    """Remove a short detached sound after the last word (the 'ay'/breath/
+    vowel tail OmniVoice sometimes adds after a question or full stop).
+    Returns (y_trimmed, dropped_seconds)."""
+    r = _islands(y)
+    if not r:
+        return y, 0.0
+    isl, peak = r
+    if len(isl) < 2:
+        return y, 0.0
+    a, b, p = isl[-1]
+    dur = (b - a) / SR
+    gap = (a - isl[-2][1]) / SR
+    if (dur < 0.30 and gap >= 0.06) or (dur < 0.45 and p < peak - 14):
+        cut = isl[-2][1] + int(0.05 * SR)
+        return y[:cut].copy(), round(len(y) / SR - cut / SR, 3)
+    return y, 0.0
+
+
+def trim(y, head_fade=0.010, tail_fade=0.045):
     a, b = _speech_bounds(y)
     y = y[a:b].astype(np.float32)
-    f = min(len(y) // 4, int(0.012 * SR))
-    if f > 0:
-        ramp = np.linspace(0, 1, f, dtype=np.float32)
-        y[:f] *= ramp
-        y[-f:] *= ramp[::-1]
+    for f, end in ((int(head_fade * SR), False), (int(tail_fade * SR), True)):
+        f = min(len(y) // 4, f)
+        if f > 0:
+            ramp = np.linspace(0, 1, f, dtype=np.float32)
+            if end:
+                y[-f:] *= ramp[::-1]
+            else:
+                y[:f] *= ramp
     return y
 
 
@@ -211,11 +257,47 @@ def _cer(ref, hyp):
 
 
 def asr_check(y, text, lang, device):
+    import librosa
     m = asr_model(device)
-    segs, info = m.transcribe(y, language=lang, beam_size=1,
-                              vad_filter=False, without_timestamps=True)
-    hyp = " ".join(s.text for s in segs)
-    return {"hyp": hyp, "cer": round(_cer(text, hyp), 3)}
+    y16 = librosa.resample(y, orig_sr=SR, target_sr=16000)
+    try:
+        segs, info = m.transcribe(y16, language=lang, beam_size=1,
+                                  vad_filter=False, word_timestamps=True)
+        segs = list(segs)
+        hyp = " ".join(s.text for s in segs)
+        words = [w for s in segs for w in (s.words or [])]
+        last_end = float(words[-1].end) if words else None
+    except RuntimeError as e:  # e.g. libcublas.so.12 missing next to a cu13 torch
+        if device == "cpu":
+            raise
+        print(f"[turbo] ASR on {device} failed ({e}); falling back to CPU ASR", flush=True)
+        return asr_check(y, text, lang, "cpu")
+    return {"hyp": hyp, "cer": round(_cer_fair(text, hyp, lang), 3),
+            "last_word_end": last_end}
+
+
+def _cer_fair(text, hyp, lang):
+    """Whisper writes numbers as digits and English loanwords in Latin script
+    (step by step, trick). Those are not mistakes in the audio: digits are
+    spoken-normalised, and Latin tokens in a te/hi hypothesis are credited
+    up to their length instead of being counted as missing words."""
+    try:
+        from textnorm import normalize
+        hyp = normalize(hyp, lang)
+    except Exception:
+        pass
+    base = _cer(text, hyp)
+    if lang == "en":
+        return base
+    latin = re.findall(r"[A-Za-z]+", hyp)
+    if not latin:
+        return base
+    hyp2 = re.sub(r"[A-Za-z]+", " ", hyp)
+    r = _norm_chars(text).replace(" ", "")
+    h = _norm_chars(hyp2).replace(" ", "")
+    edits = _cer(text, hyp2) * max(1, len(r))
+    credit = sum(len(w) for w in latin)
+    return min(base, max(0.0, edits - credit) / max(1, len(r)))
 
 
 # ---------------------------------------------------------- generation --
@@ -258,7 +340,22 @@ def worker(device, jobs, args, q=None):
                 dt = time.time() - t0
                 for (lg, idx, txt), y in zip(chunk, audios):
                     y = trim(y)
+                    y_cut, dropped = drop_tail_blob(y)
+                    full = asr_check(y, txt, lg, device) if use_asr else None
+                    if use_asr and not dropped and full.get("last_word_end"):
+                        # fused tail: sound continuing well past the last
+                        # recognised word ("...ఆలోచించారా-ay")
+                        extra = len(y) / SR - full["last_word_end"]
+                        if extra > 0.25:
+                            cut_at = int((full["last_word_end"] + 0.12) * SR)
+                            y_cut, dropped = y[:cut_at].copy(), round(extra - 0.12, 3)
+                    if dropped and use_asr:
+                        cut = asr_check(y_cut, txt, lg, device)
+                        if cut["cer"] > full["cer"] + 0.03:
+                            y_cut, dropped = y, 0.0  # the "blob" was a real syllable
+                    y = trim(y_cut) if dropped else y
                     y, ac = acoustic_checks(y)
+                    ac["tail_blob_dropped_s"] = dropped
                     rec = {"round": rnd + 1, "seed": seed + b, "device": device,
                            "dur_s": round(len(y) / SR, 2),
                            "spc": len(y) / SR / max(1, len(txt)),
