@@ -407,3 +407,29 @@ PRONUNCIATION-PROFILE.md  the measured delivery profile the settings encode
 
 MIT — see `LICENSE`. The reference voice is a real person's voice, supplied
 by its owner for this project; use the engine and the voice accordingly.
+
+## Divi Turbo — the fast path (2026-11-17)
+
+```
+python3 turbo.py --te te.txt --hi hi.txt --en en.txt --outdir out/
+```
+
+One local OmniVoice model for all three languages, loaded once; the voice
+prompt encoded once per language; sentences generated in length-sorted
+batches (split across every GPU it finds, e.g. Kaggle T4 x2); one take
+first and only failed sentences re-made. Numbers, years, %, ₹ and short
+forms (BBC) are written out in the target language first (`textnorm.py`).
+Every take runs the head-grunt mute + cut-word gates; on GPU a Whisper
+word check (CER) also runs. Speed is locked at 1.0 with no stretch.
+Outputs per language: `<lang>.mp3`, `<lang>.srt`, `<lang>.qc.json`, plus
+`summary.json` with wall time and the x-realtime figure.
+
+Free GPU: open `DiviTurbo.ipynb` in Kaggle (GPU T4 x2) or Colab (T4),
+paste the three scripts, run all cells, download `voiceovers.zip`.
+
+Honest limits: not yet timed on a GPU. On a plain CPU OmniVoice is
+slower than real time, so the 20-min-in-10 target needs a GPU.
+Hindi uses the Telugu reference (same voice) until a clean Hindi clip is
+added with `--ref-hi hindi.wav --ref-text-hi hindi.txt`; English needs
+`voice/english-reference-text.txt` (exact transcript of the English ref)
+or OmniVoice transcribes the reference itself.
