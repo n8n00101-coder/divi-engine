@@ -61,7 +61,7 @@ GAP_S = {"te": 0.35, "hi": 0.35, "en": 0.4}
 REF_DEFAULT = {
     "te": ("voice/refs/natspan2.wav", "voice/telugu-reference-text.txt"),
     "hi": ("voice/refs/natspan2.wav", "voice/telugu-reference-text.txt"),
-    "en": ("voice/english-reference.wav", "voice/english-reference-text.txt"),
+    "en": ("voice/english-reference-clean.wav", "voice/english-reference-clean.txt"),
 }
 # Allowed seconds-per-character band, relative to the job's own median
 # take. Outside it the take most likely dropped, repeated or swallowed
@@ -89,7 +89,17 @@ def split_sentences(text, lang):
             out.append(p[:cut].strip().rstrip(",;:") + ",")
             p = p[cut:].strip()
         out.append(p)
-    return out
+    # Very short sentences ("But be careful.") are where OmniVoice bleeds the
+    # reference's words in; generate them together with the next sentence.
+    merged = []
+    for p in out:
+        if merged and len(merged[-1].split()) < 4 and not merged[-1].endswith("?"):
+            merged[-1] = merged[-1] + " " + p
+        else:
+            merged.append(p)
+    if len(merged) > 1 and len(merged[-1].split()) < 4:
+        merged[-2] = merged[-2] + " " + merged.pop()
+    return merged
 
 
 def prep_script(raw, lang):
@@ -470,6 +480,8 @@ def main():
     for l in langs:
         wav = getattr(args, f"ref_{l}") or os.path.join(HERE, REF_DEFAULT[l][0])
         txt = getattr(args, f"ref_text_{l}") or os.path.join(HERE, REF_DEFAULT[l][1])
+        if not os.path.exists(wav):
+            sys.exit(f"[turbo] reference not found for {l}: {wav}")
         args.refs[l] = (wav, txt)
     args.max_cer = {"te": 0.45, "hi": 0.35, "en": 0.25}
 
@@ -500,9 +512,15 @@ def main():
               for d, s in zip(devices, shards)]
         for p in ps:
             p.start()
-        for _ in ps:
-            _, r = q.get()
-            results.update(r)
+        import queue as _q
+        got = 0
+        while got < len(ps):
+            try:
+                _, r = q.get(timeout=30)
+                results.update(r); got += 1
+            except _q.Empty:
+                if any(p.exitcode not in (None, 0) for p in ps):
+                    sys.exit("[turbo] a GPU worker crashed; see the traceback above")
         for p in ps:
             p.join()
     gen_wall = time.time() - T0
