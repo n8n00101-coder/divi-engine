@@ -8,7 +8,7 @@ WHO TAUGHT US (youtube.com/@who_taught_us-telugu, @who_taught_us--hindi, @who_ta
 100% free, open-source only. The owner has NO money — never suggest paid APIs.
 
 ## Where everything lives
-- GitHub repo (source of truth, always pull latest): https://github.com/n8n00101-coder/julie-ai-voice-engine
+- GitHub repo (source of truth, always pull latest): https://github.com/n8n00101-coder/divi-engine
 - Backup zip of the same code: Kaggle dataset `arjunchotuchotu/divi-engine-turbo` (private).
 - Kaggle account for GPU runs: username `arjunchotuchotu` (phone-verified, GPU T4 x2, 30 h/week).
   The owner pastes the Kaggle API key into your vault when you ask. Never print key values.
