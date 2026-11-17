@@ -33,6 +33,27 @@ Added 2026-11-16 (owner's ear, OmniVoice route — acoustic_gates.py):
      ending ships nothing. Acoustic shape only — gates 1–3 judge
      which words were said.
 
+Added 2026-11-17 (strict audit of the gate-2 ear-check samples):
+  8. HEAD BLEED — the IndicF5 route sometimes opens a take with
+     ~1–1.5 s of garbled speech that is not the script at all: a
+     phrase from the REFERENCE passage itself (the natspan2 ref ends
+     "...జూలై 2024 లో కొత్త క్రిమినల్ చట్టాలు వచ్చాయి" — bled takes open
+     with that "kotta kriminil chattalu"), leaking into the
+     generation before the first script word. No earlier
+     gate measures the head: gate 6 covers only a ~0.08–0.4 s grunt
+     island, and gates 1–3 judge the whole take, where a strong body
+     can carry a bled head through alignment. The bleed also inflates
+     the take's duration and drags the measured pace down. This gate
+     decodes the head window alone (from speech onset, forced
+     language, thresholds disabled) and fails the take when the head
+     legibly carries the DEFAULT reference passage's closing phrase,
+     when pre-script speech cannot be rendered phonetically at all,
+     or when nothing of the script's opening is recognizable. Other
+     head mush is recorded as evidence, not failed: fw-base garbles
+     this voice's genuine openings too, and the ear-approved fixed13
+     takes carry a non-default reference's tail echo -- the hard
+     signature is the convicted one.
+
 Local ASR only: proxy env vars are stripped in this process (a proxy breaks
 local model loads). Nothing in here needs the network.
 """
@@ -52,7 +73,7 @@ import librosa
 from faster_whisper import WhisperModel
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from phonetics import LANG_SIMPLE, LANG_SYLLABLES, any_simple, simplify  # noqa: E402
+from phonetics import LANG_SIMPLE, LANG_SYLLABLES, any_simple, en_simple, simplify  # noqa: E402
 
 # Whisper model: env override, else the local cache used in production,
 # else the hub name "base" (downloaded once by faster-whisper).
@@ -517,10 +538,369 @@ def ghost_scan(unhinted_res, lang, script_words):
     return ghosts
 
 
+# ------------------------------------------------- gate 8 (head bleed) ---
+HEAD_BLEED_LANGS = ("te", "hi")
+_HEAD_WINDOW_S = 2.4        # head decode window from speech onset
+_HEAD_TAIL_WORDS = 4        # ref passage tail length used as the signature
+_HEAD_TAIL2_MIN = 0.69      # 2-word ref-tail sub-phrase match bar
+                            # (measured class gap on the 2026-11-17
+                            # calibration corpus: convicted bleed
+                            # heads score 0.70-0.92, clean/approved
+                            # heads <= 0.48)
+_HEAD_TAIL3_MIN = 0.68      # 3-word ref-tail sub-phrase match bar
+_HEAD_ANCHOR_MIN = 0.60     # script-word recognition bar for the anchor
+_HEAD_FLOOR_MIN = 0.50      # below this nothing of the opening is readable
+
+_mix_lexicon = None
+_ref_tails = None
+
+
+def _loanword_forms():
+    """Telugu stem -> [English forms] from voice/english_mix_classes.json
+    (the corpus-attested English-mix classes; the same lexicon the
+    gate-2 loanword recalibration consults). Loaded once; a missing or
+    unreadable file yields an empty lexicon, never an error."""
+    global _mix_lexicon
+    if _mix_lexicon is None:
+        _mix_lexicon = {}
+        try:
+            path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "voice", "english_mix_classes.json")
+            with open(path, encoding="utf-8") as fh:
+                data = json.load(fh)
+            for cls in (data.get("classes") or {}).values():
+                for w in cls.get("words") or []:
+                    stem = (w.get("telugu_form_stem") or "").strip()
+                    eng = (w.get("english") or "").strip()
+                    if not stem or not eng or stem.startswith("re:"):
+                        continue
+                    forms = []
+                    for f in eng.split("/"):
+                        f = re.sub(r"\(.*?\)", "", f).strip()
+                        if f:
+                            forms.append(f)
+                    if forms:
+                        _mix_lexicon.setdefault(stem, []).extend(forms)
+        except Exception:
+            _mix_lexicon = {}
+    return _mix_lexicon
+
+
+# fw-base frequently latches onto TAMIL script for this voice's line
+# openings (genuine narration included); phonetics.any_simple has no
+# Tamil branch, so Tamil tokens reduce to empty phons and every
+# phonetic check goes blind. Tamil is an abugida parallel to Telugu,
+# so a compact transliteration restores them -- used ONLY by gate 8.
+_TA_CONS = {"க": "k", "ங": "ng", "ச": "c", "ஞ": "ny", "ட": "T", "ண": "N",
+            "த": "t", "ந": "n", "ன": "n", "ப": "p", "ம": "m", "ய": "y",
+            "ர": "r", "ற": "R", "ல": "l", "ள": "L", "ழ": "zh", "வ": "v",
+            "ஜ": "j", "ஷ": "Sh", "ஸ": "s", "ஹ": "h"}
+_TA_INDEP = {"அ": "a", "ஆ": "aa", "இ": "i", "ஈ": "ii", "உ": "u", "ஊ": "uu",
+             "எ": "e", "ஏ": "ee", "ஐ": "ai", "ஒ": "o", "ஓ": "oo", "ஔ": "au",
+             "ஃ": "h"}
+_TA_SIGN = {"ா": "aa", "ி": "i", "ீ": "ii", "ு": "u", "ூ": "uu", "ெ": "e",
+            "ே": "ee", "ை": "ai", "ொ": "o", "ோ": "oo", "ௌ": "au", "்": ""}
+
+
+def _ta_simple(tok):
+    out = []
+    i = 0
+    while i < len(tok):
+        ch = tok[i]
+        if ch in _TA_CONS:
+            base = _TA_CONS[ch]
+            nxt = tok[i + 1] if i + 1 < len(tok) else ""
+            if nxt == "்":
+                out.append(base)
+                i += 2
+            elif nxt in _TA_SIGN:
+                out.append(base + _TA_SIGN[nxt])
+                i += 2
+            else:
+                out.append(base + "a")
+                i += 1
+        elif ch in _TA_INDEP:
+            out.append(_TA_INDEP[ch])
+            i += 1
+        elif ch in _TA_SIGN:
+            out.append(_TA_SIGN[ch])
+            i += 1
+        else:
+            i += 1
+    from phonetics import simplify as _simplify
+    return _simplify("".join(out))
+
+
+def _head_phon(tok):
+    """Token -> simplified phonetics for gate 8 (adds the Tamil branch
+    any_simple lacks; every other script defers to any_simple). Mixed
+    Tamil+other tokens occur (fw-base script salad): keep whichever
+    rendering carries more phonetic content."""
+    base = any_simple(tok)
+    if any("\u0b80" <= ch <= "\u0bff" for ch in tok):
+        ta = _ta_simple(tok)
+        if len(ta) > len(base):
+            return ta
+    return base
+
+
+def _simple(word, lang):
+    """Script word -> simplified phonetics in its own language."""
+    return LANG_SIMPLE.get(lang, any_simple)(word)
+
+
+def _acceptable_phons(word, lang):
+    """Phonetic forms a script word may legitimately be HEARD as: its
+    own simplified form plus, for te, the English form of an attested
+    loanword (she may say the English word itself -- gate 2's finding).
+    A stem matches when the word starts with it and the remainder is a
+    short inflection (<= 4 chars)."""
+    own = _simple(word, lang)
+    forms = {own}
+    if lang in HEAD_BLEED_LANGS:
+        for stem, engs in _loanword_forms().items():
+            s = _simple(stem, lang)
+            if s and own.startswith(s) and len(own) - len(s) <= 4:
+                for e in engs:
+                    forms.add(en_simple(e))
+    return sorted(f for f in forms if f)
+
+
+def _ref_tail_subphons():
+    """(default_ref, {ref_name: [sub-phons]}) built from
+    voice/refs/refs.json: for each canonical reference passage, the
+    phonetic sub-phrases of its last _HEAD_TAIL_WORDS significant
+    words (2-word and 3-word windows). The DEFAULT reference (the
+    production conditioning source, refs.json "default") is the
+    fail-active signature; every other ref's best score is recorded
+    as advisory evidence only -- the owner's ear-approved fixed13
+    takes carry the natspan3 tail's echo, so a hard gate on every
+    ref's tail would refuse the owner's own approved takes (the same
+    reason gates 3/4/5 are advisory for te/hi)."""
+    global _ref_tails
+    if _ref_tails is None:
+        _ref_tails = (None, {})
+        try:
+            path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "voice", "refs", "refs.json")
+            with open(path, encoding="utf-8") as fh:
+                data = json.load(fh)
+            tails = {}
+            for name, ref in (data.get("refs") or {}).items():
+                words = [w for w in re.split(r"\s+", (ref.get("text")
+                         or "").strip()) if w]
+                ph = []
+                for w in words:
+                    p = _simple(w, "te")
+                    if len(p) >= 3:
+                        ph.append(p)
+                tail = ph[-_HEAD_TAIL_WORDS:]
+                subs = set()
+                for n in (2, 3):
+                    for i in range(len(tail) - n + 1):
+                        subs.add(("".join(tail[i:i + n]), n))
+                if subs:
+                    tails[name] = sorted(subs)
+            _ref_tails = (data.get("default"), tails)
+        except Exception:
+            _ref_tails = (None, {})
+    return _ref_tails
+
+
+def _best_concat_sim(forms, phons, pos, kmax=4):
+    """Best similarity of any acceptable form against the concatenation
+    of up to kmax token phons starting at pos; returns (sim, k)."""
+    best, bestk = 0.0, 1
+    cat = ""
+    for k in range(1, kmax + 1):
+        if pos + k - 1 >= len(phons):
+            break
+        cat += phons[pos + k - 1]
+        if not cat:
+            continue
+        for f in forms:
+            v = sim(f, cat)
+            if v > best:
+                best, bestk = v, k
+    return best, bestk
+
+
+def head_bleed_check(toks, script_words, lang):
+    """Pure matcher for gate 8 (no ASR): toks are the head decode's
+    word tokens [{tok, phon, prob, start, end}]; script_words is the
+    sentence split on whitespace. Decides from the token stream alone.
+
+    FAILS when:
+      (1) the head carries the DEFAULT reference passage's closing
+          phrase, legibly -- a token window up to the script anchor
+          matching a 2-word tail sub-phrase at >= _HEAD_TAIL2_MIN or a
+          3-word one at >= _HEAD_TAIL3_MIN (the convicted bleed: the
+          conditioning visibly re-speaking the reference's last words
+          instead of the script). Sub-phrases that are part of the
+          script's own opening are excluded.
+      (2) significant pre-script speech the phonetics cannot render
+          at all (empty phons over a >= 0.5 s lead span), or
+      (3) nothing of the script's opening is recognizable anywhere in
+          the head decode (no anchor and no near miss).
+    Everything else passes; mush that resembles neither the reference
+    tail nor nothing-at-all is RECORDED (lead_junk, tail_echo) as
+    evidence, mirroring the advisory treatment gates 3/4/5 get for
+    te/hi: fw-base garbles this voice's genuine openings too, and the
+    owner's approved takes carry non-default-ref tail echo -- a hard
+    fail on raw mush would refuse her own narration.
+
+    Anchor and phrase scans run over the AUDIBLE subsequence (tokens
+    with non-empty phons): an unrenderable token must not act as free
+    glue that lets a later script word "anchor" across it."""
+    words = [w for w in script_words if w]
+    res = {"pass": True, "fails": [], "head_text": "", "word1_sim": None,
+           "anchor_word": None, "lead_junk": [], "tail_match": None,
+           "tail_echo": None, "window_s": None}
+    if not toks:
+        res["fails"].append("head decode is empty")
+        res["pass"] = False
+        return res
+    res["head_text"] = " ".join(t["tok"] for t in toks)
+    phons = [t.get("phon") or "" for t in toks]
+    sig = [i for i, t in enumerate(toks)
+           if len(phons[i]) >= 3 or (t.get("prob") or 0) >= 0.5]
+    aud = [i for i in range(len(toks)) if phons[i]]
+    aph = [phons[i] for i in aud]
+    # anchor: earliest audible position where any of the first 3
+    # script words is recognizably heard (tolerant concat scan,
+    # loanword forms included)
+    anchor = None          # (aud_pos, k, word_index, sim)
+    for apos in range(len(aud)):
+        for wi in range(min(3, len(words))):
+            v, k = _best_concat_sim(_acceptable_phons(words[wi], lang),
+                                    aph, apos)
+            if v >= _HEAD_ANCHOR_MIN and (anchor is None
+                                          or wi < anchor[2]):
+                anchor = (apos, k, wi, v)
+        if anchor is not None:
+            break
+    w1, _ = _best_concat_sim(_acceptable_phons(words[0], lang), aph, 0) \
+        if words else (0.0, 1)
+    res["word1_sim"] = round(w1, 3)
+    anchor_orig = aud[anchor[0]] if anchor is not None else None
+    if anchor is not None:
+        res["anchor_word"] = words[anchor[2]]
+        res["lead_junk"] = [toks[i]["tok"] for i in sig if i < anchor_orig]
+    # (1) default-ref tail signature; windows may start up to and
+    # including the anchor position (the phrase can share a word with
+    # the script, e.g. its own kriminal token inside the bleed)
+    default_ref, tails = _ref_tail_subphons()
+    script_open = "".join(_simple(w, lang) for w in words[:4])
+    limit = (anchor[0] + 1) if anchor is not None else len(aud)
+    best = {}              # ref -> (margin, score, n_words, window_text)
+    for name, subs in tails.items():
+        subs = [(s, n) for s, n in subs if s not in script_open]
+        if not subs:
+            continue
+        for apos in range(0, max(0, limit)):
+            cat = ""
+            for k in range(1, 6):
+                if apos + k - 1 >= len(aph):
+                    break
+                cat += aph[apos + k - 1]
+                if not cat:
+                    continue
+                for s, n in subs:
+                    bar = _HEAD_TAIL2_MIN if n == 2 else _HEAD_TAIL3_MIN
+                    margin = sim(s, cat) - bar
+                    cur = best.get(name)
+                    if cur is None or margin > cur[0]:
+                        best[name] = (margin, sim(s, cat), n, " ".join(
+                            toks[aud[j]]["tok"]
+                            for j in range(apos, apos + k)))
+    for name, (margin, v, n, wtext) in best.items():
+        entry = {"ref": name, "score": round(v, 3), "sub_words": n,
+                 "window": wtext}
+        if name == default_ref:
+            res["tail_match"] = entry
+            if margin >= 0:
+                res["fails"].append(
+                    "reference bleed: head opens with the %s passage "
+                    "tail (%r, match %.2f)" % (name, wtext, v))
+        elif res["tail_echo"] is None or v > res["tail_echo"]["score"]:
+            res["tail_echo"] = entry
+    # (2) unrenderable pre-script speech
+    lead = [i for i in sig if anchor_orig is None or i < anchor_orig]
+    if lead:
+        span = toks[lead[-1]]["end"] - toks[lead[0]]["start"]
+        phon_len = sum(len(phons[i]) for i in lead)
+        if span >= 0.5 and phon_len < 3:
+            res["fails"].append(
+                "head unrecognizable: %.1fs of pre-script speech cannot "
+                "be rendered phonetically" % span)
+    # (3) nothing of the opening recognizable
+    if anchor is None:
+        near = 0.0
+        for wi in range(min(4, len(words))):
+            forms = _acceptable_phons(words[wi], lang)
+            for apos in range(len(aph)):
+                v, _k = _best_concat_sim(forms, aph, apos)
+                near = max(near, v)
+        if near < _HEAD_FLOOR_MIN:
+            res["fails"].append(
+                "head unrecognizable: none of the script's first words "
+                "found in the head decode (best %.2f)" % near)
+    res["pass"] = not res["fails"]
+    return res
+
+
+def head_bleed_gate(path, lang, text, settings=None):
+    """Gate 8: reference-bleed / garbled head. Decodes the take's head
+    (onset-anchored _HEAD_WINDOW_S window, thresholds disabled like
+    gates 3/4) and runs head_bleed_check. Active only when
+    settings.gates.head_bleed_gate is on AND the language is te/hi --
+    the bleed was proven on Telugu IndicF5 takes conditioned on the
+    Telugu references. The flag ships ON: the calibration controls
+    hold (the two convicted gate-2 takes fail; the ear-approved
+    fixed13 takes and her genuine reference spans pass)."""
+    active = bool(settings and (settings.get("gates") or {}).get(
+        "head_bleed_gate")) and lang in HEAD_BLEED_LANGS
+    rep = {"pass": True, "active": active}
+    if not active:
+        return rep
+    try:
+        db, dt = frame_db(path)
+        gap = db[db > -90.0]
+        floor = float(np.percentile(gap, 5)) if len(gap) else -50.0
+        islands = find_islands(db, dt, floor + 8.0)
+        onset = islands[0][0] if islands else 0.0
+        y, sr = librosa.load(path, sr=16000, mono=True)
+        a = max(0.0, onset - 0.05)
+        b = min(len(y) / sr, onset + _HEAD_WINDOW_S)
+        seg = y[int(a * sr):int(b * sr)]
+        segs, _info = get_model().transcribe(
+            seg.astype(np.float32), language=lang, beam_size=5,
+            word_timestamps=True, condition_on_previous_text=False,
+            log_prob_threshold=None, no_speech_threshold=None)
+        toks = []
+        for s in segs:
+            for w in (s.words or []):
+                t = w.word.strip()
+                if t:
+                    toks.append({"tok": t, "phon": _head_phon(t),
+                                 "prob": round(float(w.probability), 3),
+                                 "start": round(float(w.start) + a, 2),
+                                 "end": round(float(w.end) + a, 2)})
+        chk = head_bleed_check(toks, (text or "").split(), lang)
+        rep.update(chk)
+        rep["window_s"] = [round(a, 2), round(b, 2)]
+    except Exception as exc:  # a gate must never crash the pipeline
+        rep["pass"] = False
+        rep["fails"] = ["head-bleed gate error: %s" % exc]
+    return rep
+
+
+
 # ------------------------------------------------------------- all gates ---
 def run_all_gates(path, lang, text, settings=None):
     """Run every gate on one take. Returns a report dict; report['pass'] is
-    True only if ALL gates pass (the original five plus gates 6/7)."""
+    True only if ALL gates pass (the original five plus gates 6/7, and
+    gate 8 wherever it is active)."""
     settings = settings or load_settings()
     g = settings["gates"]
     script_words = [w for w in re.split(r"\s+", text.strip()) if w]
@@ -539,10 +919,12 @@ def run_all_gates(path, lang, text, settings=None):
     import acoustic_gates
     hg = acoustic_gates.head_grunt_gate(path)
     cw = acoustic_gates.cut_word_gate(path)
+    hb = head_bleed_gate(path, lang, text, settings)
     report = {
         "pass": bool(lang_pass and not ghosts and fc["pron_pass"]
                      and fc["phys_pass"] and pitch_pass
-                     and hg["pass"] and cw["pass"]),
+                     and hg["pass"] and cw["pass"]
+                     and (hb["pass"] if hb["active"] else True)),
         "gate1_nohint_language": {"pass": lang_pass, "detected": det["lang"],
                                   "prob": det["prob"], "required": need,
                                   "unhinted_text": det["text"]},
@@ -556,6 +938,7 @@ def run_all_gates(path, lang, text, settings=None):
                         "rms_db": fc["rms_db"], "dur": fc["dur"]},
         "gate6_head_grunt": hg,
         "gate7_cut_word": cw,
+        "gate8_head_bleed": hb,
     }
     return report
 
