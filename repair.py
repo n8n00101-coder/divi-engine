@@ -104,6 +104,12 @@ def defect_classes(rep, ship_extra=None, gen_error=None):
     _tg = rep.get("gate9_tail_grunt", {})
     if _tg.get("active") and not _tg.get("pass"):
         out.append(TAIL_GRUNT)
+    _at = rep.get("gate9b_absorbed_tail", {})
+    if _at.get("active") and not _at.get("pass"):
+        out.append(TAIL_GRUNT)
+    _fw = rep.get("gate10_flagged_word", {})
+    if _fw.get("active") and not _fw.get("pass"):
+        out.append(PRON)
     if ship_extra:
         if ship_extra.get("identity_pass") is False:
             out.append(IDENTITY)
@@ -153,6 +159,12 @@ def take_score(rep, ship_extra=None):
     _tg = rep.get("gate9_tail_grunt", {})
     if _tg.get("active") and not _tg.get("pass", True):
         score -= 20.0
+    _at = rep.get("gate9b_absorbed_tail", {})
+    if _at.get("active") and not _at.get("pass", True):
+        score -= 20.0
+    _fw = rep.get("gate10_flagged_word", {})
+    if _fw.get("active") and not _fw.get("pass", True):
+        score -= 15.0
     return round(score, 2)
 
 

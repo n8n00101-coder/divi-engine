@@ -1244,11 +1244,17 @@ def ship_decision(take_path, lang, text, settings, rep):
                           "+ identity + pace + gate7 cut-word "
                           "+ gate8 head-bleed (when enabled) "
                           "+ gate9 tail-grunt (when enabled) "
+                          "+ gate9b absorbed-tail (when enabled) "
+                          "+ gate10 flagged-word (when enabled) "
                           "(gates 3/4/5 advisory)",
              "gate1_pass": True, "gate2_pass": True,
              "gate7_pass": rep.get("gate7_cut_word", {}).get("pass"),
              "gate8_pass": rep.get("gate8_head_bleed", {}).get("pass"),
              "gate9_pass": rep.get("gate9_tail_grunt", {}).get("pass"),
+             "gate9b_pass": rep.get("gate9b_absorbed_tail", {})
+             .get("pass"),
+             "gate10_pass": rep.get("gate10_flagged_word", {})
+             .get("pass"),
              "advisory": {
                  "gate3_pass": rep.get("gate3_pronunciation", {})
                  .get("pass"),
@@ -1272,6 +1278,22 @@ def ship_decision(take_path, lang, text, settings, rep):
         # caught at sentence ends) never ships; an unmeasured tail
         # fails closed like the rest.
         extra["blocked_by"] = "gate9_tail_grunt"
+        return False, extra
+    if g.get("absorbed_tail_gate", False) \
+            and extra["gate9b_pass"] is not True:
+        # Hard block when enabled (2026-11-18): a take carrying the
+        # tail grunt folded INSIDE the last word's span (the absorbed
+        # class gate 9 cannot see — the owner's ear caught it on the
+        # v2 Hindi sample) never ships.
+        extra["blocked_by"] = "gate9b_absorbed_tail"
+        return False, extra
+    if g.get("flagged_word_gate", False) \
+            and extra["gate10_pass"] is not True:
+        # Hard block when enabled (2026-11-18): a take that misrenders
+        # an owner-flagged word (watchlist in settings flagged_words)
+        # never ships — the flagged word must clear its strict
+        # per-word bar (phonetic sim + syllable count).
+        extra["blocked_by"] = "gate10_flagged_word"
         return False, extra
     try:
         ident = _take_identity(take_path)

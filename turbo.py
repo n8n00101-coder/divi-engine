@@ -280,13 +280,18 @@ def asr_check(y, text, lang, device):
         hyp = " ".join(s.text for s in segs)
         words = [w for s in segs for w in (s.words or [])]
         last_end = float(words[-1].end) if words else None
+        last_start = float(words[-1].start) if words else None
+        wlist = [{"w": w.word, "s": round(float(w.start), 3),
+                  "e": round(float(w.end), 3),
+                  "p": round(float(w.probability), 3)} for w in words]
     except RuntimeError as e:  # e.g. libcublas.so.12 missing next to a cu13 torch
         if device == "cpu":
             raise
         print(f"[turbo] ASR on {device} failed ({e}); falling back to CPU ASR", flush=True)
         return asr_check(y, text, lang, "cpu")
     return {"hyp": hyp, "cer": round(_cer_fair(text, hyp, lang), 3),
-            "last_word_end": last_end}
+            "last_word_end": last_end, "last_word_start": last_start,
+            "words": wlist}
 
 
 def tail_grunt_check(y, full, txt):
@@ -369,6 +374,151 @@ def tail_grunt_check(y, full, txt):
     info["action"] = "cut"
     info["cut_s"] = round(residual, 3)
     return info, cut
+
+
+_FW_PUNCT = " .,;:!?…'\"()[]{}—–-।॥"
+_SETTINGS_CACHE = None
+
+
+def _voice_settings():
+    """voice/settings.json — the single source of truth for the
+    gate flags and the flagged-word watchlist (turbo otherwise
+    hardcodes its recipe constants)."""
+    global _SETTINGS_CACHE
+    if _SETTINGS_CACHE is None:
+        try:
+            with open(os.path.join(HERE, "voice", "settings.json"),
+                      encoding="utf-8") as f:
+                _SETTINGS_CACHE = json.load(f)
+        except Exception:
+            _SETTINGS_CACHE = {}
+    return _SETTINGS_CACHE
+
+
+def absorbed_tail_check(y, full, lang):
+    """Gate 9b (absorbed tail) for the turbo finishing path: the
+    tail grunt folded INSIDE the aligner's last-word span — gate 9's
+    residual reads zero because the aligner stretches the word over
+    the grunt (Ajju's ear caught it on the v2 Hindi sample after
+    gate 9 passed every sentence). The detector
+    (acoustic_gates.absorbed_tail_detect) convicts on a
+    collapse-return shape inside the final word. There is NO cut
+    remedy — a conviction fails the take for a re-roll; nothing is
+    ever cut inside a word."""
+    info = {"present": False, "pass": True, "active": False}
+    st = _voice_settings()
+    if lang not in ("te", "hi") or not (st.get("gates") or {}).get(
+            "absorbed_tail_gate"):
+        return info
+    info["active"] = True
+    if not full or not full.get("words"):
+        info["reason"] = "no ASR words; unmeasurable"
+        return info
+    import soundfile as sf
+    try:
+        import acoustic_gates as ag
+    except Exception as e:
+        info["reason"] = "detector unavailable: %r" % (e,)
+        return info
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        path = f.name
+    try:
+        sf.write(path, y, SR)
+        det = ag.absorbed_tail_detect(path, full.get("last_word_start"),
+                                      full.get("last_word_end"))
+        info["detection"] = det
+        info["present"] = bool(det.get("present"))
+        info["pass"] = not info["present"]
+        if info["present"]:
+            info["reason"] = det.get("reason")
+        return info
+    except Exception as e:
+        info["reason"] = "gate 9b error: %r" % (e,)
+        return info
+    finally:
+        os.unlink(path)
+
+
+def flagged_word_check(full, txt, lang):
+    """Gate 10 (flagged words) for the turbo path: a word the owner
+    has ear-convicted once (settings flagged_words — seeded te:
+    మరుసటి, rendered 'మస్టు' with the రు syllable swallowed in the
+    v2 sample while the CER judge passed the sentence) must clear a
+    STRICT per-word bar on the large-model word alignment: phonetic
+    similarity >= gates.flagged_word_sim_min (0.70; convicted 0.46,
+    correct ~1.0) AND rendered syllable count == the script word's
+    (4 vs 2 convicted). Word probability is recorded, never
+    convicting — the convicted word's probability was 0.952."""
+    import difflib
+    info = {"pass": True, "active": False, "words": []}
+    st = _voice_settings()
+    watch = (st.get("flagged_words") or {}).get(lang) or []
+    if not watch or not (st.get("gates") or {}).get("flagged_word_gate"):
+        return info
+    script_words = [w.strip(_FW_PUNCT) for w in (txt or "").split()]
+    hits = [w for w in script_words if w in watch]
+    if not hits:
+        return info
+    info["active"] = True
+    if not full or not full.get("words"):
+        info["pass"] = False
+        info["reason"] = "no ASR words; flagged word unverifiable"
+        return info
+    try:
+        from phonetics import LANG_SIMPLE, LANG_SYLLABLES
+        simple = LANG_SIMPLE[lang]
+        syll = LANG_SYLLABLES[lang]
+    except Exception as e:
+        info["reason"] = "phonetics unavailable: %r" % (e,)
+        return info
+    sim_min = float((st.get("gates") or {}).get("flagged_word_sim_min",
+                                                0.70))
+    hyp_words = [w["w"].strip(_FW_PUNCT) for w in full["words"]]
+    hyp_phon = [simple(w) for w in hyp_words]
+
+    def _sim(a, b):
+        if not a or not b:
+            return 0.0
+        return difflib.SequenceMatcher(None, a, b).ratio()
+
+    n = len(script_words)
+    for w in hits:
+        i = script_words.index(w)
+        ent = {"word": w, "sim_min": sim_min,
+               "script_syllables": syll(w)}
+        # candidate hyp words around the word's proportional
+        # position, singly or as an adjacent pair (split renders)
+        c = int(round(i / max(1, n - 1) * (len(hyp_words) - 1))) \
+            if n > 1 else 0
+        best = (0.0, "", None)
+        for j in range(max(0, c - 2), min(len(hyp_words), c + 3)):
+            s = _sim(simple(w), simple(hyp_words[j]))
+            if s > best[0]:
+                best = (s, hyp_words[j], full["words"][j].get("p"))
+        # a split render (the word across two ASR tokens) may pair
+        # with the next token — but only when pairing is CLEARLY
+        # better (+0.10), so a neighbouring word is never absorbed
+        # into the rendering on a marginal score
+        for j in range(max(0, c - 2), min(len(hyp_words) - 1, c + 3)):
+            rend = hyp_words[j] + hyp_words[j + 1]
+            s = _sim(simple(w), simple(rend))
+            if s > best[0] + 0.10:
+                best = (s, rend, full["words"][j].get("p"))
+        ent["sim"] = round(best[0], 3)
+        ent["rendered"] = best[1]
+        ent["prob"] = best[2]
+        rs = syll(best[1]) if best[1] else 0
+        ent["rendered_syllables"] = rs
+        ent["pass"] = bool(best[0] >= sim_min
+                           and rs == ent["script_syllables"])
+        if not ent["pass"]:
+            ent["reason"] = ("flagged word rendered %r: sim %.2f "
+                             "(bar %.2f), syllables %d != %d"
+                             % (best[1], best[0], sim_min, rs,
+                                ent["script_syllables"]))
+            info["pass"] = False
+        info["words"].append(ent)
+    return info
 
 
 def _cer_fair(text, hyp, lang):
@@ -471,6 +621,14 @@ def worker(device, jobs, args, q=None):
                            "batch_gen_s": round(dt, 2), "acoustic": ac}
                     if use_asr:
                         rec["asr"] = asr_check(y, txt, lg, device)
+                        # Gate 9b (absorbed tail) + gate 10 (flagged
+                        # words) run on the FINISHED take against its
+                        # own final decode — the same evidence the
+                        # shipped file will be judged on.
+                        ac["gate9b_absorbed_tail"] = absorbed_tail_check(
+                            y, rec["asr"], lg)
+                        ac["gate10_flagged_word"] = flagged_word_check(
+                            rec["asr"], txt, lg)
                     new.append(((lg, idx, txt), y, rec))
         # decide
         still = []
@@ -482,6 +640,12 @@ def worker(device, jobs, args, q=None):
                 rec["fails"].append("cut_word")
             if rec["acoustic"].get("gate9_tail_grunt", {}).get("action") == "fail":
                 rec["fails"].append("tail_grunt")
+            _at = rec["acoustic"].get("gate9b_absorbed_tail", {})
+            if _at.get("active") and not _at.get("pass", True):
+                rec["fails"].append("absorbed_tail")
+            _fw = rec["acoustic"].get("gate10_flagged_word", {})
+            if _fw.get("active") and not _fw.get("pass", True):
+                rec["fails"].append("flagged_word")
             if "asr" in rec and rec["asr"]["cer"] > args.max_cer[lg]:
                 rec["fails"].append(f"words (CER {rec['asr']['cer']})")
             entry = prev or {"takes": []}

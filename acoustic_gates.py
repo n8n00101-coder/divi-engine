@@ -519,3 +519,197 @@ def tail_grunt_gate(path, last_word_end=None):
     det = tail_grunt_detect(path, last_word_end)
     return {"pass": not det["present"], "present": det["present"],
             "detection": det}
+
+
+# ------------------------------------------------------- gate 9b --------
+def _fine_rms(y, sr, a, b, win_s=0.010, hop_s=0.005):
+    """Fine RMS trace (10 ms windows, 5 ms hop) — the resolution at
+    which a word's release (energy collapse) and a following grunt
+    (energy return) separate."""
+    out = []
+    w = int(win_s * sr)
+    t = a
+    while t < b:
+        seg = y[int(t * sr):int(t * sr) + w]
+        out.append((t, float(20 * np.log10(np.sqrt(np.mean(seg ** 2))
+                                           + 1e-9)) if len(seg)
+                    else -120.0))
+        t += hop_s
+    return out
+
+
+def _spectral_flatness(y, sr, a, b, fmin=100.0, fmax=2000.0):
+    """Spectral flatness (geometric/arithmetic PSD mean) in a band.
+    Phonation — even creaky, irregular phonation — concentrates
+    energy in harmonics (measured 0.27 on the convicted creak tail,
+    0.01-0.04 on modal voice); breath / noise is flat (0.58 on a
+    synthetic noise control)."""
+    seg = y[int(a * sr):int(b * sr)]
+    if len(seg) < 1024:
+        return None
+    spec = np.abs(np.fft.rfft(seg * np.hanning(len(seg)))) ** 2 + 1e-12
+    fr = np.fft.rfftfreq(len(seg), 1.0 / sr)
+    band = spec[(fr >= fmin) & (fr <= fmax)]
+    if not len(band):
+        return None
+    return float(np.exp(np.mean(np.log(band))) / np.mean(band))
+
+
+def _win_f0s(y, sr, a, b, win=0.050, hop=0.025):
+    """Windowed F0 medians over a span (the _seg_f0 estimator)."""
+    out = []
+    t = a
+    while t + 0.04 <= b:
+        f0, _ = _seg_f0(y, sr, t, t + win)
+        if f0:
+            out.append((t, f0))
+        t += hop
+    return out
+
+
+def absorbed_tail_detect(path, last_word_start=None,
+                         last_word_end=None):
+    """Gate 9b — the ABSORBED tail grunt: phonation folded INSIDE the
+    aligner's last-word span, the class gate 9's own report flagged
+    as invisible to it (residual vs the aligner end is zero because
+    the aligner stretches the word over the grunt). Caught by Ajju's
+    ear on the v2 Hindi sample (2026-11-18) after gate 9 passed it.
+
+    Conviction shape (calibrated 2026-11-18, test_absorbed_tail.py):
+    inside the final word's span the energy first COLLAPSES to near
+    the floor (>= 40 ms at >= 25 dB under the span body, after the
+    span's energy peak — the word has ended), then a NEW phonation
+    segment >= 60 ms sustains to the phonation end at body level in
+    a GRUNT REGIME:
+      * creak — F0 median <= 120 Hz (the convicted v2 HI S1 tail:
+        73 Hz against a 171 Hz word core) with phonation-grade
+        spectral flatness (< 0.45); creak defeats the standard
+        autocorrelation voicing test, which is one reason the class
+        stayed invisible; or
+      * flat plateau — F0 IQR <= 12 Hz and |slope| <= 60 Hz/s at
+        >= 20 Hz below the final word's core F0 (the v1 HI tails:
+        IQR 0.6-3.8, slope -5..-16 Hz/s).
+    A legitimate final syllable after a stop closure (the false-
+    positive shape: TE ఆపదు / కలిసిపోతాయి) rides the declination
+    down at -160..-210 Hz/s and is NOT convicted; a natural release
+    never returns after a floor collapse. Detection only ever FAILS
+    the take for a re-roll — nothing is ever cut inside a word."""
+    ev = {"present": False, "method": "absorbed-collapse-return"}
+    y, sr, db, dt, floor, isl = _profile(path, bridge=0.030)
+    if not isl:
+        ev["reason"] = "no speech islands"
+        return ev
+    body_rms, body_f0 = _body_stats(y, sr, isl)
+    a0, phon_end = isl[-1]
+    # The collapse itself can split the final island (a deep dip
+    # under the island threshold): the analysis window covers the
+    # trailing island COMPLEX — islands separated by collapse-grade
+    # gaps (<= 0.12 s) — while the phonation end stays the last
+    # island's end.
+    j = len(isl) - 1
+    while j > 0 and isl[j][0] - isl[j - 1][1] <= 0.12:
+        j -= 1
+    a0 = isl[j][0]
+    start = max(a0, phon_end - 0.45)
+    if last_word_start is not None:
+        start = max(a0, min(last_word_start - 0.05, phon_end - 0.10))
+    rows = _fine_rms(y, sr, start, phon_end + 0.01)
+    ev.update({"phon_end_s": round(phon_end, 3),
+               "span_s": [round(start, 3), round(phon_end, 3)],
+               "body_rms_db": round(body_rms, 1)})
+    if len(rows) < 10:
+        ev["reason"] = "span too short to judge"
+        return ev
+    span_body = float(np.percentile([r for _, r in rows], 75))
+    thr = span_body - 25.0
+    ev["span_body_db"] = round(span_body, 1)
+    ev["collapse_thr_db"] = round(thr, 1)
+    peak_i = int(np.argmax([r for _, r in rows]))
+    collapse = None
+    run = []
+    for i in range(peak_i, len(rows)):
+        if rows[i][1] <= thr:
+            run.append(i)
+        else:
+            if len(run) >= 8:      # >= 40 ms at 5 ms hop
+                collapse = (run[0], run[-1])
+                break
+            run = []
+    if collapse is None and len(run) >= 8:
+        collapse = (run[0], run[-1])
+    if collapse is None:
+        ev["reason"] = "no floor collapse after the word peak"
+        return ev
+    c_end = rows[collapse[1]][0]
+    ev["collapse_s"] = [round(rows[collapse[0]][0], 3), round(c_end, 3)]
+    if c_end < phon_end - 0.35:
+        ev["reason"] = "collapse too early in the span (syllable gap)"
+        return ev
+    ret_dur = phon_end - c_end
+    ret = [r for (t, r) in rows if t > c_end]
+    if not ret:
+        ev["reason"] = "collapse runs to the phonation end (release)"
+        return ev
+    ret_med = float(np.median(ret[:-4])) if len(ret) > 4 \
+        else float(np.median(ret))
+    ev["return_s"] = round(ret_dur, 3)
+    ev["return_med_db"] = round(ret_med, 1)
+    if ret_dur < 0.060:
+        ev["reason"] = "post-collapse return too short (< 60 ms)"
+        return ev
+    if ret_med < body_rms - 20.0:
+        ev["reason"] = "post-collapse return too quiet to be the grunt"
+        return ev
+    # grunt-regime test on the return segment
+    f0w = _win_f0s(y, sr, c_end + 0.005, phon_end)
+    f0s = [f for _, f in f0w]
+    ev["return_f0s"] = [round(f, 0) for f in f0s]
+    core_f0 = None
+    if last_word_start is not None and last_word_end is not None \
+            and last_word_end > last_word_start:
+        mid = last_word_start + (last_word_end - last_word_start) * 0.5
+        cf = [f for _, f in _win_f0s(y, sr, last_word_start, mid)]
+        core_f0 = float(np.median(cf)) if cf else None
+    ev["word_core_f0_hz"] = (round(core_f0, 0) if core_f0 else None)
+    regime = None
+    if f0s:
+        med = float(np.median(f0s))
+        ev["return_f0_med_hz"] = round(med, 0)
+        if med <= 120.0:
+            flat = _spectral_flatness(y, sr, c_end + 0.005,
+                                      phon_end - 0.005)
+            ev["return_flatness"] = (round(flat, 3)
+                                     if flat is not None else None)
+            if flat is not None and flat < 0.45:
+                regime = "creak"
+        if regime is None and len(f0s) >= 3:
+            iqr = float(np.percentile(f0s, 75) - np.percentile(f0s, 25))
+            tt = np.array([t for t, _ in f0w])
+            ff = np.array(f0s)
+            slope = float(np.polyfit(tt - tt[0], ff, 1)[0])
+            ev["return_f0_iqr_hz"] = round(iqr, 1)
+            ev["return_f0_slope_hz_s"] = round(slope, 0)
+            below = (core_f0 is not None and med <= core_f0 - 20.0) \
+                or (core_f0 is None and 120.0 < med <= 185.0)
+            if iqr <= 12.0 and abs(slope) <= 60.0 and below:
+                regime = "flat_plateau"
+    ev["regime"] = regime
+    if regime:
+        ev["present"] = True
+        ev["reason"] = ("absorbed tail grunt: voiced %s segment %.2f s "
+                        "returns after a floor collapse inside the "
+                        "final word (F0 med %s Hz, word core %s Hz)"
+                        % (regime, ret_dur, ev.get("return_f0_med_hz"),
+                           ev.get("word_core_f0_hz")))
+    else:
+        ev["reason"] = ("post-collapse return is not in a grunt regime "
+                        "(declining syllable / release)")
+    return ev
+
+
+def absorbed_tail_gate(path, last_word_start=None, last_word_end=None):
+    """Gate 9b report (verification only — never edits the take;
+    a conviction fails the take for a re-roll)."""
+    det = absorbed_tail_detect(path, last_word_start, last_word_end)
+    return {"pass": not det["present"], "present": det["present"],
+            "detection": det}

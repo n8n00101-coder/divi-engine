@@ -1133,6 +1133,138 @@ def tail_grunt_gate(path, lang, text, settings=None):
     return rep
 
 
+def absorbed_tail_gate(path, lang, text, settings):
+    """Gate 9b ABSORBED TAIL: the tail grunt folded INSIDE the
+    aligner's last-word span — gate 9's residual reads zero because
+    the aligner stretches the word over the grunt, the honest limit
+    gate 9's own note recorded. Convicted by Ajju's ear on the v2
+    Hindi sample (2026-11-18) after gate 9 passed every sentence.
+    The detector (acoustic_gates.absorbed_tail_detect) convicts on
+    a collapse-return shape inside the final word: the word's
+    energy collapses to the floor (>= 40 ms, >= 25 dB under the
+    span body), then a NEW phonation segment >= 60 ms sustains to
+    the phonation end in a grunt regime — creak (F0 <= 120 Hz; the
+    convicted v2 HI S1 tail measures 73 Hz against a 171 Hz word
+    core) or a dead-flat plateau (IQR <= 12 Hz, |slope| <= 60 Hz/s,
+    >= 20 Hz below the word core). A legitimate final syllable
+    after a stop closure rides the declination at -160..-210 Hz/s
+    and passes. The last word's span comes from the same
+    thresholds-disabled tail-window decode gate 9 uses. A
+    conviction FAILS the take for a re-roll; nothing is ever cut
+    inside a word."""
+    active = bool(settings and (settings.get("gates") or {}).get(
+        "absorbed_tail_gate")) and lang in TAIL_GRUNT_LANGS
+    rep = {"pass": True, "active": active}
+    if not active:
+        return rep
+    try:
+        import acoustic_gates
+        y, sr = librosa.load(path, sr=16000, mono=True)
+        dur = len(y) / sr
+        a = max(0.0, dur - _TAIL_WINDOW_S)
+        seg = y[int(a * sr):]
+        segs, _info = get_model().transcribe(
+            seg.astype(np.float32), language=lang, beam_size=5,
+            word_timestamps=True, condition_on_previous_text=False,
+            log_prob_threshold=None, no_speech_threshold=None)
+        words = [w for s in segs for w in (s.words or [])]
+        if words:
+            det = acoustic_gates.absorbed_tail_detect(
+                path, a + float(words[-1].start),
+                a + float(words[-1].end))
+        else:
+            det = acoustic_gates.absorbed_tail_detect(path)
+        rep.update(det)
+        rep["pass"] = not det["present"]
+        rep["window_s"] = [round(a, 2), round(dur, 2)]
+        if det["present"]:
+            rep["fails"] = ["absorbed tail grunt: %s"
+                            % det.get("reason", "")]
+    except Exception as exc:  # a gate must never crash the pipeline
+        rep["pass"] = False
+        rep["fails"] = ["absorbed-tail gate error: %s" % exc]
+    return rep
+
+
+_FW_PUNCT = " .,;:!?…'\"()[]{}—–-।॥"
+
+
+def flagged_word_gate(path, lang, text, settings):
+    """Gate 10 FLAGGED WORDS: Ajju's ear verdicts become permanent
+    machine checks. A word he has convicted once (settings
+    flagged_words per language — seeded te: మరుసటి, rendered
+    'మస్టు' with the రు syllable swallowed in the v2 turbo sample
+    while the CER judge passed the sentence at 0.08) must clear a
+    STRICT per-word bar in every future take: phonetic similarity
+    >= gates.flagged_word_sim_min (0.70; the convicted rendering
+    measures 0.46, a correct rendering ~1.0) AND the rendered
+    syllable count must equal the script word's (4 vs 2 convicted).
+    Word PROBABILITY is recorded but never convicts: the convicted
+    word's large-model probability was 0.952 — the judge was
+    confident in the wrong word. Engine-side evidence is the
+    fw-base forced alignment (forced_check rows) with similarity
+    recomputed through any_simple so ASR script salad does not
+    zero it; on the OmniVoice route, where fw-base renders this
+    voice in salad, the turbo path runs the same bar on its
+    large-model word alignment (turbo.flagged_word_check) — the
+    convicting instrument there."""
+    g = (settings or {}).get("gates", {})
+    watch = ((settings or {}).get("flagged_words", {}) or {}).get(lang) \
+        or []
+    active = bool(watch) and bool(g.get("flagged_word_gate"))
+    rep = {"pass": True, "active": False, "words": []}
+    if not active:
+        return rep
+    script_words = [w for w in re.split(r"\s+", (text or "").strip())
+                    if w]
+    hits = [w for w in script_words if w.strip(_FW_PUNCT) in watch]
+    if not hits:
+        return rep
+    rep["active"] = True
+    try:
+        sim_min = float(g.get("flagged_word_sim_min", 0.70))
+        fc = forced_check(path, lang, script_words, settings)
+        rows = fc.get("rows") or []
+        simple = LANG_SIMPLE[lang]
+        syll = LANG_SYLLABLES[lang]
+        for w in hits:
+            ent = {"word": w, "sim_min": sim_min,
+                   "script_syllables": syll(w.strip(_FW_PUNCT))}
+            row = next((r for r in rows if r["word"] == w), None)
+            if row is None or row.get("status") == "MISSING" \
+                    or not row.get("toks"):
+                ent["pass"] = False
+                ent["reason"] = "flagged word missing from the alignment"
+                rep["pass"] = False
+                rep["words"].append(ent)
+                continue
+            rendered = "".join(row["toks"])
+            ent["rendered"] = rendered
+            ent["prob"] = row.get("prob")
+            ent["status"] = row.get("status")
+            cs = sim(simple(w.strip(_FW_PUNCT)),
+                     any_simple(rendered)) if rendered else 0.0
+            ent["sim"] = round(max(cs, row.get("sim") or 0.0), 3)
+            rs = syll(rendered) if rendered else 0
+            ent["rendered_syllables"] = rs
+            ent["pass"] = bool(ent["sim"] >= sim_min
+                               and rs == ent["script_syllables"])
+            if not ent["pass"]:
+                ent["reason"] = ("flagged word rendered %r: sim %.2f "
+                                 "(bar %.2f), syllables %d != %d"
+                                 % (rendered, ent["sim"], sim_min, rs,
+                                    ent["script_syllables"]))
+                rep["pass"] = False
+            rep["words"].append(ent)
+        if not rep["pass"]:
+            rep["fails"] = [e["reason"] for e in rep["words"]
+                            if not e["pass"]]
+    except Exception as exc:  # a gate must never crash the pipeline
+        rep["pass"] = False
+        rep["fails"] = ["flagged-word gate error: %s" % exc]
+    return rep
+
+
 
 # ------------------------------------------------------------- all gates ---
 def run_all_gates(path, lang, text, settings=None):
@@ -1159,12 +1291,16 @@ def run_all_gates(path, lang, text, settings=None):
     cw = acoustic_gates.cut_word_gate(path)
     hb = head_bleed_gate(path, lang, text, settings)
     tg = tail_grunt_gate(path, lang, text, settings)
+    atg = absorbed_tail_gate(path, lang, text, settings)
+    fwg = flagged_word_gate(path, lang, text, settings)
     report = {
         "pass": bool(lang_pass and not ghosts and fc["pron_pass"]
                      and fc["phys_pass"] and pitch_pass
                      and hg["pass"] and cw["pass"]
                      and (hb["pass"] if hb["active"] else True)
-                     and (tg["pass"] if tg["active"] else True)),
+                     and (tg["pass"] if tg["active"] else True)
+                     and (atg["pass"] if atg["active"] else True)
+                     and (fwg["pass"] if fwg["active"] else True)),
         "gate1_nohint_language": {"pass": lang_pass, "detected": det["lang"],
                                   "prob": det["prob"], "required": need,
                                   "unhinted_text": det["text"]},
@@ -1182,6 +1318,8 @@ def run_all_gates(path, lang, text, settings=None):
         "gate7_cut_word": cw,
         "gate8_head_bleed": hb,
         "gate9_tail_grunt": tg,
+        "gate9b_absorbed_tail": atg,
+        "gate10_flagged_word": fwg,
     }
     return report
 
