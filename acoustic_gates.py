@@ -188,11 +188,43 @@ def _body_stats(y, sr, isl):
 
 
 # ------------------------------------------------------------ gate 6 -----
+def _win_f0_medians(y, sr, a, b, win=0.060, hop=0.030):
+    """Windowed F0 medians across a span. The pooled _seg_f0 can
+    misread a creak island (v3 HI S5 raw: pooled 185 Hz / IQR 85
+    over an island whose windows sit at ~62 Hz — YIN frames from
+    the creak's octave and the island edge swamp the median), so
+    the creak test judges the WINDOWS, not the pool."""
+    out = []
+    t = a
+    while t + 0.04 <= b:
+        f0, _ = _seg_f0(y, sr, t, min(b, t + win))
+        if f0:
+            out.append(f0)
+        t += hop
+    return out
+
+
 def head_grunt_detect(path):
     """Detect the OmniVoice head-grunt signature at a take's head.
-    Returns a dict: present + the measured evidence either way."""
+    Returns a dict: present + the measured evidence either way.
+
+    Two pitch regimes of the SAME artifact (a short non-word
+    phonation island at the take head, ~10 dB under the body,
+    separated from the first word by silence):
+      modal — F0 100-190 Hz, flat (the 2026-11-16 Sample B grunt,
+        and the v2/v3 HI takes S2/S6/S7/S8: 143-148 Hz);
+      creak — F0 55-100 Hz, vocal-fry phonation (the v3 HI takes
+        S1/S3/S4/S5: 62-75 Hz, IQR 1-28). The modal band's 100 Hz
+        floor EXCLUDED the creak regime, so gate 6 passed those
+        takes and the grunt shipped — Ajju's ear caught it on the
+        v3 Hindi sample (2026-11-18) after gates 9/9b (tail-only)
+        had passed every sentence. The creak test therefore runs
+        on windowed F0 medians (see _win_f0_medians) and requires
+        the island to be audible (>= body - 20 dB: the muted
+        residue measured on the delivered S8 head sits at
+        -41..-56 dB and forms no island at all)."""
     y, sr, db, dt, floor, isl = _profile(path)
-    ev = {"present": False, "islands": len(isl)}
+    ev = {"present": False, "islands": len(isl), "regime": None}
     if len(isl) < 2:
         ev["reason"] = "fewer than two speech islands"
         return ev
@@ -202,12 +234,23 @@ def head_grunt_detect(path):
     rms = _seg_rms_db(y, sr, a, b)
     body_rms, body_f0 = _body_stats(y, sr, isl[1:])
     f0, iqr = _seg_f0(y, sr, a, b)
+    wins = _win_f0_medians(y, sr, a, b)
+    win_med = float(np.median(wins)) if wins else None
+    win_low = (float(np.mean([1.0 if w < 110.0 else 0.0 for w in wins]))
+               if wins else None)
+    low_wins = [w for w in wins if w < 110.0]
+    win_low_med = float(np.median(low_wins)) if low_wins else None
     ev.update({"span_s": [round(a, 2), round(b, 2)],
                "dur_s": round(dur, 2), "gap_after_s": round(gap, 2),
                "rms_db": round(rms, 1), "body_rms_db": round(body_rms, 1),
                "f0_hz": round(f0, 0) if f0 else None,
                "f0_iqr_hz": round(iqr, 0) if iqr is not None else None,
-               "body_f0_hz": round(body_f0, 0) if body_f0 else None})
+               "body_f0_hz": round(body_f0, 0) if body_f0 else None,
+               "win_f0_med_hz": round(win_med, 0) if win_med else None,
+               "win_f0_low_frac": (round(win_low, 2)
+                                   if win_low is not None else None),
+               "win_f0_low_med_hz": (round(win_low_med, 0)
+                                     if win_low_med else None)})
     checks = {
         "starts_at_head": a <= 0.20,
         "short": 0.08 <= dur <= 0.40,
@@ -216,9 +259,80 @@ def head_grunt_detect(path):
         "low_flat_f0": (f0 is not None and 100.0 <= f0 <= 190.0
                         and body_f0 is not None and f0 <= body_f0 - 30.0
                         and (iqr is None or iqr <= 60.0)),
+        # Creak windows are a MIX: the fry rate (~62-75 Hz) and its
+        # octave (~130-150 Hz) both appear, so the island median can
+        # sit at ~98-114 Hz while half the windows are pure creak
+        # (measured on the convicted v3 HI raws/delivered: low
+        # fraction 0.50-0.67, sub-110 median 62-88 Hz; clean
+        # controls: low fraction <= 0.25 or structural checks fail).
+        "creak_f0": (win_low is not None and win_low >= 0.4
+                     and win_low_med is not None
+                     and 50.0 <= win_low_med < 100.0
+                     and win_med is not None and win_med <= 130.0
+                     and body_f0 is not None
+                     and win_low_med <= body_f0 - 40.0
+                     and rms >= body_rms - 20.0),
     }
     ev["checks"] = checks
-    ev["present"] = all(checks.values())
+    structural = (checks["starts_at_head"] and checks["short"]
+                  and checks["isolated_by_silence"]
+                  and checks["quiet_vs_body"])
+    if structural and checks["low_flat_f0"]:
+        ev["present"], ev["regime"] = True, "modal"
+    elif structural and checks["creak_f0"]:
+        ev["present"], ev["regime"] = True, "creak"
+    return ev
+
+
+def head_creak_scan(path, window_s=0.50):
+    """Tile scan of a take's first `window_s` seconds for the creak
+    head grunt — the fail-only companion to head_grunt_detect. The
+    island detector needs the grunt SILENCE-SEPARATED (its mute
+    remedy must never touch speech); a creak run GLUED to the first
+    word forms one island with it and stays invisible there. This
+    scan convicts on the raw signature alone: >= 0.12 s of
+    consecutive 50 ms tiles (25 ms hop) that are periodicity-voiced
+    (voiced_frac >= 0.5), low (tile F0 <= 105 Hz) and audible
+    (tile RMS >= body - 22 dB — the delivered S8 muted residue at
+    -41..-56 dB against a -10 dB body must NOT convict).
+    Calibration (2026-11-18): convicted v3 HI heads S1/S3/S4/S5 run
+    0.15-0.24 s at 60-75 Hz; every clean control (v3 TE takes,
+    muted-clean HI takes, her genuine refs) has no such run — real
+    word onsets in her voice sit at 145-310 Hz."""
+    ev = {"present": False, "method": "head-creak-tile-scan"}
+    y, sr, db, dt, floor, isl = _profile(path, bridge=0.030)
+    if not isl:
+        ev["reason"] = "no speech islands"
+        return ev
+    body_rms, _bf = _body_stats(y, sr, isl)
+    ev["body_rms_db"] = round(body_rms, 1)
+    tiles = []
+    t = 0.0
+    while t + 0.05 <= window_s:
+        vf = _voiced_frac(y, sr, t, t + 0.05)
+        f0, _iqr = _seg_f0(y, sr, t, t + 0.05)
+        rms = _seg_rms_db(y, sr, t, t + 0.05)
+        bad = (vf is not None and vf >= 0.5 and f0 is not None
+               and f0 <= 105.0 and rms >= body_rms - 22.0)
+        tiles.append((round(t, 3), bad))
+        t += 0.025
+    best, run, run0 = 0.0, 0.0, None
+    for tt, bad in tiles:
+        if bad:
+            if run0 is None:
+                run0 = tt
+            run = tt + 0.05 - run0
+            best = max(best, run)
+        else:
+            run0, run = None, 0.0
+    ev["longest_bad_run_s"] = round(best, 3)
+    if best >= 0.12:
+        ev["present"] = True
+        ev["reason"] = ("creak head run %.2f s at <= 105 Hz in the "
+                        "first %.1f s — head grunt (glued or "
+                        "separated)" % (best, window_s))
+    else:
+        ev["reason"] = "no creak run >= 0.12 s at the head"
     return ev
 
 
@@ -259,11 +373,18 @@ def mute_head_grunt(path):
 def head_grunt_gate(path, apply=False):
     """Gate 6 report. With apply=True the grunt is muted first and the
     gate re-checks the result (this is the engine's generation path);
-    with apply=False it is a pure verification (gates.run_all_gates)."""
+    with apply=False it is a pure verification (gates.run_all_gates).
+    The verdict combines the island detector (modal + creak regimes;
+    the mute remedy) with the tile scan (head_creak_scan), which
+    also convicts a creak run glued to the first word — that shape
+    has no mute remedy, so the gate simply fails and the take
+    re-rolls."""
     action = mute_head_grunt(path) if apply else None
     det = head_grunt_detect(path)
-    out = {"pass": not det["present"], "present": det["present"],
-           "detection": det}
+    scan = head_creak_scan(path)
+    present = bool(det["present"] or scan["present"])
+    out = {"pass": not present, "present": present,
+           "detection": det, "creak_scan": scan}
     if action is not None:
         out["action"] = action
     return out
