@@ -9,7 +9,8 @@ WHO TAUGHT US (youtube.com/@who_taught_us-telugu, @who_taught_us--hindi, @who_ta
 
 ## Where everything lives
 - GitHub repo (source of truth, always pull latest): https://github.com/n8n00101-coder/divi-engine
-- Backup zip of the same code: Kaggle dataset `arjunchotuchotu/divi-engine-turbo` (private).
+- Backup zip of the same code: Kaggle dataset `divi-engine-turbo` (private) — MIRRORED on all 3 accounts
+  (`n8n00101`, `arjunchotuchotu`, `mike0123l098`); keep all three updated whenever the tool changes.
 - Kaggle account for GPU runs: username `arjunchotuchotu` (phone-verified, GPU T4 x2, 30 h/week).
   The owner pastes the Kaggle API key into your vault when you ask. Never print key values.
 
@@ -37,9 +38,22 @@ WHO TAUGHT US (youtube.com/@who_taught_us-telugu, @who_taught_us--hindi, @who_ta
 - Use BOTH GPUs (--device auto). Model load ~5 min once per session — generate all 3 languages in one session.
 - Max 2 GPU batch sessions at a time; never leave old runs queued. Batch runs sometimes sit in QUEUED ~1 h — say so honestly.
 
-## State (2026-11-17)
+## State (2026-11-18)
 - Engine main includes: full gate stack (language/identity/pitch/ghost-word/head-bleed), self-healing re-roll,
   OmniVoice route with head-grunt mute + tail-trim fixes, turbo.py + textnorm.py (merged from Hark's build).
+- NEW gates LIVE on main (merged 2026-11-18, Ajju approved): **Gate 9 TAIL GRUNT** (voiced phonation past the
+  last word fails/cuts the take), **Gate 9b ABSORBED TAIL** (grunt folded inside the last word's span),
+  **Gate 10 FLAGGED WORDS** (owner-ear-flagged words must clear a strict per-word bar — phonetic sim + syllable
+  count; word probability never convicts), **Gate 6 STRENGTHENED** with a creak head-grunt regime + head tile scan.
+- Telugu v3 turbo sample EAR-APPROVED by Ajju 2026-11-18 — Gate 10 proven by ear (మరుసటి now renders exactly).
+- Hindi "ey ehy" ROOT CAUSE FOUND (2026-11-18): NOT a tail sound — OmniVoice HEAD grunts in the CREAK pitch
+  regime (62–75 Hz) at the heads of sentences S1/S3/S4/S5. Gate 6's old F0 band [100,190] Hz structurally missed
+  creak below 100 Hz; the aligner folded the next take's head grunt into the previous sentence's last word, so it
+  was heard as a tail. Fixed: gate 6 convicts the creak regime (calibration 27/27 — all bad takes convicted, all
+  clean controls pass). Hindi v4 sample built on the strengthened gate (S1/S3/S4/S5 re-rolled, 8/8 pass,
+  independent verify ALL_PASS).
+- PROCESS RULE added: head verification runs on the DELIVERED assembled file, not only inside generation —
+  two generations of gates missed a defect class because no pass ever re-checked take heads after assembly.
 - Measured: 86 s of audio in 217 s on ONE T4 + ~5 min one-time model load. Speed target 20-min VO in ~10 min is
   NOT proven; honest free-T4 estimate so far 25–40 min. Never claim the target until measured.
 - Owner feedback on first Kaggle samples: extra 'ay' after a question word, gaps too long, some words felt cut —
